@@ -39,7 +39,7 @@ payment features.
    TWILIO_FROM_PHONE=
    CRON_SECRET=
    LESSON_TIME_ZONE=America/New_York
-   REMINDER_WINDOW_MINUTES=60
+   REMINDER_WINDOW_MINUTES=720
    ```
 
    Keep `SUPABASE_SERVICE_ROLE_KEY` private. It is used only from server code.
@@ -102,5 +102,10 @@ For a deployed cron route, set `CRON_SECRET` and call the route with:
 Authorization: Bearer your-secret
 ```
 
-Vercel Cron is configured in `vercel.json` to run hourly. The default reminder
-window is 60 minutes so hourly checks can catch lessons near the 24-hour mark.
+Vercel Cron is configured in `vercel.json` to run once daily at 9:00 AM UTC so
+the app can deploy on Vercel Hobby. The default reminder window is 720 minutes
+to catch most next-day lessons during that daily run.
+
+For more precise reminders near the 24-hour mark, upgrade to Vercel Pro for
+hourly cron jobs or use an external scheduler to call
+`/api/cron/send-reminders` hourly.
