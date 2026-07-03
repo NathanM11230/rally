@@ -1,18 +1,19 @@
-# Rally SMS Lesson Reminders
+# Rally Manual SMS Lesson Reminders
 
-Rally is a lightweight MVP for tennis instructors to create lessons and send SMS
-reminders to both the student and instructor about 24 hours before lesson time.
+Rally is a lightweight MVP for tennis instructors to create lessons and prepare
+SMS reminder messages for students and instructors.
 
-This app is intentionally SMS-only. It does not include email lesson reminders or
-payment features.
+This app is intentionally SMS-only. It does not include email reminders,
+payments, Twilio sending, or automated SMS provider delivery. Rally opens a
+prefilled text message and the instructor sends it manually from their own SMS
+app.
 
 ## Stack
 
 - Next.js App Router
 - TypeScript
 - Supabase Postgres
-- Twilio SMS
-- Vercel Cron or a scheduled request to `/api/cron/send-reminders`
+- Manual `sms:` links for reminder texts
 
 ## Setup
 
@@ -24,22 +25,16 @@ payment features.
 
 2. Create a Supabase project and run the SQL in `supabase/schema.sql`.
 
-   If you already ran the first MVP schema, run this updated SQL again. It adds
-   `instructor_profiles`, migrates existing lesson instructor name/phone values
-   into profiles, converts lesson date/time into `lesson_start_time`, and replaces
-   the old reminder status field with `reminder_sent`.
+   If you already ran the previous Rally schema, you do not need a new schema
+   just for the manual SMS change. The existing `reminder_sent` field is reused
+   to track whether the instructor marked a manual reminder as sent.
 
 3. Copy `.env.example` to `.env.local` and fill in:
 
    ```bash
    SUPABASE_URL=
    SUPABASE_SERVICE_ROLE_KEY=
-   TWILIO_ACCOUNT_SID=
-   TWILIO_AUTH_TOKEN=
-   TWILIO_FROM_PHONE=
-   CRON_SECRET=
    LESSON_TIME_ZONE=America/New_York
-   REMINDER_WINDOW_MINUTES=720
    ```
 
    Keep `SUPABASE_SERVICE_ROLE_KEY` private. It is used only from server code.
@@ -65,10 +60,10 @@ When there is no instructor profile, the dashboard and new lesson page ask the
 instructor to complete the profile first. After the profile is saved, lesson
 forms no longer ask for instructor name or instructor phone number.
 
-Each lesson stores `instructor_profile_id`, so reminders can look up the saved
-instructor profile automatically.
+Each lesson stores `instructor_profile_id`, so Rally can include the instructor
+name and phone number in manual reminder actions.
 
-## SMS Reminders
+## Manual SMS Reminders
 
 Lessons store:
 
@@ -80,11 +75,16 @@ Lessons store:
 - `reminder_sent`
 - `instructor_profile_id`
 
-The reminder cron checks for lessons about 24 hours away where
-`reminder_sent = false`. For each due lesson, Rally joins the connected
-instructor profile, sends one SMS to the student, sends one SMS to the
-instructor's saved `phone_number`, then marks `reminder_sent = true` only after
-Twilio successfully sends both messages.
+On the dashboard and edit page, each lesson has actions to:
+
+- open a prefilled SMS to the student
+- open a prefilled SMS to the instructor
+- mark the reminder as sent
+- reset the sent status if needed
+
+The app does not send texts in the background. The instructor reviews the
+prefilled text and taps send in their own messaging app. This avoids Twilio,
+A2P 10DLC, toll-free verification, and Vercel Cron complexity for the MVP.
 
 ## API Routes
 
@@ -94,18 +94,17 @@ Twilio successfully sends both messages.
 - `POST /api/lessons` creates a lesson using the saved instructor profile.
 - `PATCH /api/lessons/:id` edits a lesson.
 - `DELETE /api/lessons/:id` deletes a lesson.
-- `GET /api/cron/send-reminders` checks for lessons happening about 24 hours from now, sends SMS reminders, and marks reminders as sent.
+- `POST /api/lessons/:id/reminder-sent` marks a manual reminder as sent.
+- `DELETE /api/lessons/:id/reminder-sent` resets a reminder to not sent.
 
-For a deployed cron route, set `CRON_SECRET` and call the route with:
+## Deploying
 
-```text
-Authorization: Bearer your-secret
+Set these Vercel environment variables:
+
+```bash
+SUPABASE_URL=
+SUPABASE_SERVICE_ROLE_KEY=
+LESSON_TIME_ZONE=America/New_York
 ```
 
-Vercel Cron is configured in `vercel.json` to run once daily at 9:00 AM UTC so
-the app can deploy on Vercel Hobby. The default reminder window is 720 minutes
-to catch most next-day lessons during that daily run.
-
-For more precise reminders near the 24-hour mark, upgrade to Vercel Pro for
-hourly cron jobs or use an external scheduler to call
-`/api/cron/send-reminders` hourly.
+Redeploy after changing environment variables.

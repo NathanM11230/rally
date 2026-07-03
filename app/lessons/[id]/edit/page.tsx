@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { DeleteLessonButton } from "@/components/DeleteLessonButton";
 import { LessonForm } from "@/components/LessonForm";
+import { ManualReminderActions } from "@/components/ManualReminderActions";
 import { formatLessonDateTime, getLessonTimeZone } from "@/lib/date";
 import { getLesson } from "@/lib/lessons";
 
@@ -41,6 +42,7 @@ export default async function EditLessonPage({ params }: EditLessonPageProps) {
           <Link className="button-secondary" href="/">
             Dashboard
           </Link>
+          <ManualReminderActions lesson={lesson} timeZone={timeZone} />
           <DeleteLessonButton lessonId={lesson.id} />
         </div>
       </header>

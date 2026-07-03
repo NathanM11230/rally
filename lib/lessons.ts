@@ -72,6 +72,13 @@ export async function updateLesson(id: string, input: LessonUpdate) {
   return data as LessonWithInstructorProfile;
 }
 
+export async function markLessonReminderSent(id: string, reminderSent: boolean) {
+  return updateLesson(id, {
+    reminder_sent: reminderSent,
+    reminder_sent_at: reminderSent ? new Date().toISOString() : null,
+  });
+}
+
 export async function deleteLesson(id: string) {
   const supabase = getSupabaseAdmin();
 

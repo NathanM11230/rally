@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { ManualReminderActions } from "@/components/ManualReminderActions";
 import { formatLessonDateTime, getLessonTimeZone } from "@/lib/date";
 import { getCurrentInstructorProfile } from "@/lib/instructor-profiles";
 import { getUpcomingLessons } from "@/lib/lessons";
@@ -51,8 +52,8 @@ export default async function DashboardPage() {
           <p className="eyebrow">SMS lesson reminders</p>
           <h1>Upcoming tennis lessons</h1>
           <p className="lede">
-            Create lessons, keep court details in one place, and send simple text
-            reminders to the student and instructor.
+            Create lessons, keep court details in one place, and open prefilled
+            reminder texts when it is time to send them.
           </p>
         </div>
         <div className="button-row">
@@ -71,7 +72,7 @@ export default async function DashboardPage() {
         <section className="panel">
           <div className="empty-state">
             Add your instructor profile before creating lessons. Rally will use
-            that saved phone number for SMS reminders.
+            that saved phone number to prepare instructor reminder texts.
             <div className="button-row section-actions">
               <Link className="button" href="/profile">
                 Set up instructor profile
@@ -90,7 +91,7 @@ export default async function DashboardPage() {
         {lessons.length === 0 ? (
           <div className="empty-state">
             No upcoming lessons yet. Add your first lesson to start scheduling SMS
-            reminders.
+            reminder texts.
           </div>
         ) : (
           <div className="table-wrap">
@@ -140,6 +141,7 @@ export default async function DashboardPage() {
                       <Link className="button-secondary" href={`/lessons/${lesson.id}/edit`}>
                         Edit
                       </Link>
+                      <ManualReminderActions lesson={lesson} timeZone={timeZone} />
                     </td>
                   </tr>
                 ))}

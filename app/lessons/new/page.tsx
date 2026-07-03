@@ -56,7 +56,7 @@ export default async function NewLessonPage() {
           <h1>Create a tennis lesson</h1>
           <p className="lede">
             Add the student, time, and court details. Rally will use your saved
-            instructor phone number for SMS reminders.
+            instructor phone number to prepare reminder texts.
           </p>
           <div className="details-bar">
             <span className="detail-chip">Instructor: {profile.full_name}</span>

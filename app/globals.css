@@ -282,6 +282,20 @@ select:focus {
   color: var(--muted);
 }
 
+.lesson-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.lesson-actions .button,
+.lesson-actions .button-secondary {
+  min-height: 36px;
+  padding: 0 12px;
+  font-size: 0.9rem;
+}
+
 @media (max-width: 720px) {
   .page {
     width: min(100% - 24px, 1120px);

@@ -42,8 +42,8 @@ export default async function ProfilePage() {
           <p className="eyebrow">{profile ? "Edit profile" : "Instructor setup"}</p>
           <h1>{profile ? "Update instructor profile" : "Create instructor profile"}</h1>
           <p className="lede">
-            Rally uses this saved phone number for SMS lesson reminders. You only
-            need to enter it once.
+            Rally uses this saved phone number to prepare instructor reminder texts.
+            You only need to enter it once.
           </p>
         </div>
         <Link className="button-secondary" href="/">
