@@ -69,6 +69,11 @@ h1 {
   line-height: 1.04;
 }
 
+h2 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
 .lede {
   max-width: 720px;
   margin: 12px 0 0;
@@ -282,6 +287,12 @@ select:focus {
   color: var(--muted);
 }
 
+.compact-button {
+  min-height: 36px;
+  padding: 0 12px;
+  font-size: 0.9rem;
+}
+
 .lesson-actions {
   display: flex;
   flex-wrap: wrap;
@@ -296,6 +307,48 @@ select:focus {
   font-size: 0.9rem;
 }
 
+.field-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.student-list,
+.profile-list,
+.profile-manager {
+  display: grid;
+  gap: 16px;
+}
+
+.student-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: end;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px;
+}
+
+.profile-section {
+  display: grid;
+  gap: 14px;
+  padding: 24px;
+}
+
+.profile-section + .profile-section {
+  border-top: 1px solid var(--border);
+}
+
+.profile-card {
+  display: grid;
+  gap: 18px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+}
+
 @media (max-width: 720px) {
   .page {
     width: min(100% - 24px, 1120px);
@@ -307,6 +360,10 @@ select:focus {
   }
 
   .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .student-row {
     grid-template-columns: 1fr;
   }
 }

@@ -86,6 +86,41 @@ export type Database = {
           },
         ];
       };
+      lesson_students: {
+        Row: {
+          id: string;
+          lesson_id: string;
+          student_name: string;
+          student_phone: string;
+          sort_order: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          lesson_id: string;
+          student_name: string;
+          student_phone: string;
+          sort_order?: number;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          lesson_id?: string;
+          student_name?: string;
+          student_phone?: string;
+          sort_order?: number;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "lesson_students_lesson_id_fkey";
+            columns: ["lesson_id"];
+            isOneToOne: false;
+            referencedRelation: "lessons";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
@@ -103,7 +138,14 @@ export type InstructorProfileUpdate =
 export type Lesson = Database["public"]["Tables"]["lessons"]["Row"];
 export type LessonInsert = Database["public"]["Tables"]["lessons"]["Insert"];
 export type LessonUpdate = Database["public"]["Tables"]["lessons"]["Update"];
+export type LessonStudent =
+  Database["public"]["Tables"]["lesson_students"]["Row"];
+export type LessonStudentInsert =
+  Database["public"]["Tables"]["lesson_students"]["Insert"];
+export type LessonStudentUpdate =
+  Database["public"]["Tables"]["lesson_students"]["Update"];
 
 export type LessonWithInstructorProfile = Lesson & {
   instructor_profile: InstructorProfile | null;
+  lesson_students: LessonStudent[];
 };

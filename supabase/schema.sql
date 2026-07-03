@@ -32,6 +32,15 @@ create table if not exists public.lessons (
   updated_at timestamptz not null default now()
 );
 
+create table if not exists public.lesson_students (
+  id uuid primary key default gen_random_uuid(),
+  lesson_id uuid not null references public.lessons(id) on delete cascade,
+  student_name text not null,
+  student_phone text not null,
+  sort_order integer not null default 0,
+  created_at timestamptz not null default now()
+);
+
 alter table public.lessons
   add column if not exists instructor_profile_id uuid,
   add column if not exists lesson_start_time timestamptz,
@@ -198,6 +207,18 @@ create index if not exists lessons_reminder_sent_idx
 create index if not exists lessons_instructor_profile_id_idx
   on public.lessons (instructor_profile_id);
 
+create index if not exists lesson_students_lesson_id_idx
+  on public.lesson_students (lesson_id, sort_order);
+
+insert into public.lesson_students (lesson_id, student_name, student_phone, sort_order)
+select lessons.id, lessons.student_name, lessons.student_phone, 0
+from public.lessons
+where not exists (
+  select 1
+  from public.lesson_students
+  where lesson_students.lesson_id = lessons.id
+);
+
 create or replace function public.set_updated_at()
 returns trigger as $$
 begin
@@ -222,6 +243,7 @@ execute function public.set_updated_at();
 
 alter table public.instructor_profiles enable row level security;
 alter table public.lessons enable row level security;
+alter table public.lesson_students enable row level security;
 
 -- No public policies are added for this MVP. Server-side routes use the
 -- Supabase service role key, which bypasses RLS. Do not expose that key.

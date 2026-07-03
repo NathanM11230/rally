@@ -1,13 +1,15 @@
 import { formatLessonDateTime } from "@/lib/date";
-import type { LessonWithInstructorProfile } from "@/types/database";
+import type { LessonStudent, LessonWithInstructorProfile } from "@/types/database";
 
 type ManualSmsTarget = {
   href: string;
+  label: string;
   message: string;
 };
 
 export function buildStudentReminderSms(
   lesson: LessonWithInstructorProfile,
+  student: Pick<LessonStudent, "student_name" | "student_phone">,
   timeZone: string,
 ): ManualSmsTarget {
   const instructorName = lesson.instructor_profile?.full_name ?? "your instructor";
@@ -17,7 +19,8 @@ export function buildStudentReminderSms(
   )} at ${lesson.location}.`;
 
   return {
-    href: buildSmsHref(lesson.student_phone, message),
+    href: buildSmsHref(student.student_phone, message),
+    label: `Text ${student.student_name}`,
     message,
   };
 }
@@ -30,14 +33,36 @@ export function buildInstructorReminderSms(
     return null;
   }
 
-  const message = `Reminder: You have a tennis lesson with ${
-    lesson.student_name
-  } on ${formatLessonDateTime(lesson, timeZone)} at ${lesson.location}.`;
+  const studentNames = getLessonStudents(lesson)
+    .map((student) => student.student_name)
+    .join(", ");
+  const message = `Reminder: You have a tennis lesson with ${studentNames} on ${formatLessonDateTime(
+    lesson,
+    timeZone,
+  )} at ${lesson.location}.`;
 
   return {
     href: buildSmsHref(lesson.instructor_profile.phone_number, message),
+    label: `Text ${lesson.instructor_profile.full_name}`,
     message,
   };
+}
+
+export function getLessonStudents(lesson: LessonWithInstructorProfile) {
+  if (lesson.lesson_students.length > 0) {
+    return lesson.lesson_students;
+  }
+
+  return [
+    {
+      id: lesson.id,
+      lesson_id: lesson.id,
+      student_name: lesson.student_name,
+      student_phone: lesson.student_phone,
+      sort_order: 0,
+      created_at: lesson.created_at,
+    },
+  ];
 }
 
 function buildSmsHref(phoneNumber: string, message: string) {

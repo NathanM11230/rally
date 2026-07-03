@@ -2,30 +2,30 @@ import Link from "next/link";
 
 import { LessonForm } from "@/components/LessonForm";
 import { getLessonTimeZone } from "@/lib/date";
-import { getCurrentInstructorProfile } from "@/lib/instructor-profiles";
+import { getInstructorProfiles } from "@/lib/instructor-profiles";
 
 export const dynamic = "force-dynamic";
 
 export default async function NewLessonPage() {
-  let profile = null;
+  let profiles = null;
   const timeZone = getLessonTimeZone();
 
   try {
-    profile = await getCurrentInstructorProfile();
+    profiles = await getInstructorProfiles();
   } catch {
-    profile = null;
+    profiles = null;
   }
 
-  if (!profile) {
+  if (!profiles || profiles.length === 0) {
     return (
       <main className="page">
         <header className="page-header">
           <div>
-            <p className="eyebrow">Profile required</p>
-            <h1>Set up your instructor profile first</h1>
+            <p className="eyebrow">Pros required</p>
+            <h1>Add your club pros first</h1>
             <p className="lede">
-              Rally needs your saved instructor name and phone number before it can
-              create SMS lesson reminders.
+              Rally needs at least one saved pro before it can create lesson
+              reservations.
             </p>
           </div>
           <Link className="button-secondary" href="/">
@@ -35,11 +35,11 @@ export default async function NewLessonPage() {
 
         <section className="panel">
           <div className="empty-state">
-            Create your instructor profile once, then Rally will automatically attach
-            it to every new lesson.
+            Add each pro once, then select the right pro when creating each
+            lesson.
             <div className="button-row section-actions">
               <Link className="button" href="/profile">
-                Set up instructor profile
+                Add club pros
               </Link>
             </div>
           </div>
@@ -55,12 +55,15 @@ export default async function NewLessonPage() {
           <p className="eyebrow">New lesson</p>
           <h1>Create a tennis lesson</h1>
           <p className="lede">
-            Add the student, time, and court details. Rally will use your saved
-            instructor phone number to prepare reminder texts.
+            Choose the pro, add one or more students, and enter the time and court
+            details.
           </p>
           <div className="details-bar">
-            <span className="detail-chip">Instructor: {profile.full_name}</span>
-            <span className="detail-chip">SMS phone: {profile.phone_number}</span>
+            {profiles.map((profile) => (
+              <span className="detail-chip" key={profile.id}>
+                {profile.full_name}: {profile.phone_number}
+              </span>
+            ))}
           </div>
         </div>
         <Link className="button-secondary" href="/">
@@ -69,7 +72,7 @@ export default async function NewLessonPage() {
       </header>
 
       <section className="panel">
-        <LessonForm mode="create" timeZone={timeZone} />
+        <LessonForm mode="create" timeZone={timeZone} instructorProfiles={profiles} />
       </section>
     </main>
   );

@@ -1,16 +1,16 @@
 import Link from "next/link";
 
-import { ProfileForm } from "@/components/ProfileForm";
-import { getCurrentInstructorProfile } from "@/lib/instructor-profiles";
+import { InstructorProfilesManager } from "@/components/InstructorProfilesManager";
+import { getInstructorProfiles } from "@/lib/instructor-profiles";
 
 export const dynamic = "force-dynamic";
 
 export default async function ProfilePage() {
-  let profile = null;
+  let profiles = null;
   let canLoadProfile = true;
 
   try {
-    profile = await getCurrentInstructorProfile();
+    profiles = await getInstructorProfiles();
   } catch {
     canLoadProfile = false;
   }
@@ -39,11 +39,11 @@ export default async function ProfilePage() {
     <main className="page">
       <header className="page-header">
         <div>
-          <p className="eyebrow">{profile ? "Edit profile" : "Instructor setup"}</p>
-          <h1>{profile ? "Update instructor profile" : "Create instructor profile"}</h1>
+          <p className="eyebrow">Club roster</p>
+          <h1>Manage tennis pros</h1>
           <p className="lede">
-            Rally uses this saved phone number to prepare instructor reminder texts.
-            You only need to enter it once.
+            Add each pro once. Lessons can then be assigned to the right pro, and
+            Rally will prepare reminder texts with that pro&apos;s name and phone number.
           </p>
         </div>
         <Link className="button-secondary" href="/">
@@ -52,7 +52,7 @@ export default async function ProfilePage() {
       </header>
 
       <section className="panel">
-        <ProfileForm profile={profile} />
+        <InstructorProfilesManager profiles={profiles ?? []} />
       </section>
     </main>
   );

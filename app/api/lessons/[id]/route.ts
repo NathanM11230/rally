@@ -45,7 +45,7 @@ export async function PATCH(request: Request, { params }: LessonRouteContext) {
   }
 
   try {
-    const lesson = await updateLesson(id, parsed.data);
+    const lesson = await updateLesson(id, parsed.data.lesson, parsed.data.students);
     revalidatePath("/");
     revalidatePath(`/lessons/${id}/edit`);
     return NextResponse.json({ lesson });

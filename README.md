@@ -1,12 +1,11 @@
 # Rally Manual SMS Lesson Reminders
 
-Rally is a lightweight MVP for tennis instructors to create lessons and prepare
-SMS reminder messages for students and instructors.
+Rally is a lightweight MVP for tennis clubs to create lesson reservations and
+prepare SMS reminder messages for students and pros.
 
 This app is intentionally SMS-only. It does not include email reminders,
 payments, Twilio sending, or automated SMS provider delivery. Rally opens a
-prefilled text message and the instructor sends it manually from their own SMS
-app.
+prefilled text message and the pro sends it manually from their own SMS app.
 
 ## Stack
 
@@ -25,9 +24,9 @@ app.
 
 2. Create a Supabase project and run the SQL in `supabase/schema.sql`.
 
-   If you already ran the previous Rally schema, you do not need a new schema
-   just for the manual SMS change. The existing `reminder_sent` field is reused
-   to track whether the instructor marked a manual reminder as sent.
+   If you already ran an earlier Rally schema, run this updated SQL again. It
+   adds `lesson_students`, migrates each existing lesson's current student into
+   that table, and keeps the existing `lessons` fields as compatibility values.
 
 3. Copy `.env.example` to `.env.local` and fill in:
 
@@ -49,50 +48,54 @@ app.
 
 5. Open `http://localhost:3000`.
 
-## Instructor Profiles
+## Club Pros
 
-Rally stores the instructor's name and phone number once in
-`instructor_profiles`. In this no-auth MVP, the app uses the first saved profile
-as the current instructor profile. The `user_id` column is included so the table
-can connect to Supabase Auth users later.
+Rally stores each pro's name and phone number in `instructor_profiles`. In this
+club MVP, there is no login system yet; the roster is shared by the club.
 
-When there is no instructor profile, the dashboard and new lesson page ask the
-instructor to complete the profile first. After the profile is saved, lesson
-forms no longer ask for instructor name or instructor phone number.
+Go to **Manage pros** to add both pros at your club. When creating or editing a
+lesson, choose which pro owns that reservation. Rally uses the selected pro's
+name and phone number when preparing manual reminder texts.
 
-Each lesson stores `instructor_profile_id`, so Rally can include the instructor
-name and phone number in manual reminder actions.
+## Multi-Student Reservations
+
+Each lesson can have one or many students. The lesson form lets you add multiple
+student names and phone numbers to the same reservation.
+
+The database stores:
+
+- `lessons.instructor_profile_id`
+- `lessons.lesson_start_time`
+- `lessons.location`
+- `lessons.notes`
+- `lessons.reminder_sent`
+- `lesson_students.student_name`
+- `lesson_students.student_phone`
+
+The older `lessons.student_name` and `lessons.student_phone` columns are still
+filled with the first student as a compatibility fallback.
 
 ## Manual SMS Reminders
 
-Lessons store:
-
-- `student_name`
-- `student_phone`
-- `lesson_start_time`
-- `location`
-- `notes`
-- `reminder_sent`
-- `instructor_profile_id`
-
 On the dashboard and edit page, each lesson has actions to:
 
-- open a prefilled SMS to the student
-- open a prefilled SMS to the instructor
+- open a prefilled SMS to each student
+- open a prefilled SMS to the selected pro
 - mark the reminder as sent
 - reset the sent status if needed
 
-The app does not send texts in the background. The instructor reviews the
-prefilled text and taps send in their own messaging app. This avoids Twilio,
-A2P 10DLC, toll-free verification, and Vercel Cron complexity for the MVP.
+The app does not send texts in the background. The pro reviews the prefilled
+text and taps send in their own messaging app. This avoids Twilio, A2P 10DLC,
+toll-free verification, and Vercel Cron complexity for the MVP.
 
 ## API Routes
 
-- `GET /api/instructor-profile` gets the current instructor profile.
-- `POST /api/instructor-profile` creates or updates the current instructor profile.
+- `GET /api/instructor-profile` lists club pros.
+- `POST /api/instructor-profile` adds a club pro.
+- `PATCH /api/instructor-profile/:id` edits a club pro.
 - `GET /api/lessons` lists upcoming lessons.
-- `POST /api/lessons` creates a lesson using the saved instructor profile.
-- `PATCH /api/lessons/:id` edits a lesson.
+- `POST /api/lessons` creates a lesson with the selected pro and students.
+- `PATCH /api/lessons/:id` edits a lesson, selected pro, and students.
 - `DELETE /api/lessons/:id` deletes a lesson.
 - `POST /api/lessons/:id/reminder-sent` marks a manual reminder as sent.
 - `DELETE /api/lessons/:id/reminder-sent` resets a reminder to not sent.

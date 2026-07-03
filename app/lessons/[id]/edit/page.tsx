@@ -5,7 +5,9 @@ import { DeleteLessonButton } from "@/components/DeleteLessonButton";
 import { LessonForm } from "@/components/LessonForm";
 import { ManualReminderActions } from "@/components/ManualReminderActions";
 import { formatLessonDateTime, getLessonTimeZone } from "@/lib/date";
+import { getInstructorProfiles } from "@/lib/instructor-profiles";
 import { getLesson } from "@/lib/lessons";
+import { getLessonStudents } from "@/lib/manual-sms";
 
 type EditLessonPageProps = {
   params: Promise<{
@@ -18,7 +20,10 @@ export const dynamic = "force-dynamic";
 export default async function EditLessonPage({ params }: EditLessonPageProps) {
   const { id } = await params;
   const timeZone = getLessonTimeZone();
-  const lesson = await getLesson(id);
+  const [lesson, instructorProfiles] = await Promise.all([
+    getLesson(id),
+    getInstructorProfiles(),
+  ]);
 
   if (!lesson) {
     notFound();
@@ -29,7 +34,7 @@ export default async function EditLessonPage({ params }: EditLessonPageProps) {
       <header className="page-header">
         <div>
           <p className="eyebrow">Edit lesson</p>
-          <h1>{lesson.student_name}</h1>
+          <h1>{getLessonStudents(lesson).map((student) => student.student_name).join(", ")}</h1>
           <div className="details-bar">
             <span className="detail-chip">{formatLessonDateTime(lesson, timeZone)}</span>
             <span className="detail-chip">{lesson.location}</span>
@@ -48,7 +53,12 @@ export default async function EditLessonPage({ params }: EditLessonPageProps) {
       </header>
 
       <section className="panel">
-        <LessonForm mode="edit" lesson={lesson} timeZone={timeZone} />
+        <LessonForm
+          mode="edit"
+          lesson={lesson}
+          timeZone={timeZone}
+          instructorProfiles={instructorProfiles}
+        />
       </section>
     </main>
   );

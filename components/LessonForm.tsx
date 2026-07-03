@@ -5,17 +5,25 @@ import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
 
 import { getLessonFormDateTime } from "@/lib/date";
-import type { LessonWithInstructorProfile } from "@/types/database";
+import type { InstructorProfile, LessonWithInstructorProfile } from "@/types/database";
+
+type StudentFormRow = {
+  id: string;
+  student_name: string;
+  student_phone: string;
+};
 
 type LessonFormProps =
   | {
       mode: "create";
       timeZone: string;
+      instructorProfiles: InstructorProfile[];
       lesson?: never;
     }
   | {
       mode: "edit";
       timeZone: string;
+      instructorProfiles: InstructorProfile[];
       lesson: LessonWithInstructorProfile;
     };
 
@@ -27,6 +35,9 @@ export function LessonForm(props: LessonFormProps) {
   const dateTimeDefaults = lesson
     ? getLessonFormDateTime(lesson, props.timeZone)
     : { lesson_date: "", lesson_time: "" };
+  const [students, setStudents] = useState<StudentFormRow[]>(() =>
+    getInitialStudents(lesson),
+  );
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -34,7 +45,17 @@ export function LessonForm(props: LessonFormProps) {
     setIsSaving(true);
 
     const formData = new FormData(event.currentTarget);
-    const payload = Object.fromEntries(formData.entries());
+    const payload = {
+      instructor_profile_id: String(formData.get("instructor_profile_id") ?? ""),
+      lesson_date: String(formData.get("lesson_date") ?? ""),
+      lesson_time: String(formData.get("lesson_time") ?? ""),
+      location: String(formData.get("location") ?? ""),
+      notes: String(formData.get("notes") ?? ""),
+      students: students.map((student) => ({
+        student_name: student.student_name,
+        student_phone: student.student_phone,
+      })),
+    };
     let endpoint = "/api/lessons";
     let method = "POST";
 
@@ -70,19 +91,95 @@ export function LessonForm(props: LessonFormProps) {
     }
   }
 
+  function addStudent() {
+    setStudents((currentStudents) => [
+      ...currentStudents,
+      { id: crypto.randomUUID(), student_name: "", student_phone: "" },
+    ]);
+  }
+
+  function removeStudent(id: string) {
+    setStudents((currentStudents) =>
+      currentStudents.length === 1
+        ? currentStudents
+        : currentStudents.filter((student) => student.id !== id),
+    );
+  }
+
+  function updateStudent(id: string, field: "student_name" | "student_phone", value: string) {
+    setStudents((currentStudents) =>
+      currentStudents.map((student) =>
+        student.id === id
+          ? {
+              ...student,
+              [field]: value,
+            }
+          : student,
+      ),
+    );
+  }
+
   return (
     <form className="form" onSubmit={handleSubmit}>
       {error ? <div className="form-error">{error}</div> : null}
 
       <div className="form-grid">
-        <Field label="Student name" name="student_name" defaultValue={lesson?.student_name} />
-        <Field
-          label="Student phone number"
-          name="student_phone"
-          type="tel"
-          defaultValue={lesson?.student_phone}
-          placeholder="+15551234567"
-        />
+        <label className="field field-full">
+          Pro
+          <select
+            required
+            name="instructor_profile_id"
+            defaultValue={lesson?.instructor_profile_id ?? ""}
+          >
+            <option value="" disabled>
+              Select a pro
+            </option>
+            {props.instructorProfiles.map((profile) => (
+              <option key={profile.id} value={profile.id}>
+                {profile.full_name}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <div className="field field-full">
+          <div className="field-heading">
+            <label>Students</label>
+            <button className="button-secondary compact-button" type="button" onClick={addStudent}>
+              Add student
+            </button>
+          </div>
+
+          <div className="student-list">
+            {students.map((student, index) => (
+              <div className="student-row" key={student.id}>
+                <Field
+                  label={`Student ${index + 1} name`}
+                  name={`student_name_${student.id}`}
+                  value={student.student_name}
+                  onChange={(value) => updateStudent(student.id, "student_name", value)}
+                />
+                <Field
+                  label={`Student ${index + 1} phone`}
+                  name={`student_phone_${student.id}`}
+                  type="tel"
+                  value={student.student_phone}
+                  placeholder="+15551234567"
+                  onChange={(value) => updateStudent(student.id, "student_phone", value)}
+                />
+                <button
+                  className="button-danger compact-button"
+                  type="button"
+                  disabled={students.length === 1}
+                  onClick={() => removeStudent(student.id)}
+                >
+                  Remove
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+
         <Field
           label="Lesson date"
           name="lesson_date"
@@ -128,10 +225,20 @@ type FieldProps = {
   name: string;
   type?: string;
   defaultValue?: string;
+  value?: string;
   placeholder?: string;
+  onChange?: (value: string) => void;
 };
 
-function Field({ label, name, type = "text", defaultValue = "", placeholder }: FieldProps) {
+function Field({
+  label,
+  name,
+  type = "text",
+  defaultValue = "",
+  value,
+  placeholder,
+  onChange,
+}: FieldProps) {
   return (
     <label className="field">
       {label}
@@ -139,9 +246,33 @@ function Field({ label, name, type = "text", defaultValue = "", placeholder }: F
         required
         name={name}
         type={type}
-        defaultValue={defaultValue}
+        defaultValue={value === undefined ? defaultValue : undefined}
+        value={value}
         placeholder={placeholder}
+        onChange={onChange ? (event) => onChange(event.target.value) : undefined}
       />
     </label>
   );
+}
+
+function getInitialStudents(lesson: LessonWithInstructorProfile | null): StudentFormRow[] {
+  if (!lesson) {
+    return [{ id: crypto.randomUUID(), student_name: "", student_phone: "" }];
+  }
+
+  const students =
+    lesson.lesson_students.length > 0
+      ? lesson.lesson_students
+      : [
+          {
+            student_name: lesson.student_name,
+            student_phone: lesson.student_phone,
+          },
+        ];
+
+  return students.map((student) => ({
+    id: crypto.randomUUID(),
+    student_name: student.student_name,
+    student_phone: student.student_phone,
+  }));
 }

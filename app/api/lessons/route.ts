@@ -1,7 +1,6 @@
 import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 
-import { getCurrentInstructorProfile } from "@/lib/instructor-profiles";
 import { createLesson, getUpcomingLessons } from "@/lib/lessons";
 import { parseLessonInput } from "@/lib/lesson-input";
 import type { LessonInsert } from "@/types/database";
@@ -33,21 +32,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const profile = await getCurrentInstructorProfile();
-
-    if (!profile) {
-      return NextResponse.json(
-        { error: "Create an instructor profile before adding lessons." },
-        { status: 409 },
-      );
-    }
-
-    const lesson = await createLesson({
-      ...(parsed.data as Omit<LessonInsert, "instructor_profile_id">),
-      instructor_profile_id: profile.id,
-      reminder_sent: false,
-      reminder_sent_at: null,
-    });
+    const lesson = await createLesson(parsed.data.lesson as LessonInsert, parsed.data.students);
 
     revalidatePath("/");
     revalidatePath("/lessons/new");

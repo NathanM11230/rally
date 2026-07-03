@@ -1,21 +1,16 @@
 import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 
-import {
-  createInstructorProfile,
-  getInstructorProfiles,
-} from "@/lib/instructor-profiles";
+import { updateInstructorProfile } from "@/lib/instructor-profiles";
 
-export async function GET() {
-  try {
-    const profiles = await getInstructorProfiles();
-    return NextResponse.json({ profiles });
-  } catch (error) {
-    return handleApiError(error);
-  }
-}
+type InstructorProfileRouteContext = {
+  params: Promise<{
+    id: string;
+  }>;
+};
 
-export async function POST(request: Request) {
+export async function PATCH(request: Request, { params }: InstructorProfileRouteContext) {
+  const { id } = await params;
   const body = await readJson(request);
 
   if (!body.ok) {
@@ -29,7 +24,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const profile = await createInstructorProfile(parsed.data);
+    const profile = await updateInstructorProfile(id, parsed.data);
     revalidatePath("/");
     revalidatePath("/profile");
     revalidatePath("/lessons/new");

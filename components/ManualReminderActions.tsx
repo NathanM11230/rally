@@ -6,6 +6,7 @@ import { useState } from "react";
 import {
   buildInstructorReminderSms,
   buildStudentReminderSms,
+  getLessonStudents,
 } from "@/lib/manual-sms";
 import type { LessonWithInstructorProfile } from "@/types/database";
 
@@ -17,7 +18,9 @@ type ManualReminderActionsProps = {
 export function ManualReminderActions({ lesson, timeZone }: ManualReminderActionsProps) {
   const router = useRouter();
   const [isSaving, setIsSaving] = useState(false);
-  const studentSms = buildStudentReminderSms(lesson, timeZone);
+  const studentSmsTargets = getLessonStudents(lesson).map((student) =>
+    buildStudentReminderSms(lesson, student, timeZone),
+  );
   const instructorSms = buildInstructorReminderSms(lesson, timeZone);
 
   async function updateReminderStatus(reminderSent: boolean) {
@@ -39,12 +42,18 @@ export function ManualReminderActions({ lesson, timeZone }: ManualReminderAction
 
   return (
     <div className="lesson-actions">
-      <a className="button-secondary" href={studentSms.href}>
-        Text student
-      </a>
+      {studentSmsTargets.map((studentSms) => (
+        <a
+          className="button-secondary"
+          href={studentSms.href}
+          key={`${studentSms.href}-${studentSms.label}`}
+        >
+          {studentSms.label}
+        </a>
+      ))}
       {instructorSms ? (
         <a className="button-secondary" href={instructorSms.href}>
-          Text instructor
+          {instructorSms.label}
         </a>
       ) : null}
       {lesson.reminder_sent ? (

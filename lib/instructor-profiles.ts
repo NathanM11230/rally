@@ -4,15 +4,13 @@ import type {
   InstructorProfileUpdate,
 } from "@/types/database";
 
-export async function getCurrentInstructorProfile() {
+export async function getInstructorProfiles() {
   const supabase = getSupabaseAdmin();
 
   const { data, error } = await supabase
     .from("instructor_profiles")
     .select("*")
-    .order("created_at", { ascending: true })
-    .limit(1)
-    .maybeSingle();
+    .order("created_at", { ascending: true });
 
   if (error) {
     throw error;
@@ -21,17 +19,27 @@ export async function getCurrentInstructorProfile() {
   return data;
 }
 
-export async function saveCurrentInstructorProfile(input: InstructorProfileInsert) {
-  const existingProfile = await getCurrentInstructorProfile();
+export async function getInstructorProfile(id: string) {
+  const supabase = getSupabaseAdmin();
 
-  if (existingProfile) {
-    return updateInstructorProfile(existingProfile.id, input);
+  const { data, error } = await supabase
+    .from("instructor_profiles")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if (error) {
+    if (error.code === "PGRST116") {
+      return null;
+    }
+
+    throw error;
   }
 
-  return createInstructorProfile(input);
+  return data;
 }
 
-async function createInstructorProfile(input: InstructorProfileInsert) {
+export async function createInstructorProfile(input: InstructorProfileInsert) {
   const supabase = getSupabaseAdmin();
 
   const { data, error } = await supabase
@@ -47,7 +55,7 @@ async function createInstructorProfile(input: InstructorProfileInsert) {
   return data;
 }
 
-async function updateInstructorProfile(id: string, input: InstructorProfileUpdate) {
+export async function updateInstructorProfile(id: string, input: InstructorProfileUpdate) {
   const supabase = getSupabaseAdmin();
 
   const { data, error } = await supabase

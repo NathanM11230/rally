@@ -2,27 +2,27 @@ import Link from "next/link";
 
 import { ManualReminderActions } from "@/components/ManualReminderActions";
 import { formatLessonDateTime, getLessonTimeZone } from "@/lib/date";
-import { getCurrentInstructorProfile } from "@/lib/instructor-profiles";
+import { getInstructorProfiles } from "@/lib/instructor-profiles";
 import { getUpcomingLessons } from "@/lib/lessons";
 
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
   let lessons = null;
-  let profile = null;
+  let profiles = null;
   const timeZone = getLessonTimeZone();
 
   try {
-    [lessons, profile] = await Promise.all([
+    [lessons, profiles] = await Promise.all([
       getUpcomingLessons(),
-      getCurrentInstructorProfile(),
+      getInstructorProfiles(),
     ]);
   } catch {
     lessons = null;
-    profile = null;
+    profiles = null;
   }
 
-  if (!lessons) {
+  if (!lessons || !profiles) {
     return (
       <main className="page">
         <header className="page-header">
@@ -58,9 +58,9 @@ export default async function DashboardPage() {
         </div>
         <div className="button-row">
           <Link className="button-secondary" href="/profile">
-            {profile ? "Edit profile" : "Set up profile"}
+            Manage pros
           </Link>
-          {profile ? (
+          {profiles.length > 0 ? (
             <Link className="button" href="/lessons/new">
               New lesson
             </Link>
@@ -68,22 +68,25 @@ export default async function DashboardPage() {
         </div>
       </header>
 
-      {!profile ? (
+      {profiles.length === 0 ? (
         <section className="panel">
           <div className="empty-state">
-            Add your instructor profile before creating lessons. Rally will use
-            that saved phone number to prepare instructor reminder texts.
+            Add at least one club pro before creating lessons. Rally will use the
+            selected pro&apos;s name and phone number to prepare reminder texts.
             <div className="button-row section-actions">
               <Link className="button" href="/profile">
-                Set up instructor profile
+                Add club pros
               </Link>
             </div>
           </div>
         </section>
       ) : (
         <div className="details-bar profile-bar">
-          <span className="detail-chip">Instructor: {profile.full_name}</span>
-          <span className="detail-chip">SMS phone: {profile.phone_number}</span>
+          {profiles.map((profile) => (
+            <span className="detail-chip" key={profile.id}>
+              {profile.full_name}: {profile.phone_number}
+            </span>
+          ))}
         </div>
       )}
 
@@ -110,8 +113,18 @@ export default async function DashboardPage() {
                 {lessons.map((lesson) => (
                   <tr key={lesson.id}>
                     <td>
-                      <span className="cell-title">{lesson.student_name}</span>
-                      <span className="cell-subtitle">{lesson.student_phone}</span>
+                      <span className="cell-title">
+                        {lesson.lesson_students.length > 1
+                          ? `${lesson.lesson_students.length} students`
+                          : lesson.lesson_students[0]?.student_name ?? lesson.student_name}
+                      </span>
+                      <span className="cell-subtitle">
+                        {lesson.lesson_students.length > 0
+                          ? lesson.lesson_students
+                              .map((student) => `${student.student_name} (${student.student_phone})`)
+                              .join(", ")
+                          : lesson.student_phone}
+                      </span>
                     </td>
                     <td>
                       <span className="cell-title">

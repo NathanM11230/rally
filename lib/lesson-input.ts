@@ -3,18 +3,30 @@ import type { LessonInsert, LessonUpdate } from "@/types/database";
 
 type LessonInputMode = "create" | "update";
 
-type ParsedLessonData = Pick<
-  LessonInsert,
-  "student_name" | "student_phone" | "lesson_start_time" | "location" | "notes"
->;
+export type LessonStudentInput = {
+  student_name: string;
+  student_phone: string;
+};
+
+type ParsedLessonData = {
+  lesson: LessonUpdate &
+    Pick<
+      LessonInsert,
+      | "instructor_profile_id"
+      | "student_name"
+      | "student_phone"
+      | "lesson_start_time"
+      | "location"
+    >;
+  students: LessonStudentInput[];
+};
 
 type LessonInputResult =
   | { data: ParsedLessonData; errors: [] }
   | { data: null; errors: string[] };
 
 const requiredFields = [
-  "student_name",
-  "student_phone",
+  "instructor_profile_id",
   "lesson_date",
   "lesson_time",
   "location",
@@ -27,6 +39,7 @@ export function parseLessonInput(body: unknown, mode: LessonInputMode): LessonIn
 
   const errors: string[] = [];
   const values: Record<string, string> = {};
+  const students = parseStudents(body.students);
 
   for (const field of requiredFields) {
     const value = cleanString(body[field]);
@@ -36,6 +49,10 @@ export function parseLessonInput(body: unknown, mode: LessonInputMode): LessonIn
     } else {
       values[field] = value;
     }
+  }
+
+  if (students.length === 0) {
+    errors.push("At least one student name and phone number is required.");
   }
 
   if (values.lesson_date && !/^\d{4}-\d{2}-\d{2}$/.test(values.lesson_date)) {
@@ -55,21 +72,54 @@ export function parseLessonInput(body: unknown, mode: LessonInputMode): LessonIn
     values.lesson_time,
     getLessonTimeZone(),
   );
-
-  const data: LessonUpdate = {
-    student_name: values.student_name,
-    student_phone: values.student_phone,
+  const primaryStudent = students[0];
+  const lesson: ParsedLessonData["lesson"] = {
+    instructor_profile_id: values.instructor_profile_id,
+    student_name: primaryStudent.student_name,
+    student_phone: primaryStudent.student_phone,
     lesson_start_time: lessonStartTime.toISOString(),
     location: values.location,
     notes: cleanString(body.notes) || null,
   };
 
   if (mode === "create") {
-    data.reminder_sent = false;
-    data.reminder_sent_at = null;
+    lesson.reminder_sent = false;
+    lesson.reminder_sent_at = null;
   }
 
-  return { data: data as ParsedLessonData, errors: [] };
+  return {
+    data: {
+      lesson,
+      students,
+    },
+    errors: [],
+  };
+}
+
+function parseStudents(value: unknown): LessonStudentInput[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .map((student) => {
+      if (!isRecord(student)) {
+        return null;
+      }
+
+      const studentName = cleanString(student.student_name);
+      const studentPhone = cleanString(student.student_phone);
+
+      if (!studentName || !studentPhone) {
+        return null;
+      }
+
+      return {
+        student_name: studentName,
+        student_phone: studentPhone,
+      };
+    })
+    .filter((student): student is LessonStudentInput => student !== null);
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
