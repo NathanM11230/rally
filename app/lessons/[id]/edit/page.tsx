@@ -44,13 +44,25 @@ export default async function EditLessonPage({ params }: EditLessonPageProps) {
           </div>
         </div>
         <div className="button-row">
-          <Link className="button-secondary" href="/">
-            Dashboard
+          <Link className="button-secondary" href="/calendar">
+            Calendar
           </Link>
+        </div>
+      </header>
+
+      <section className="panel lesson-tools">
+        <div className="lesson-tool-copy">
+          <h2>Reminder tools</h2>
+          <p>
+            Open the prefilled texts, send them from your phone, then mark the
+            reminder as sent.
+          </p>
+        </div>
+        <div className="lesson-tool-actions">
           <ManualReminderActions lesson={lesson} timeZone={timeZone} />
           <DeleteLessonButton lessonId={lesson.id} />
         </div>
-      </header>
+      </section>
 
       <section className="panel">
         <LessonForm

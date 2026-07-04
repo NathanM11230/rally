@@ -1,5 +1,3 @@
-import Link from "next/link";
-
 import { InstructorProfilesManager } from "@/components/InstructorProfilesManager";
 import { getInstructorProfiles } from "@/lib/instructor-profiles";
 
@@ -27,9 +25,6 @@ export default async function ProfilePage() {
               setting up an instructor profile.
             </p>
           </div>
-          <Link className="button-secondary" href="/">
-            Dashboard
-          </Link>
         </header>
       </main>
     );
@@ -46,9 +41,6 @@ export default async function ProfilePage() {
             Rally will prepare reminder texts with that pro&apos;s name and phone number.
           </p>
         </div>
-        <Link className="button-secondary" href="/">
-          Dashboard
-        </Link>
       </header>
 
       <section className="panel">

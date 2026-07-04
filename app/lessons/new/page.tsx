@@ -28,9 +28,6 @@ export default async function NewLessonPage() {
               reservations.
             </p>
           </div>
-          <Link className="button-secondary" href="/">
-            Dashboard
-          </Link>
         </header>
 
         <section className="panel">
@@ -66,9 +63,6 @@ export default async function NewLessonPage() {
             ))}
           </div>
         </div>
-        <Link className="button-secondary" href="/">
-          Dashboard
-        </Link>
       </header>
 
       <section className="panel">

@@ -29,6 +29,79 @@ body {
     sans-serif;
 }
 
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) auto minmax(130px, 1fr);
+  align-items: center;
+  gap: 18px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(246, 248, 245, 0.92);
+  padding: 14px max(16px, calc((100vw - 1120px) / 2));
+  backdrop-filter: blur(12px);
+}
+
+.brand {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  gap: 10px;
+}
+
+.brand-mark {
+  display: inline-grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border-radius: 10px;
+  background: var(--accent);
+  color: #ffffff;
+  font-weight: 900;
+}
+
+.brand-name,
+.brand-subtitle {
+  display: block;
+}
+
+.brand-name {
+  font-size: 1rem;
+  font-weight: 900;
+}
+
+.brand-subtitle {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.top-nav {
+  display: inline-flex;
+  justify-content: center;
+  gap: 4px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  padding: 4px;
+}
+
+.nav-link {
+  border-radius: 999px;
+  color: var(--muted);
+  padding: 8px 14px;
+  font-weight: 800;
+}
+
+.nav-link-active {
+  background: var(--sent-bg);
+  color: var(--accent-strong);
+}
+
+.nav-cta {
+  justify-self: end;
+}
+
 a {
   color: inherit;
   text-decoration: none;
@@ -44,7 +117,7 @@ select {
 .page {
   width: min(1120px, calc(100% - 32px));
   margin: 0 auto;
-  padding: 40px 0;
+  padding: 32px 0 48px;
 }
 
 .page-header {
@@ -135,6 +208,40 @@ h2 {
   border: 1px solid var(--border);
   border-radius: 8px;
   overflow: hidden;
+}
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin: -8px 0 20px;
+}
+
+.stat-card {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  padding: 16px;
+}
+
+.stat-label,
+.stat-note {
+  color: var(--muted);
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.stat-value {
+  display: block;
+  margin-top: 6px;
+  font-size: 2rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.stat-note {
+  display: block;
+  margin-top: 6px;
 }
 
 .table-wrap {
@@ -323,12 +430,19 @@ select:focus {
 
 .student-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 12px;
-  align-items: end;
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: 14px;
+}
+
+.student-row-header {
+  display: flex;
+  grid-column: 1 / -1;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
 }
 
 .profile-section {
@@ -349,10 +463,50 @@ select:focus {
   padding: 16px;
 }
 
+.lesson-tools {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 20px;
+  padding: 18px;
+}
+
+.lesson-tools .lesson-actions {
+  margin-top: 0;
+}
+
+.lesson-tool-copy {
+  max-width: 520px;
+}
+
+.lesson-tool-copy p {
+  margin: 6px 0 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.lesson-tool-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
 .calendar-controls {
   display: grid;
   gap: 16px;
   margin: -8px 0 20px;
+}
+
+.calendar-summary {
+  margin: -4px 0 12px;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.calendar-summary strong {
+  color: var(--text);
 }
 
 .filter-row {
@@ -475,6 +629,22 @@ select:focus {
 }
 
 @media (max-width: 720px) {
+  .app-header {
+    position: static;
+    grid-template-columns: 1fr;
+    justify-items: stretch;
+  }
+
+  .brand,
+  .nav-cta {
+    justify-self: start;
+  }
+
+  .top-nav {
+    justify-content: flex-start;
+    overflow-x: auto;
+  }
+
   .page {
     width: min(100% - 24px, 1120px);
     padding: 28px 0;
@@ -486,6 +656,18 @@ select:focus {
 
   .form-grid {
     grid-template-columns: 1fr;
+  }
+
+  .stat-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .lesson-tools {
+    display: grid;
+  }
+
+  .lesson-tool-actions {
+    justify-content: flex-start;
   }
 
   .student-row {

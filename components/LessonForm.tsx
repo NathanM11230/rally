@@ -153,28 +153,31 @@ export function LessonForm(props: LessonFormProps) {
           <div className="student-list">
             {students.map((student, index) => (
               <div className="student-row" key={student.id}>
+                <div className="student-row-header">
+                  <strong>Student {index + 1}</strong>
+                  <button
+                    className="button-danger compact-button"
+                    type="button"
+                    disabled={students.length === 1}
+                    onClick={() => removeStudent(student.id)}
+                  >
+                    Remove
+                  </button>
+                </div>
                 <Field
-                  label={`Student ${index + 1} name`}
+                  label="Name"
                   name={`student_name_${student.id}`}
                   value={student.student_name}
                   onChange={(value) => updateStudent(student.id, "student_name", value)}
                 />
                 <Field
-                  label={`Student ${index + 1} phone`}
+                  label="Phone"
                   name={`student_phone_${student.id}`}
                   type="tel"
                   value={student.student_phone}
                   placeholder="+15551234567"
                   onChange={(value) => updateStudent(student.id, "student_phone", value)}
                 />
-                <button
-                  className="button-danger compact-button"
-                  type="button"
-                  disabled={students.length === 1}
-                  onClick={() => removeStudent(student.id)}
-                >
-                  Remove
-                </button>
               </div>
             ))}
           </div>

@@ -89,9 +89,6 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
           </p>
         </div>
         <div className="button-row">
-          <Link className="button-secondary" href="/">
-            Dashboard
-          </Link>
           <Link className="button" href="/lessons/new">
             New lesson
           </Link>
@@ -136,6 +133,14 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
           </div>
         ) : null}
       </section>
+
+      {profiles.length > 0 ? (
+        <div className="calendar-summary">
+          <strong>{lessons.length}</strong>{" "}
+          {lessons.length === 1 ? "lesson" : "lessons"} shown
+          {selectedProfile ? ` for ${selectedProfile.full_name}` : " for all pros"}.
+        </div>
+      ) : null}
 
       {profiles.length === 0 ? (
         <section className="panel">
