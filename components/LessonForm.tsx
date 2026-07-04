@@ -123,92 +123,97 @@ export function LessonForm(props: LessonFormProps) {
     <form className="form" onSubmit={handleSubmit}>
       {error ? <div className="form-error">{error}</div> : null}
 
-      <div className="form-grid">
-        <label className="field field-full">
-          Pro
-          <select
-            required
-            name="instructor_profile_id"
-            defaultValue={lesson?.instructor_profile_id ?? ""}
-          >
-            <option value="" disabled>
-              Select a pro
+      <div className="form-section">
+        <h3 className="form-section-title">Pro</h3>
+        <select
+          required
+          name="instructor_profile_id"
+          aria-label="Select a pro"
+          defaultValue={lesson?.instructor_profile_id ?? ""}
+        >
+          <option value="" disabled>
+            Select a pro
+          </option>
+          {props.instructorProfiles.map((profile) => (
+            <option key={profile.id} value={profile.id}>
+              {profile.full_name}
             </option>
-            {props.instructorProfiles.map((profile) => (
-              <option key={profile.id} value={profile.id}>
-                {profile.full_name}
-              </option>
-            ))}
-          </select>
-        </label>
+          ))}
+        </select>
+      </div>
 
-        <div className="field field-full">
-          <div className="field-heading">
-            <label>Students</label>
-            <button className="button-secondary compact-button" type="button" onClick={addStudent}>
-              Add student
-            </button>
-          </div>
-
-          <div className="student-list">
-            {students.map((student, index) => (
-              <div className="student-row" key={student.id}>
-                <div className="student-row-header">
-                  <strong>Student {index + 1}</strong>
-                  <button
-                    className="button-danger compact-button"
-                    type="button"
-                    disabled={students.length === 1}
-                    onClick={() => removeStudent(student.id)}
-                  >
-                    Remove
-                  </button>
-                </div>
-                <Field
-                  label="Name"
-                  name={`student_name_${student.id}`}
-                  value={student.student_name}
-                  onChange={(value) => updateStudent(student.id, "student_name", value)}
-                />
-                <Field
-                  label="Phone"
-                  name={`student_phone_${student.id}`}
-                  type="tel"
-                  value={student.student_phone}
-                  placeholder="+15551234567"
-                  onChange={(value) => updateStudent(student.id, "student_phone", value)}
-                />
-              </div>
-            ))}
-          </div>
+      <div className="form-section">
+        <div className="field-heading">
+          <h3 className="form-section-title">Students</h3>
+          <button className="button-secondary compact-button" type="button" onClick={addStudent}>
+            Add student
+          </button>
         </div>
+        <div className="student-list">
+          {students.map((student, index) => (
+            <div className="student-row" key={student.id}>
+              <div className="student-row-header">
+                <strong>Student {index + 1}</strong>
+                <button
+                  className="button-danger compact-button"
+                  type="button"
+                  disabled={students.length === 1}
+                  onClick={() => removeStudent(student.id)}
+                >
+                  Remove
+                </button>
+              </div>
+              <Field
+                label="Name"
+                name={`student_name_${student.id}`}
+                value={student.student_name}
+                onChange={(value) => updateStudent(student.id, "student_name", value)}
+              />
+              <Field
+                label="Phone"
+                name={`student_phone_${student.id}`}
+                type="tel"
+                value={student.student_phone}
+                placeholder="+15551234567"
+                onChange={(value) => updateStudent(student.id, "student_phone", value)}
+              />
+            </div>
+          ))}
+        </div>
+      </div>
 
-        <Field
-          label="Lesson date"
-          name="lesson_date"
-          type="date"
-          defaultValue={dateTimeDefaults.lesson_date}
-        />
-        <Field
-          label="Lesson time"
-          name="lesson_time"
-          type="time"
-          defaultValue={dateTimeDefaults.lesson_time}
-        />
-        <Field
-          label="Location or court"
-          name="location"
-          defaultValue={lesson?.location}
-          placeholder="Court 3"
-        />
-        <label className="field field-full">
-          Optional notes
-          <textarea
-            name="notes"
-            defaultValue={lesson?.notes ?? ""}
-            placeholder="Anything useful for the lesson reminder or instructor prep."
+      <div className="form-section">
+        <h3 className="form-section-title">Lesson details</h3>
+        <div className="form-grid">
+          <Field
+            label="Date"
+            name="lesson_date"
+            type="date"
+            defaultValue={dateTimeDefaults.lesson_date}
           />
-        </label>
+          <Field
+            label="Time"
+            name="lesson_time"
+            type="time"
+            defaultValue={dateTimeDefaults.lesson_time}
+          />
+          <Field
+            label="Location"
+            name="location"
+            defaultValue={lesson?.location}
+            placeholder="Court 3"
+          />
+        </div>
+      </div>
+
+      <div className="form-section">
+        <h3 className="form-section-title">Notes</h3>
+        <textarea
+          name="notes"
+          aria-label="Lesson notes"
+          defaultValue={lesson?.notes ?? ""}
+          placeholder="Optional notes for the reminder or instructor prep."
+        />
       </div>
 
       <div className="form-actions">

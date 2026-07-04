@@ -49,19 +49,10 @@ export default async function NewLessonPage() {
     <main className="page">
       <header className="page-header">
         <div>
-          <p className="eyebrow">New lesson</p>
-          <h1>Create a tennis lesson</h1>
-          <p className="lede">
-            Choose the pro, add one or more students, and enter the time and court
-            details.
+          <h1>New lesson</h1>
+          <p className="page-subtitle">
+            Choose a pro, add students, and set the time and court.
           </p>
-          <div className="details-bar">
-            {profiles.map((profile) => (
-              <span className="detail-chip" key={profile.id}>
-                {profile.full_name}: {profile.phone_number}
-              </span>
-            ))}
-          </div>
         </div>
       </header>
 

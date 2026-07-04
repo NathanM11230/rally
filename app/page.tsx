@@ -4,11 +4,13 @@ import { ManualReminderActions } from "@/components/ManualReminderActions";
 import {
   formatDateKeyInTimeZone,
   formatLessonDateTime,
+  formatLessonTime,
   getLessonTimeZone,
 } from "@/lib/date";
 import { getInstructorProfiles } from "@/lib/instructor-profiles";
 import { getUpcomingLessons } from "@/lib/lessons";
 import { getLessonStudents } from "@/lib/manual-sms";
+import type { LessonWithInstructorProfile } from "@/types/database";
 
 export const dynamic = "force-dynamic";
 
@@ -32,18 +34,18 @@ export default async function DashboardPage() {
       <main className="page">
         <header className="page-header">
           <div>
-            <p className="eyebrow">Setup needed</p>
-            <h1>Tennis SMS Reminders</h1>
+            <h1>Dashboard</h1>
             <p className="lede">
-              Add your Supabase environment variables before the dashboard can load
-              lessons.
+              Add your Supabase environment variables before the dashboard can
+              load.
             </p>
           </div>
         </header>
         <section className="panel">
           <div className="setup-note">
-            Set `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` in `.env.local`, then
-            restart the dev server. The schema is in `supabase/schema.sql`.
+            Set <code>SUPABASE_URL</code> and{" "}
+            <code>SUPABASE_SERVICE_ROLE_KEY</code> in <code>.env.local</code>,
+            then restart the dev server.
           </div>
         </section>
       </main>
@@ -51,66 +53,48 @@ export default async function DashboardPage() {
   }
 
   const todayKey = formatDateKeyInTimeZone(new Date(), timeZone);
-  const lessonsToday = lessons.filter(
-    (lesson) =>
-      formatDateKeyInTimeZone(new Date(lesson.lesson_start_time), timeZone) === todayKey,
-  ).length;
-  const pendingReminders = lessons.filter((lesson) => !lesson.reminder_sent).length;
+  const todayLessons = lessons.filter(
+    (l) =>
+      formatDateKeyInTimeZone(new Date(l.lesson_start_time), timeZone) ===
+      todayKey,
+  );
+  const upcomingLessons = lessons.filter(
+    (l) =>
+      formatDateKeyInTimeZone(new Date(l.lesson_start_time), timeZone) !==
+      todayKey,
+  );
+  const pendingReminders = lessons.filter((l) => !l.reminder_sent).length;
+
+  const todayFormatted = new Intl.DateTimeFormat("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    timeZone,
+  }).format(new Date());
 
   return (
     <main className="page">
       <header className="page-header">
         <div>
-          <p className="eyebrow">SMS lesson reminders</p>
-          <h1>Upcoming tennis lessons</h1>
-          <p className="lede">
-            Create lessons, keep court details in one place, and open prefilled
-            reminder texts when it is time to send them.
-          </p>
+          <h1>Dashboard</h1>
+          <p className="page-subtitle">{todayFormatted}</p>
         </div>
-        <div className="button-row">
-          {profiles.length > 0 ? (
-            <Link className="button" href="/lessons/new">
-              New lesson
-            </Link>
-          ) : (
-            <Link className="button" href="/profile">
-              Add club pros
-            </Link>
-          )}
-        </div>
+        {profiles.length > 0 ? (
+          <Link className="button" href="/lessons/new">
+            New lesson
+          </Link>
+        ) : (
+          <Link className="button" href="/profile">
+            Add club pros
+          </Link>
+        )}
       </header>
-
-      {profiles.length > 0 ? (
-        <section className="stat-grid" aria-label="Dashboard summary">
-          <div className="stat-card">
-            <span className="stat-label">Today</span>
-            <strong className="stat-value">{lessonsToday}</strong>
-            <span className="stat-note">lessons scheduled</span>
-          </div>
-          <div className="stat-card">
-            <span className="stat-label">Upcoming</span>
-            <strong className="stat-value">{lessons.length}</strong>
-            <span className="stat-note">future reservations</span>
-          </div>
-          <div className="stat-card">
-            <span className="stat-label">Reminders</span>
-            <strong className="stat-value">{pendingReminders}</strong>
-            <span className="stat-note">still not marked sent</span>
-          </div>
-          <div className="stat-card">
-            <span className="stat-label">Club pros</span>
-            <strong className="stat-value">{profiles.length}</strong>
-            <span className="stat-note">available on the roster</span>
-          </div>
-        </section>
-      ) : null}
 
       {profiles.length === 0 ? (
         <section className="panel">
           <div className="empty-state">
-            Add at least one club pro before creating lessons. Rally will use the
-            selected pro&apos;s name and phone number to prepare reminder texts.
+            Add at least one club pro before creating lessons. Rally uses the
+            pro&apos;s name and phone number to prepare reminder texts.
             <div className="button-row section-actions">
               <Link className="button" href="/profile">
                 Add club pros
@@ -118,91 +102,119 @@ export default async function DashboardPage() {
             </div>
           </div>
         </section>
-      ) : (
-        <div className="details-bar profile-bar">
-          {profiles.map((profile) => (
-            <span className="detail-chip" key={profile.id}>
-              {profile.full_name}: {profile.phone_number}
-            </span>
-          ))}
-        </div>
-      )}
-
-      <section className="panel">
-        {lessons.length === 0 ? (
+      ) : lessons.length === 0 ? (
+        <section className="panel">
           <div className="empty-state">
-            No upcoming lessons yet. Add your first lesson to start scheduling SMS
-            reminder texts.
+            No upcoming lessons. Create your first lesson to start scheduling
+            reminders.
+            <div className="button-row section-actions">
+              <Link className="button" href="/lessons/new">
+                New lesson
+              </Link>
+            </div>
           </div>
-        ) : (
-          <div className="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Student</th>
-                  <th>Instructor</th>
-                  <th>Lesson</th>
-                  <th>Location</th>
-                  <th>Reminder</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {lessons.map((lesson) => {
-                  const students = getLessonStudents(lesson);
+        </section>
+      ) : (
+        <>
+          <div className="stats-row" aria-label="Summary">
+            <span>
+              <strong>{todayLessons.length}</strong> today
+            </span>
+            <span>
+              <strong>{lessons.length}</strong> upcoming
+            </span>
+            <span>
+              <strong>{pendingReminders}</strong> unsent
+            </span>
+          </div>
 
-                  return (
-                    <tr key={lesson.id}>
-                      <td>
-                        <span className="cell-title">
-                          {students.length > 1
-                            ? `${students.length} students`
-                            : students[0]?.student_name}
-                        </span>
-                        <span className="cell-subtitle">
-                          {students
-                            .map((student) => `${student.student_name} (${student.student_phone})`)
-                            .join(", ")}
-                        </span>
-                      </td>
-                      <td>
-                        <span className="cell-title">
-                          {lesson.instructor_profile?.full_name ?? "Missing profile"}
-                        </span>
-                        <span className="cell-subtitle">
-                          {lesson.instructor_profile?.phone_number ?? "No phone number"}
-                        </span>
-                      </td>
-                      <td>{formatLessonDateTime(lesson, timeZone)}</td>
-                      <td>
-                        <span className="cell-title">{lesson.location}</span>
-                        {lesson.notes ? (
-                          <span className="cell-subtitle">{lesson.notes}</span>
-                        ) : null}
-                      </td>
-                      <td>
-                        <span
-                          className={`status-pill ${
-                            lesson.reminder_sent ? "status-sent" : "status-not-sent"
-                          }`}
-                        >
-                          {lesson.reminder_sent ? "Sent" : "Not sent"}
-                        </span>
-                      </td>
-                      <td>
-                        <Link className="button-secondary" href={`/lessons/${lesson.id}/edit`}>
-                          Edit
-                        </Link>
-                        <ManualReminderActions lesson={lesson} timeZone={timeZone} />
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
+          <section className="dash-section">
+            <h2 className="section-title">Today</h2>
+            {todayLessons.length === 0 ? (
+              <p className="section-empty">No lessons today.</p>
+            ) : (
+              <div className="lesson-cards">
+                {todayLessons.map((lesson) => (
+                  <LessonCard
+                    key={lesson.id}
+                    lesson={lesson}
+                    timeZone={timeZone}
+                    showDate={false}
+                  />
+                ))}
+              </div>
+            )}
+          </section>
+
+          {upcomingLessons.length > 0 ? (
+            <section className="dash-section">
+              <h2 className="section-title">Upcoming</h2>
+              <div className="lesson-cards">
+                {upcomingLessons.map((lesson) => (
+                  <LessonCard
+                    key={lesson.id}
+                    lesson={lesson}
+                    timeZone={timeZone}
+                    showDate
+                  />
+                ))}
+              </div>
+            </section>
+          ) : null}
+        </>
+      )}
     </main>
+  );
+}
+
+function LessonCard({
+  lesson,
+  timeZone,
+  showDate,
+}: {
+  lesson: LessonWithInstructorProfile;
+  timeZone: string;
+  showDate: boolean;
+}) {
+  const students = getLessonStudents(lesson);
+
+  return (
+    <div className="lesson-card">
+      <div className="lesson-card-header">
+        <div className="lesson-card-time">
+          {showDate
+            ? formatLessonDateTime(lesson, timeZone)
+            : formatLessonTime(lesson, timeZone)}
+          <span className="lesson-card-location">{lesson.location}</span>
+        </div>
+        <span
+          className={`status-pill ${
+            lesson.reminder_sent ? "status-sent" : "status-not-sent"
+          }`}
+        >
+          {lesson.reminder_sent ? "Sent" : "Not sent"}
+        </span>
+      </div>
+      <div className="lesson-card-body">
+        <span className="lesson-card-students">
+          {students.map((s) => s.student_name).join(", ")}
+        </span>
+        <span className="lesson-card-pro">
+          {lesson.instructor_profile?.full_name ?? "No pro assigned"}
+        </span>
+      </div>
+      {lesson.notes ? (
+        <p className="lesson-card-notes">{lesson.notes}</p>
+      ) : null}
+      <div className="lesson-card-actions">
+        <ManualReminderActions lesson={lesson} timeZone={timeZone} />
+        <Link
+          className="button-secondary compact-button"
+          href={`/lessons/${lesson.id}/edit`}
+        >
+          Edit
+        </Link>
+      </div>
+    </div>
   );
 }

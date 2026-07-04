@@ -22,10 +22,7 @@ export function AppShell({ children }: AppShellProps) {
       <header className="app-header">
         <Link className="brand" href="/">
           <span className="brand-mark">R</span>
-          <span>
-            <span className="brand-name">Rally</span>
-            <span className="brand-subtitle">Tennis reminders</span>
-          </span>
+          <span className="brand-name">Rally</span>
         </Link>
 
         <nav className="top-nav" aria-label="Main navigation">

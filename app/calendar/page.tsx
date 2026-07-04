@@ -80,19 +80,16 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
     <main className="page">
       <header className="page-header">
         <div>
-          <p className="eyebrow">Lesson calendar</p>
           <h1>{monthLabel}</h1>
-          <p className="lede">
+          <p className="page-subtitle">
             {selectedProfile
-              ? `${selectedProfile.full_name}'s lessons for the month.`
-              : "All scheduled club lessons for the month."}
+              ? `${selectedProfile.full_name}\u2019s lessons`
+              : "All club lessons"}
           </p>
         </div>
-        <div className="button-row">
-          <Link className="button" href="/lessons/new">
-            New lesson
-          </Link>
-        </div>
+        <Link className="button" href="/lessons/new">
+          New lesson
+        </Link>
       </header>
 
       <section className="calendar-controls">

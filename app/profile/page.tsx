@@ -34,11 +34,10 @@ export default async function ProfilePage() {
     <main className="page">
       <header className="page-header">
         <div>
-          <p className="eyebrow">Club roster</p>
-          <h1>Manage tennis pros</h1>
-          <p className="lede">
-            Add each pro once. Lessons can then be assigned to the right pro, and
-            Rally will prepare reminder texts with that pro&apos;s name and phone number.
+          <h1>Club pros</h1>
+          <p className="page-subtitle">
+            Add each pro once. Lessons will use their name and phone for
+            reminders.
           </p>
         </div>
       </header>

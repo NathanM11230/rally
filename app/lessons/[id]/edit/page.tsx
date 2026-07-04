@@ -33,21 +33,20 @@ export default async function EditLessonPage({ params }: EditLessonPageProps) {
     <main className="page">
       <header className="page-header">
         <div>
-          <p className="eyebrow">Edit lesson</p>
           <h1>{getLessonStudents(lesson).map((student) => student.student_name).join(", ")}</h1>
           <div className="details-bar">
             <span className="detail-chip">{formatLessonDateTime(lesson, timeZone)}</span>
             <span className="detail-chip">{lesson.location}</span>
-            <span className="detail-chip">
-              Reminder: {lesson.reminder_sent ? "sent" : "not sent"}
+            <span
+              className={`status-pill ${lesson.reminder_sent ? "status-sent" : "status-not-sent"}`}
+            >
+              {lesson.reminder_sent ? "Sent" : "Not sent"}
             </span>
           </div>
         </div>
-        <div className="button-row">
-          <Link className="button-secondary" href="/calendar">
-            Calendar
-          </Link>
-        </div>
+        <Link className="button-secondary" href="/">
+          Dashboard
+        </Link>
       </header>
 
       <section className="panel lesson-tools">
