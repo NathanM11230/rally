@@ -9,6 +9,12 @@ import type {
 
 const lessonSelect = "*, instructor_profile:instructor_profiles(*), lesson_students(*)";
 
+type LessonCalendarFilters = {
+  start: Date;
+  end: Date;
+  instructorProfileId?: string;
+};
+
 export async function getUpcomingLessons() {
   const supabase = getSupabaseAdmin();
 
@@ -17,6 +23,33 @@ export async function getUpcomingLessons() {
     .select(lessonSelect)
     .gte("lesson_start_time", new Date().toISOString())
     .order("lesson_start_time", { ascending: true });
+
+  if (error) {
+    throw error;
+  }
+
+  return normalizeLessons(data as LessonWithInstructorProfile[]);
+}
+
+export async function getLessonsForCalendar({
+  start,
+  end,
+  instructorProfileId,
+}: LessonCalendarFilters) {
+  const supabase = getSupabaseAdmin();
+
+  let query = supabase
+    .from("lessons")
+    .select(lessonSelect)
+    .gte("lesson_start_time", start.toISOString())
+    .lt("lesson_start_time", end.toISOString())
+    .order("lesson_start_time", { ascending: true });
+
+  if (instructorProfileId) {
+    query = query.eq("instructor_profile_id", instructorProfileId);
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     throw error;

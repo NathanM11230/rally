@@ -37,6 +37,18 @@ export function formatLessonTime(
   return formatter.format(date);
 }
 
+export function formatDateKeyInTimeZone(date: Date, timeZone = DEFAULT_TIME_ZONE) {
+  const parts = getZonedParts(date, timeZone);
+
+  return `${parts.year}-${parts.month}-${parts.day}`;
+}
+
+export function getCurrentMonthKey(timeZone = DEFAULT_TIME_ZONE) {
+  const parts = getZonedParts(new Date(), timeZone);
+
+  return `${parts.year}-${parts.month}`;
+}
+
 export function getLessonFormDateTime(
   lesson: Pick<Lesson, "lesson_start_time">,
   timeZone = DEFAULT_TIME_ZONE,

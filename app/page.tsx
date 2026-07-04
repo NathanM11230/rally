@@ -61,6 +61,11 @@ export default async function DashboardPage() {
             Manage pros
           </Link>
           {profiles.length > 0 ? (
+            <Link className="button-secondary" href="/calendar">
+              Calendar
+            </Link>
+          ) : null}
+          {profiles.length > 0 ? (
             <Link className="button" href="/lessons/new">
               New lesson
             </Link>

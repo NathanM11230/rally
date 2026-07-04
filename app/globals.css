@@ -349,6 +349,131 @@ select:focus {
   padding: 16px;
 }
 
+.calendar-controls {
+  display: grid;
+  gap: 16px;
+  margin: -8px 0 20px;
+}
+
+.filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.filter-chip {
+  display: inline-flex;
+  min-height: 36px;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--muted);
+  padding: 0 14px;
+  font-weight: 800;
+}
+
+.filter-chip-active {
+  border-color: var(--accent);
+  background: var(--sent-bg);
+  color: var(--accent-strong);
+}
+
+.calendar-panel {
+  overflow: hidden;
+}
+
+.calendar-wrap {
+  overflow-x: auto;
+}
+
+.calendar-grid {
+  display: grid;
+  min-width: 980px;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.calendar-weekday {
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-muted);
+  color: var(--muted);
+  padding: 12px;
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.calendar-day {
+  min-height: 148px;
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  padding: 10px;
+}
+
+.calendar-day:nth-child(7n + 7) {
+  border-right: 0;
+}
+
+.calendar-day-muted {
+  background: #f8faf7;
+  color: var(--muted);
+}
+
+.calendar-day-today {
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+
+.calendar-day-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-weight: 900;
+}
+
+.calendar-count {
+  border-radius: 999px;
+  background: var(--surface-muted);
+  color: var(--accent-strong);
+  padding: 3px 8px;
+  font-size: 0.76rem;
+}
+
+.calendar-lessons {
+  display: grid;
+  gap: 8px;
+}
+
+.calendar-lesson {
+  display: grid;
+  gap: 3px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 9px;
+}
+
+.calendar-lesson:hover {
+  border-color: var(--accent);
+}
+
+.calendar-lesson-time {
+  color: var(--accent-strong);
+  font-size: 0.82rem;
+  font-weight: 900;
+}
+
+.calendar-lesson-title {
+  font-weight: 900;
+}
+
+.calendar-lesson-meta {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
 @media (max-width: 720px) {
   .page {
     width: min(100% - 24px, 1120px);

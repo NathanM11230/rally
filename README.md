@@ -57,6 +57,12 @@ Go to **Manage pros** to add both pros at your club. When creating or editing a
 lesson, choose which pro owns that reservation. Rally uses the selected pro's
 name and phone number when preparing manual reminder texts.
 
+## Calendar
+
+Go to **Calendar** from the dashboard to see lessons in a monthly calendar view.
+Use the pro filters to show all lessons or only one pro's individual lessons.
+Each calendar lesson links back to the edit page for that reservation.
+
 ## Multi-Student Reservations
 
 Each lesson can have one or many students. The lesson form lets you add multiple
