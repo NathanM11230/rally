@@ -79,15 +79,11 @@ export default async function DashboardPage() {
           <h1>Dashboard</h1>
           <p className="page-subtitle">{todayFormatted}</p>
         </div>
-        {profiles.length > 0 ? (
-          <Link className="button" href="/lessons/new">
-            New lesson
-          </Link>
-        ) : (
+        {profiles.length === 0 ? (
           <Link className="button" href="/profile">
             Add club pros
           </Link>
-        )}
+        ) : null}
       </header>
 
       {profiles.length === 0 ? (

@@ -87,9 +87,6 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
               : "All club lessons"}
           </p>
         </div>
-        <Link className="button" href="/lessons/new">
-          New lesson
-        </Link>
       </header>
 
       <section className="calendar-controls">
