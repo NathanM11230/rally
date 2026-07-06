@@ -1,4 +1,5 @@
 import { formatLessonDateTime } from "@/lib/date";
+import { getLessonInstructorNames, getLessonInstructors } from "@/lib/lesson-instructors";
 import { getStudentReminderSubject } from "@/lib/session-types";
 import type { LessonStudent, LessonWithInstructorProfile } from "@/types/database";
 
@@ -13,7 +14,7 @@ export function buildStudentReminderSms(
   student: Pick<LessonStudent, "student_name" | "student_phone">,
   timeZone: string,
 ): ManualSmsTarget {
-  const instructorName = lesson.instructor_profile?.full_name ?? "your instructor";
+  const instructorName = getLessonInstructorNames(lesson);
   const subject = getStudentReminderSubject(lesson);
   const message = `Reminder: You have ${subject} with ${instructorName} on ${formatLessonDateTime(
     lesson,
@@ -27,33 +28,33 @@ export function buildStudentReminderSms(
   };
 }
 
-export function buildInstructorReminderSms(
+export function buildInstructorReminderSmsTargets(
   lesson: LessonWithInstructorProfile,
   timeZone: string,
-): ManualSmsTarget | null {
-  if (!lesson.instructor_profile) {
-    return null;
-  }
-
+): ManualSmsTarget[] {
   const studentNames = getLessonStudents(lesson)
     .map((student) => student.student_name)
     .join(", ");
   const subject = getStudentReminderSubject(lesson);
-  const message = studentNames
-    ? `Reminder: You have ${subject} with ${studentNames} on ${formatLessonDateTime(
-        lesson,
-        timeZone,
-      )} at ${lesson.location}.`
-    : `Reminder: You have ${subject} on ${formatLessonDateTime(
-        lesson,
-        timeZone,
-      )} at ${lesson.location}.`;
+  const instructors = getLessonInstructors(lesson);
 
-  return {
-    href: buildSmsHref(lesson.instructor_profile.phone_number, message),
-    label: `Text ${lesson.instructor_profile.full_name}`,
-    message,
-  };
+  return instructors.map((instructor) => {
+    const message = studentNames
+      ? `Reminder: You have ${subject} with ${studentNames} on ${formatLessonDateTime(
+          lesson,
+          timeZone,
+        )} at ${lesson.location}.`
+      : `Reminder: You have ${subject} on ${formatLessonDateTime(
+          lesson,
+          timeZone,
+        )} at ${lesson.location}.`;
+
+    return {
+      href: buildSmsHref(instructor.phone_number, message),
+      label: `Text ${instructor.full_name}`,
+      message,
+    };
+  });
 }
 
 export function getLessonStudents(lesson: LessonWithInstructorProfile) {

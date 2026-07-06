@@ -42,7 +42,13 @@ export type Database = {
           instructor_profile_id: string;
           student_name: string;
           student_phone: string;
-          session_type: "lesson" | "clinic" | "other_event";
+          session_type:
+            | "lesson"
+            | "clinic"
+            | "other_event"
+            | "freshmen"
+            | "varsity"
+            | "team";
           event_title: string | null;
           lesson_start_time: string;
           location: string;
@@ -58,7 +64,13 @@ export type Database = {
           instructor_profile_id: string;
           student_name: string;
           student_phone: string;
-          session_type?: "lesson" | "clinic" | "other_event";
+          session_type?:
+            | "lesson"
+            | "clinic"
+            | "other_event"
+            | "freshmen"
+            | "varsity"
+            | "team";
           event_title?: string | null;
           lesson_start_time: string;
           location: string;
@@ -74,7 +86,13 @@ export type Database = {
           instructor_profile_id?: string;
           student_name?: string;
           student_phone?: string;
-          session_type?: "lesson" | "clinic" | "other_event";
+          session_type?:
+            | "lesson"
+            | "clinic"
+            | "other_event"
+            | "freshmen"
+            | "varsity"
+            | "team";
           event_title?: string | null;
           lesson_start_time?: string;
           location?: string;
@@ -130,12 +148,57 @@ export type Database = {
           },
         ];
       };
+      lesson_instructors: {
+        Row: {
+          id: string;
+          lesson_id: string;
+          instructor_profile_id: string;
+          sort_order: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          lesson_id: string;
+          instructor_profile_id: string;
+          sort_order?: number;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          lesson_id?: string;
+          instructor_profile_id?: string;
+          sort_order?: number;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "lesson_instructors_lesson_id_fkey";
+            columns: ["lesson_id"];
+            isOneToOne: false;
+            referencedRelation: "lessons";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "lesson_instructors_instructor_profile_id_fkey";
+            columns: ["instructor_profile_id"];
+            isOneToOne: false;
+            referencedRelation: "instructor_profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
     Enums: {
       lesson_status: "scheduled" | "completed" | "cancelled" | "no_show";
-      session_type: "lesson" | "clinic" | "other_event";
+      session_type:
+        | "lesson"
+        | "clinic"
+        | "other_event"
+        | "freshmen"
+        | "varsity"
+        | "team";
     };
     CompositeTypes: Record<string, never>;
   };
@@ -158,8 +221,19 @@ export type LessonStudentInsert =
   Database["public"]["Tables"]["lesson_students"]["Insert"];
 export type LessonStudentUpdate =
   Database["public"]["Tables"]["lesson_students"]["Update"];
+export type LessonInstructor =
+  Database["public"]["Tables"]["lesson_instructors"]["Row"];
+export type LessonInstructorInsert =
+  Database["public"]["Tables"]["lesson_instructors"]["Insert"];
+export type LessonInstructorUpdate =
+  Database["public"]["Tables"]["lesson_instructors"]["Update"];
+
+export type LessonInstructorWithProfile = LessonInstructor & {
+  instructor_profile: InstructorProfile | null;
+};
 
 export type LessonWithInstructorProfile = Lesson & {
   instructor_profile: InstructorProfile | null;
   lesson_students: LessonStudent[];
+  lesson_instructors: LessonInstructorWithProfile[];
 };

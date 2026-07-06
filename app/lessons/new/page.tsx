@@ -51,7 +51,7 @@ export default async function NewLessonPage() {
         <div>
           <h1>New session</h1>
           <p className="page-subtitle">
-            Choose the type, pro, participants, time, and court.
+            Choose the type, one or more pros, participants, time, and court.
           </p>
         </div>
       </header>

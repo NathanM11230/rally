@@ -46,15 +46,25 @@ export function LessonForm(props: LessonFormProps) {
   const [sessionType, setSessionType] = useState<SessionType>(
     lesson?.session_type ?? "lesson",
   );
+  const [selectedInstructorIds, setSelectedInstructorIds] = useState<string[]>(() =>
+    getInitialInstructorIds(lesson),
+  );
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
     setIsSaving(true);
 
+    if (selectedInstructorIds.length === 0) {
+      setError("Select at least one pro.");
+      setIsSaving(false);
+      return;
+    }
+
     const formData = new FormData(event.currentTarget);
     const payload = {
-      instructor_profile_id: String(formData.get("instructor_profile_id") ?? ""),
+      instructor_profile_id: selectedInstructorIds[0] ?? "",
+      instructor_profile_ids: selectedInstructorIds,
       session_type: sessionType,
       event_title: String(formData.get("event_title") ?? ""),
       lesson_date: String(formData.get("lesson_date") ?? ""),
@@ -108,6 +118,14 @@ export function LessonForm(props: LessonFormProps) {
     ]);
   }
 
+  function toggleInstructor(instructorProfileId: string) {
+    setSelectedInstructorIds((currentIds) =>
+      currentIds.includes(instructorProfileId)
+        ? currentIds.filter((id) => id !== instructorProfileId)
+        : [...currentIds, instructorProfileId],
+    );
+  }
+
   function removeStudent(id: string) {
     setStudents((currentStudents) =>
       currentStudents.length === 1 && sessionType === "lesson"
@@ -135,51 +153,48 @@ export function LessonForm(props: LessonFormProps) {
 
       <div className="form-section">
         <h3 className="form-section-title">Session</h3>
-        <div className="form-grid">
-          <label className="field">
-            Type
-            <select
-              required
-              name="session_type"
-              value={sessionType}
-              onChange={(event) => setSessionType(event.target.value as SessionType)}
+        <div className="choice-grid session-type-grid">
+          {SESSION_TYPES.map((type) => (
+            <button
+              className={`choice-button ${
+                sessionType === type ? "choice-button-active" : ""
+              }`}
+              key={type}
+              type="button"
+              onClick={() => setSessionType(type)}
             >
-              {SESSION_TYPES.map((type) => (
-                <option key={type} value={type}>
-                  {sessionTypeLabels[type]}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          {sessionType === "other_event" ? (
-            <Field
-              label="Other event"
-              name="event_title"
-              defaultValue={lesson?.event_title ?? ""}
-              placeholder="Cardio Tennis"
-            />
-          ) : null}
+              {sessionTypeLabels[type]}
+            </button>
+          ))}
         </div>
+
+        {sessionType === "other_event" ? (
+          <Field
+            label="Other event"
+            name="event_title"
+            defaultValue={lesson?.event_title ?? ""}
+            placeholder="Cardio Tennis"
+          />
+        ) : null}
       </div>
 
       <div className="form-section">
-        <h3 className="form-section-title">Pro</h3>
-        <select
-          required
-          name="instructor_profile_id"
-          aria-label="Select a pro"
-          defaultValue={lesson?.instructor_profile_id ?? ""}
-        >
-          <option value="" disabled>
-            Select a pro
-          </option>
+        <h3 className="form-section-title">Pros</h3>
+        <div className="choice-grid">
           {props.instructorProfiles.map((profile) => (
-            <option key={profile.id} value={profile.id}>
-              {profile.full_name}
-            </option>
+            <button
+              className={`choice-button choice-button-stacked ${
+                selectedInstructorIds.includes(profile.id) ? "choice-button-active" : ""
+              }`}
+              key={profile.id}
+              type="button"
+              onClick={() => toggleInstructor(profile.id)}
+            >
+              <span>{profile.full_name}</span>
+              <small>{profile.phone_number}</small>
+            </button>
           ))}
-        </select>
+        </div>
       </div>
 
       <div className="form-section">
@@ -331,4 +346,17 @@ function getInitialStudents(lesson: LessonWithInstructorProfile | null): Student
     student_name: student.student_name,
     student_phone: student.student_phone,
   }));
+}
+
+function getInitialInstructorIds(lesson: LessonWithInstructorProfile | null) {
+  if (!lesson) {
+    return [];
+  }
+
+  const instructorIds =
+    lesson.lesson_instructors.length > 0
+      ? lesson.lesson_instructors.map((instructor) => instructor.instructor_profile_id)
+      : [lesson.instructor_profile_id];
+
+  return Array.from(new Set(instructorIds.filter(Boolean)));
 }

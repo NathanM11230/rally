@@ -45,7 +45,12 @@ export async function PATCH(request: Request, { params }: LessonRouteContext) {
   }
 
   try {
-    const lesson = await updateLesson(id, parsed.data.lesson, parsed.data.students);
+    const lesson = await updateLesson(
+      id,
+      parsed.data.lesson,
+      parsed.data.students,
+      parsed.data.instructorProfileIds,
+    );
     revalidatePath("/");
     revalidatePath("/calendar");
     revalidatePath("/pay-periods");

@@ -1,5 +1,5 @@
 import { dateAndTimeToUtc, getLessonTimeZone } from "@/lib/date";
-import { isSessionType } from "@/lib/session-types";
+import { isSessionType, sessionTypeLabels } from "@/lib/session-types";
 import type { LessonInsert, LessonUpdate } from "@/types/database";
 
 type LessonInputMode = "create" | "update";
@@ -20,6 +20,7 @@ type ParsedLessonData = {
       | "lesson_start_time"
       | "location"
     >;
+  instructorProfileIds: string[];
   students: LessonStudentInput[];
 };
 
@@ -28,7 +29,6 @@ type LessonInputResult =
   | { data: null; errors: string[] };
 
 const requiredFields = [
-  "instructor_profile_id",
   "lesson_date",
   "lesson_time",
   "location",
@@ -42,6 +42,10 @@ export function parseLessonInput(body: unknown, mode: LessonInputMode): LessonIn
   const errors: string[] = [];
   const values: Record<string, string> = {};
   const students = parseStudents(body.students);
+  const instructorProfileIds = parseInstructorProfileIds(
+    body.instructor_profile_ids,
+    body.instructor_profile_id,
+  );
   const sessionType = cleanString(body.session_type) || "lesson";
   const eventTitle = cleanString(body.event_title);
 
@@ -56,7 +60,11 @@ export function parseLessonInput(body: unknown, mode: LessonInputMode): LessonIn
   }
 
   if (!isSessionType(sessionType)) {
-    errors.push("session_type must be lesson, clinic, or other_event.");
+    errors.push("session_type must be lesson, clinic, other_event, freshmen, varsity, or team.");
+  }
+
+  if (instructorProfileIds.length === 0) {
+    errors.push("At least one pro is required.");
   }
 
   if (sessionType === "lesson" && students.length === 0) {
@@ -86,11 +94,14 @@ export function parseLessonInput(body: unknown, mode: LessonInputMode): LessonIn
     getLessonTimeZone(),
   );
   const primaryStudent = students[0] ?? {
-    student_name: normalizedSessionType === "other_event" ? eventTitle : "Clinic",
+    student_name:
+      normalizedSessionType === "other_event"
+        ? eventTitle
+        : sessionTypeLabels[normalizedSessionType],
     student_phone: "",
   };
   const lesson: ParsedLessonData["lesson"] = {
-    instructor_profile_id: values.instructor_profile_id,
+    instructor_profile_id: instructorProfileIds[0],
     student_name: primaryStudent.student_name,
     student_phone: primaryStudent.student_phone,
     session_type: normalizedSessionType,
@@ -108,10 +119,21 @@ export function parseLessonInput(body: unknown, mode: LessonInputMode): LessonIn
   return {
     data: {
       lesson,
+      instructorProfileIds,
       students,
     },
     errors: [],
   };
+}
+
+function parseInstructorProfileIds(value: unknown, fallback: unknown) {
+  const ids = Array.isArray(value)
+    ? value.map(cleanString).filter(Boolean)
+    : [];
+  const fallbackId = cleanString(fallback);
+  const allIds = fallbackId ? [fallbackId, ...ids] : ids;
+
+  return Array.from(new Set(allIds));
 }
 
 function parseStudents(value: unknown): LessonStudentInput[] {

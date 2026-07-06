@@ -1,6 +1,7 @@
 import type { LessonStudentInput } from "@/lib/lesson-input";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
 import type {
+  LessonInstructorInsert,
   LessonInsert,
   LessonStatus,
   LessonStudentInsert,
@@ -8,7 +9,8 @@ import type {
   LessonWithInstructorProfile,
 } from "@/types/database";
 
-const lessonSelect = "*, instructor_profile:instructor_profiles(*), lesson_students(*)";
+const lessonSelect =
+  "*, instructor_profile:instructor_profiles(*), lesson_students(*), lesson_instructors(*, instructor_profile:instructor_profiles(*))";
 
 type LessonCalendarFilters = {
   start: Date;
@@ -39,16 +41,12 @@ export async function getLessonsForCalendar({
 }: LessonCalendarFilters) {
   const supabase = getSupabaseAdmin();
 
-  let query = supabase
+  const query = supabase
     .from("lessons")
     .select(lessonSelect)
     .gte("lesson_start_time", start.toISOString())
     .lt("lesson_start_time", end.toISOString())
     .order("lesson_start_time", { ascending: true });
-
-  if (instructorProfileId) {
-    query = query.eq("instructor_profile_id", instructorProfileId);
-  }
 
   const { data, error } = await query;
 
@@ -56,7 +54,15 @@ export async function getLessonsForCalendar({
     throw error;
   }
 
-  return normalizeLessons(data as LessonWithInstructorProfile[]);
+  const lessons = normalizeLessons(data as LessonWithInstructorProfile[]);
+
+  if (!instructorProfileId) {
+    return lessons;
+  }
+
+  return lessons.filter((lesson) =>
+    lessonHasInstructor(lesson, instructorProfileId),
+  );
 }
 
 export async function getLesson(id: string) {
@@ -79,7 +85,11 @@ export async function getLesson(id: string) {
   return normalizeLesson(data as LessonWithInstructorProfile);
 }
 
-export async function createLesson(input: LessonInsert, students: LessonStudentInput[]) {
+export async function createLesson(
+  input: LessonInsert,
+  students: LessonStudentInput[],
+  instructorProfileIds: string[],
+) {
   const supabase = getSupabaseAdmin();
 
   const { data, error } = await supabase.from("lessons").insert(input).select("id").single();
@@ -88,6 +98,7 @@ export async function createLesson(input: LessonInsert, students: LessonStudentI
     throw error;
   }
 
+  await replaceLessonInstructors(data.id, instructorProfileIds);
   await replaceLessonStudents(data.id, students);
 
   const lesson = await getLesson(data.id);
@@ -103,6 +114,7 @@ export async function updateLesson(
   id: string,
   input: LessonUpdate,
   students?: LessonStudentInput[],
+  instructorProfileIds?: string[],
 ) {
   const supabase = getSupabaseAdmin();
 
@@ -114,6 +126,10 @@ export async function updateLesson(
 
   if (students) {
     await replaceLessonStudents(id, students);
+  }
+
+  if (instructorProfileIds) {
+    await replaceLessonInstructors(id, instructorProfileIds);
   }
 
   const lesson = await getLesson(id);
@@ -177,6 +193,37 @@ export async function deleteLesson(id: string) {
   }
 }
 
+async function replaceLessonInstructors(lessonId: string, instructorProfileIds: string[]) {
+  const supabase = getSupabaseAdmin();
+
+  const { error: deleteError } = await supabase
+    .from("lesson_instructors")
+    .delete()
+    .eq("lesson_id", lessonId);
+
+  if (deleteError) {
+    throw deleteError;
+  }
+
+  const rows: LessonInstructorInsert[] = instructorProfileIds.map(
+    (instructorProfileId, index) => ({
+      lesson_id: lessonId,
+      instructor_profile_id: instructorProfileId,
+      sort_order: index,
+    }),
+  );
+
+  if (rows.length === 0) {
+    return;
+  }
+
+  const { error: insertError } = await supabase.from("lesson_instructors").insert(rows);
+
+  if (insertError) {
+    throw insertError;
+  }
+}
+
 async function replaceLessonStudents(lessonId: string, students: LessonStudentInput[]) {
   const supabase = getSupabaseAdmin();
 
@@ -214,8 +261,20 @@ function normalizeLessons(lessons: LessonWithInstructorProfile[]) {
 function normalizeLesson(lesson: LessonWithInstructorProfile) {
   return {
     ...lesson,
+    lesson_instructors: [...(lesson.lesson_instructors ?? [])].sort(
+      (first, second) => first.sort_order - second.sort_order,
+    ),
     lesson_students: [...(lesson.lesson_students ?? [])].sort(
       (first, second) => first.sort_order - second.sort_order,
     ),
   };
+}
+
+function lessonHasInstructor(lesson: LessonWithInstructorProfile, instructorProfileId: string) {
+  return (
+    lesson.instructor_profile_id === instructorProfileId ||
+    (lesson.lesson_instructors ?? []).some(
+      (instructor) => instructor.instructor_profile_id === instructorProfileId,
+    )
+  );
 }

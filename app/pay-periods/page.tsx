@@ -4,6 +4,7 @@ import { LessonStatusSelect } from "@/components/LessonStatusSelect";
 import { PrintButton } from "@/components/PrintButton";
 import { formatLessonDateTime, getLessonTimeZone } from "@/lib/date";
 import { getInstructorProfiles } from "@/lib/instructor-profiles";
+import { getLessonInstructorNames, getLessonInstructors } from "@/lib/lesson-instructors";
 import {
   getLessonStatus,
   getLessonStatusClass,
@@ -221,7 +222,7 @@ function PayPeriodLessonCard({
         <span className="lesson-card-students">{participantSummary}</span>
         <span className="lesson-card-pro">
           {students.length > 0 ? `${sessionLabel} - ` : ""}
-          {lesson.instructor_profile?.full_name ?? "No pro assigned"}
+          {getLessonInstructorNames(lesson)}
         </span>
       </div>
       {lesson.notes ? <p className="lesson-card-notes">{lesson.notes}</p> : null}
@@ -268,10 +269,14 @@ function getLessonGroups(
     .map((profile) => ({
       id: profile.id,
       name: profile.full_name,
-      lessons: lessons.filter((lesson) => lesson.instructor_profile_id === profile.id),
+      lessons: lessons.filter((lesson) =>
+        getLessonInstructors(lesson).some((instructor) => instructor.id === profile.id),
+      ),
     }))
     .filter((group) => group.lessons.length > 0);
-  const missingProfileLessons = lessons.filter((lesson) => !lesson.instructor_profile);
+  const missingProfileLessons = lessons.filter(
+    (lesson) => getLessonInstructors(lesson).length === 0,
+  );
 
   if (missingProfileLessons.length > 0) {
     groups.push({

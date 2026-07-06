@@ -25,9 +25,10 @@ prefilled text message and the pro sends it manually from their own SMS app.
 2. Create a Supabase project and run the SQL in `supabase/schema.sql`.
 
    If you already ran an earlier Rally schema, run this updated SQL again. It
-   adds `lesson_students`, `lessons.status`, `lessons.session_type`, and
-   `lessons.event_title`, migrates each existing lesson's current student into
-   that table, and keeps the existing `lessons` fields as compatibility values.
+   adds `lesson_students`, `lesson_instructors`, `lessons.status`,
+   `lessons.session_type`, and `lessons.event_title`, migrates each existing
+   lesson's current student and pro into those tables, and keeps the existing
+   `lessons` fields as compatibility values.
 
 3. Copy `.env.example` to `.env.local` and fill in:
 
@@ -54,9 +55,9 @@ prefilled text message and the pro sends it manually from their own SMS app.
 Rally stores each pro's name and phone number in `instructor_profiles`. In this
 club MVP, there is no login system yet; the roster is shared by the club.
 
-Go to **Manage pros** to add both pros at your club. When creating or editing a
-lesson, choose which pro owns that reservation. Rally uses the selected pro's
-name and phone number when preparing manual reminder texts.
+Go to **Manage pros** to add pros at your club. When creating or editing a
+session, choose one or more pros for that reservation. Rally uses the selected
+pros' names and phone numbers when preparing manual reminder texts.
 
 ## Calendar
 
@@ -71,6 +72,9 @@ Each reservation has one type:
 - Lesson
 - Clinic
 - Other event
+- Freshmen
+- Varsity
+- Team
 
 When **Other event** is selected, Rally asks for the event name, such as
 `Cardio Tennis` or `Ladies Night`. That event name appears on the dashboard,
@@ -80,6 +84,10 @@ Lessons require at least one student name and phone number. Clinics and other
 events can include participants, but they can also be saved without participant
 phone numbers when the session only needs to be tracked for calendar or pay
 period reporting.
+
+Each reservation can also have one or more pros assigned. Rally keeps the first
+selected pro as the primary compatibility value on `lessons.instructor_profile_id`
+and stores the full pro list in `lesson_instructors`.
 
 ## Pay Period Reports
 
@@ -113,6 +121,7 @@ The database stores:
 - `lessons.reminder_sent`
 - `lesson_students.student_name`
 - `lesson_students.student_phone`
+- `lesson_instructors.instructor_profile_id`
 
 The older `lessons.student_name` and `lessons.student_phone` columns are still
 filled with the first student as a compatibility fallback.
@@ -136,8 +145,8 @@ toll-free verification, and Vercel Cron complexity for the MVP.
 - `POST /api/instructor-profile` adds a club pro.
 - `PATCH /api/instructor-profile/:id` edits a club pro.
 - `GET /api/lessons` lists upcoming lessons.
-- `POST /api/lessons` creates a lesson with the selected pro and students.
-- `PATCH /api/lessons/:id` edits a lesson, selected pro, and students.
+- `POST /api/lessons` creates a session with the selected pros and participants.
+- `PATCH /api/lessons/:id` edits a session, selected pros, and participants.
 - `DELETE /api/lessons/:id` deletes a lesson.
 - `PATCH /api/lessons/:id/status` updates scheduled/completed/cancelled/no-show status.
 - `POST /api/lessons/:id/reminder-sent` marks a manual reminder as sent.

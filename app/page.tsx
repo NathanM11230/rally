@@ -8,6 +8,7 @@ import {
   getLessonTimeZone,
 } from "@/lib/date";
 import { getInstructorProfiles } from "@/lib/instructor-profiles";
+import { getLessonInstructorNames } from "@/lib/lesson-instructors";
 import {
   getLessonStatus,
   getLessonStatusClass,
@@ -212,7 +213,7 @@ function LessonCard({
         <span className="lesson-card-students">{participantSummary}</span>
         <span className="lesson-card-pro">
           {students.length > 0 ? `${sessionLabel} - ` : ""}
-          {lesson.instructor_profile?.full_name ?? "No pro assigned"}
+          {getLessonInstructorNames(lesson)}
         </span>
       </div>
       {lesson.notes ? (

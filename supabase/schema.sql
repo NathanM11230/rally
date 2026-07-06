@@ -12,10 +12,21 @@ end $$;
 
 do $$
 begin
-  create type public.session_type as enum ('lesson', 'clinic', 'other_event');
+  create type public.session_type as enum (
+    'lesson',
+    'clinic',
+    'other_event',
+    'freshmen',
+    'varsity',
+    'team'
+  );
 exception
   when duplicate_object then null;
 end $$;
+
+alter type public.session_type add value if not exists 'freshmen';
+alter type public.session_type add value if not exists 'varsity';
+alter type public.session_type add value if not exists 'team';
 
 create table if not exists public.instructor_profiles (
   id uuid primary key default gen_random_uuid(),
@@ -56,6 +67,15 @@ create table if not exists public.lesson_students (
   student_phone text not null,
   sort_order integer not null default 0,
   created_at timestamptz not null default now()
+);
+
+create table if not exists public.lesson_instructors (
+  id uuid primary key default gen_random_uuid(),
+  lesson_id uuid not null references public.lessons(id) on delete cascade,
+  instructor_profile_id uuid not null references public.instructor_profiles(id) on delete cascade,
+  sort_order integer not null default 0,
+  created_at timestamptz not null default now(),
+  unique (lesson_id, instructor_profile_id)
 );
 
 alter table public.lessons
@@ -240,6 +260,12 @@ create index if not exists lessons_status_idx
 create index if not exists lesson_students_lesson_id_idx
   on public.lesson_students (lesson_id, sort_order);
 
+create index if not exists lesson_instructors_lesson_id_idx
+  on public.lesson_instructors (lesson_id, sort_order);
+
+create index if not exists lesson_instructors_instructor_profile_id_idx
+  on public.lesson_instructors (instructor_profile_id);
+
 insert into public.lesson_students (lesson_id, student_name, student_phone, sort_order)
 select lessons.id, lessons.student_name, lessons.student_phone, 0
 from public.lessons
@@ -248,6 +274,17 @@ where not exists (
   from public.lesson_students
   where lesson_students.lesson_id = lessons.id
 );
+
+insert into public.lesson_instructors (lesson_id, instructor_profile_id, sort_order)
+select lessons.id, lessons.instructor_profile_id, 0
+from public.lessons
+where lessons.instructor_profile_id is not null
+  and not exists (
+    select 1
+    from public.lesson_instructors
+    where lesson_instructors.lesson_id = lessons.id
+      and lesson_instructors.instructor_profile_id = lessons.instructor_profile_id
+  );
 
 create or replace function public.set_updated_at()
 returns trigger as $$
@@ -274,6 +311,7 @@ execute function public.set_updated_at();
 alter table public.instructor_profiles enable row level security;
 alter table public.lessons enable row level security;
 alter table public.lesson_students enable row level security;
+alter table public.lesson_instructors enable row level security;
 
 -- No public policies are added for this MVP. Server-side routes use the
 -- Supabase service role key, which bypasses RLS. Do not expose that key.

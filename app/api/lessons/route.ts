@@ -32,7 +32,11 @@ export async function POST(request: Request) {
   }
 
   try {
-    const lesson = await createLesson(parsed.data.lesson as LessonInsert, parsed.data.students);
+    const lesson = await createLesson(
+      parsed.data.lesson as LessonInsert,
+      parsed.data.students,
+      parsed.data.instructorProfileIds,
+    );
 
     revalidatePath("/");
     revalidatePath("/calendar");

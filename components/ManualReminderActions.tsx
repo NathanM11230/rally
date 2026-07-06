@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import {
-  buildInstructorReminderSms,
+  buildInstructorReminderSmsTargets,
   buildStudentReminderSms,
   getLessonStudents,
 } from "@/lib/manual-sms";
@@ -21,7 +21,7 @@ export function ManualReminderActions({ lesson, timeZone }: ManualReminderAction
   const studentSmsTargets = getLessonStudents(lesson).map((student) =>
     buildStudentReminderSms(lesson, student, timeZone),
   );
-  const instructorSms = buildInstructorReminderSms(lesson, timeZone);
+  const instructorSmsTargets = buildInstructorReminderSmsTargets(lesson, timeZone);
 
   async function updateReminderStatus(reminderSent: boolean) {
     setIsSaving(true);
@@ -51,11 +51,15 @@ export function ManualReminderActions({ lesson, timeZone }: ManualReminderAction
           {studentSms.label}
         </a>
       ))}
-      {instructorSms ? (
-        <a className="button-secondary" href={instructorSms.href}>
+      {instructorSmsTargets.map((instructorSms) => (
+        <a
+          className="button-secondary"
+          href={instructorSms.href}
+          key={`${instructorSms.href}-${instructorSms.label}`}
+        >
           {instructorSms.label}
         </a>
-      ) : null}
+      ))}
       {lesson.reminder_sent ? (
         <button
           className="button-secondary"

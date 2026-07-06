@@ -1,11 +1,21 @@
 import type { Lesson, SessionType } from "@/types/database";
 
-export const SESSION_TYPES = ["lesson", "clinic", "other_event"] as const;
+export const SESSION_TYPES = [
+  "lesson",
+  "clinic",
+  "other_event",
+  "freshmen",
+  "varsity",
+  "team",
+] as const;
 
 export const sessionTypeLabels: Record<SessionType, string> = {
   lesson: "Lesson",
   clinic: "Clinic",
   other_event: "Other event",
+  freshmen: "Freshmen",
+  varsity: "Varsity",
+  team: "Team",
 };
 
 export function isSessionType(value: unknown): value is SessionType {
@@ -35,6 +45,18 @@ export function getStudentReminderSubject(
 
   if (sessionType === "clinic") {
     return "a tennis clinic";
+  }
+
+  if (sessionType === "freshmen") {
+    return "Freshmen tennis";
+  }
+
+  if (sessionType === "varsity") {
+    return "Varsity tennis";
+  }
+
+  if (sessionType === "team") {
+    return "team tennis";
   }
 
   if (sessionType === "other_event") {
