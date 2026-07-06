@@ -45,6 +45,7 @@ export type Database = {
           lesson_start_time: string;
           location: string;
           notes: string | null;
+          status: "scheduled" | "completed" | "cancelled" | "no_show";
           reminder_sent: boolean;
           reminder_sent_at: string | null;
           created_at: string;
@@ -58,6 +59,7 @@ export type Database = {
           lesson_start_time: string;
           location: string;
           notes?: string | null;
+          status?: "scheduled" | "completed" | "cancelled" | "no_show";
           reminder_sent?: boolean;
           reminder_sent_at?: string | null;
           created_at?: string;
@@ -71,6 +73,7 @@ export type Database = {
           lesson_start_time?: string;
           location?: string;
           notes?: string | null;
+          status?: "scheduled" | "completed" | "cancelled" | "no_show";
           reminder_sent?: boolean;
           reminder_sent_at?: string | null;
           created_at?: string;
@@ -124,7 +127,9 @@ export type Database = {
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
-    Enums: Record<string, never>;
+    Enums: {
+      lesson_status: "scheduled" | "completed" | "cancelled" | "no_show";
+    };
     CompositeTypes: Record<string, never>;
   };
 };
@@ -138,6 +143,7 @@ export type InstructorProfileUpdate =
 export type Lesson = Database["public"]["Tables"]["lessons"]["Row"];
 export type LessonInsert = Database["public"]["Tables"]["lessons"]["Insert"];
 export type LessonUpdate = Database["public"]["Tables"]["lessons"]["Update"];
+export type LessonStatus = Database["public"]["Enums"]["lesson_status"];
 export type LessonStudent =
   Database["public"]["Tables"]["lesson_students"]["Row"];
 export type LessonStudentInsert =

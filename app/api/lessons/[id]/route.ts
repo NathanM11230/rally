@@ -47,6 +47,8 @@ export async function PATCH(request: Request, { params }: LessonRouteContext) {
   try {
     const lesson = await updateLesson(id, parsed.data.lesson, parsed.data.students);
     revalidatePath("/");
+    revalidatePath("/calendar");
+    revalidatePath("/pay-periods");
     revalidatePath(`/lessons/${id}/edit`);
     return NextResponse.json({ lesson });
   } catch (error) {
@@ -60,6 +62,8 @@ export async function DELETE(_request: Request, { params }: LessonRouteContext) 
   try {
     await deleteLesson(id);
     revalidatePath("/");
+    revalidatePath("/calendar");
+    revalidatePath("/pay-periods");
     return NextResponse.json({ ok: true });
   } catch (error) {
     return handleApiError(error);

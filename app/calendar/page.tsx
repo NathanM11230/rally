@@ -8,6 +8,7 @@ import {
   getLessonTimeZone,
 } from "@/lib/date";
 import { getInstructorProfiles } from "@/lib/instructor-profiles";
+import { getLessonStatus, lessonStatusLabels } from "@/lib/lesson-status";
 import { getLessonsForCalendar } from "@/lib/lessons";
 import { getLessonStudents } from "@/lib/manual-sms";
 import type { LessonWithInstructorProfile } from "@/types/database";
@@ -189,6 +190,9 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
                           </span>
                           <span className="calendar-lesson-meta">
                             {lesson.instructor_profile?.full_name ?? "Missing pro"}
+                          </span>
+                          <span className="calendar-lesson-meta">
+                            {lessonStatusLabels[getLessonStatus(lesson)]}
                           </span>
                           <span className="calendar-lesson-meta">{lesson.location}</span>
                         </Link>

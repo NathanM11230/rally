@@ -1,0 +1,52 @@
+import { revalidatePath } from "next/cache";
+import { NextResponse } from "next/server";
+
+import { isLessonStatus } from "@/lib/lesson-status";
+import { updateLessonStatus } from "@/lib/lessons";
+
+type LessonStatusRouteContext = {
+  params: Promise<{
+    id: string;
+  }>;
+};
+
+export async function PATCH(request: Request, { params }: LessonStatusRouteContext) {
+  const { id } = await params;
+  const body = await readJson(request);
+
+  if (!body.ok) {
+    return NextResponse.json({ error: body.error }, { status: 400 });
+  }
+
+  const status = body.value.status;
+
+  if (!isLessonStatus(status)) {
+    return NextResponse.json({ error: "Invalid lesson status." }, { status: 400 });
+  }
+
+  try {
+    const lesson = await updateLessonStatus(id, status);
+
+    revalidatePath("/");
+    revalidatePath("/calendar");
+    revalidatePath("/pay-periods");
+    revalidatePath(`/lessons/${id}/edit`);
+
+    return NextResponse.json({ lesson });
+  } catch (error) {
+    return handleApiError(error);
+  }
+}
+
+async function readJson(request: Request) {
+  try {
+    return { ok: true as const, value: await request.json() };
+  } catch {
+    return { ok: false as const, error: "Request body must be valid JSON." };
+  }
+}
+
+function handleApiError(error: unknown) {
+  const message = error instanceof Error ? error.message : "Unexpected server error.";
+  return NextResponse.json({ error: message }, { status: 500 });
+}

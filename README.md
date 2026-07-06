@@ -25,8 +25,9 @@ prefilled text message and the pro sends it manually from their own SMS app.
 2. Create a Supabase project and run the SQL in `supabase/schema.sql`.
 
    If you already ran an earlier Rally schema, run this updated SQL again. It
-   adds `lesson_students`, migrates each existing lesson's current student into
-   that table, and keeps the existing `lessons` fields as compatibility values.
+   adds `lesson_students` and `lessons.status`, migrates each existing lesson's
+   current student into that table, and keeps the existing `lessons` fields as
+   compatibility values.
 
 3. Copy `.env.example` to `.env.local` and fill in:
 
@@ -63,6 +64,21 @@ Go to **Calendar** from the dashboard to see lessons in a monthly calendar view.
 Use the pro filters to show all lessons or only one pro's individual lessons.
 Each calendar lesson links back to the edit page for that reservation.
 
+## Pay Period Reports
+
+Rally tracks lesson work status so pros can compare completed lessons against
+what they were paid for. The club pay period is calculated in two-week windows
+starting Monday, July 6, 2026.
+
+Go to **Pay Periods** to:
+
+- move between previous, current, and next pay periods
+- filter the report by pro
+- mark lessons as scheduled, completed, cancelled, or no-show
+- print a clean report for the selected pay period
+
+This is only a reporting tool. Rally does not process payments.
+
 ## Multi-Student Reservations
 
 Each lesson can have one or many students. The lesson form lets you add multiple
@@ -74,6 +90,7 @@ The database stores:
 - `lessons.lesson_start_time`
 - `lessons.location`
 - `lessons.notes`
+- `lessons.status`
 - `lessons.reminder_sent`
 - `lesson_students.student_name`
 - `lesson_students.student_phone`
@@ -103,6 +120,7 @@ toll-free verification, and Vercel Cron complexity for the MVP.
 - `POST /api/lessons` creates a lesson with the selected pro and students.
 - `PATCH /api/lessons/:id` edits a lesson, selected pro, and students.
 - `DELETE /api/lessons/:id` deletes a lesson.
+- `PATCH /api/lessons/:id/status` updates scheduled/completed/cancelled/no-show status.
 - `POST /api/lessons/:id/reminder-sent` marks a manual reminder as sent.
 - `DELETE /api/lessons/:id/reminder-sent` resets a reminder to not sent.
 

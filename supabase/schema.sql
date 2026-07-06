@@ -3,6 +3,13 @@
 
 create extension if not exists pgcrypto;
 
+do $$
+begin
+  create type public.lesson_status as enum ('scheduled', 'completed', 'cancelled', 'no_show');
+exception
+  when duplicate_object then null;
+end $$;
+
 create table if not exists public.instructor_profiles (
   id uuid primary key default gen_random_uuid(),
   user_id uuid references auth.users(id) on delete cascade,
@@ -26,6 +33,7 @@ create table if not exists public.lessons (
   lesson_start_time timestamptz not null,
   location text not null,
   notes text,
+  status public.lesson_status not null default 'scheduled',
   reminder_sent boolean not null default false,
   reminder_sent_at timestamptz,
   created_at timestamptz not null default now(),
@@ -46,6 +54,7 @@ alter table public.lessons
   add column if not exists lesson_start_time timestamptz,
   add column if not exists location text,
   add column if not exists notes text,
+  add column if not exists status public.lesson_status default 'scheduled',
   add column if not exists reminder_sent boolean default false,
   add column if not exists reminder_sent_at timestamptz;
 
@@ -170,6 +179,8 @@ alter table public.lessons
   alter column instructor_profile_id set not null,
   alter column lesson_start_time set not null,
   alter column location set not null,
+  alter column status set default 'scheduled',
+  alter column status set not null,
   alter column reminder_sent set not null;
 
 do $$
@@ -206,6 +217,9 @@ create index if not exists lessons_reminder_sent_idx
 
 create index if not exists lessons_instructor_profile_id_idx
   on public.lessons (instructor_profile_id);
+
+create index if not exists lessons_status_idx
+  on public.lessons (status);
 
 create index if not exists lesson_students_lesson_id_idx
   on public.lesson_students (lesson_id, sort_order);

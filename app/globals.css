@@ -296,6 +296,13 @@ h2 {
   gap: 12px;
 }
 
+.lesson-card-pills {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
 .lesson-card-time {
   font-weight: 800;
   font-size: 0.92rem;
@@ -364,6 +371,46 @@ h2 {
 .status-not-sent {
   background: var(--pending-bg);
   color: var(--pending-text);
+}
+
+.status-scheduled {
+  background: var(--pending-bg);
+  color: var(--pending-text);
+}
+
+.status-completed {
+  background: var(--sent-bg);
+  color: var(--sent-text);
+}
+
+.status-cancelled {
+  background: #eef0f2;
+  color: #4d5960;
+}
+
+.status-no-show {
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+
+.status-select-label {
+  display: grid;
+  gap: 4px;
+  min-width: 150px;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.status-select {
+  min-height: 32px;
+  padding: 4px 8px;
+  font-size: 0.84rem;
+  font-weight: 700;
+  text-transform: none;
+  letter-spacing: 0;
 }
 
 /* ── Table ── */
@@ -632,6 +679,43 @@ select:focus {
   font-size: 0.82rem;
 }
 
+/* Pay periods */
+
+.pay-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 22px;
+}
+
+.pay-summary-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  padding: 14px;
+}
+
+.pay-summary-card span {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.pay-summary-card strong {
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
+.pay-lesson-card .lesson-card-actions {
+  justify-content: space-between;
+}
+
 /* ── Calendar ── */
 
 .calendar-controls {
@@ -838,6 +922,14 @@ select:focus {
     gap: 6px;
   }
 
+  .lesson-card-pills {
+    justify-content: flex-start;
+  }
+
+  .pay-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .calendar-grid {
     min-width: 560px;
   }
@@ -849,5 +941,28 @@ select:focus {
 
   .calendar-lesson {
     padding: 4px 6px;
+  }
+}
+
+@media print {
+  .app-header,
+  .print-hidden,
+  .lesson-card-actions {
+    display: none !important;
+  }
+
+  body {
+    background: #ffffff;
+  }
+
+  .page {
+    width: 100%;
+    padding: 0;
+  }
+
+  .panel,
+  .lesson-card,
+  .pay-summary-card {
+    break-inside: avoid;
   }
 }

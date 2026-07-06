@@ -35,6 +35,8 @@ export async function POST(request: Request) {
     const lesson = await createLesson(parsed.data.lesson as LessonInsert, parsed.data.students);
 
     revalidatePath("/");
+    revalidatePath("/calendar");
+    revalidatePath("/pay-periods");
     revalidatePath("/lessons/new");
     return NextResponse.json({ lesson }, { status: 201 });
   } catch (error) {

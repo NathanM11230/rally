@@ -2,6 +2,7 @@ import type { LessonStudentInput } from "@/lib/lesson-input";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
 import type {
   LessonInsert,
+  LessonStatus,
   LessonStudentInsert,
   LessonUpdate,
   LessonWithInstructorProfile,
@@ -143,6 +144,24 @@ export async function markLessonReminderSent(id: string, reminderSent: boolean) 
 
   if (!lesson) {
     throw new Error("Lesson reminder status was updated but could not be loaded.");
+  }
+
+  return lesson;
+}
+
+export async function updateLessonStatus(id: string, status: LessonStatus) {
+  const supabase = getSupabaseAdmin();
+
+  const { error } = await supabase.from("lessons").update({ status }).eq("id", id);
+
+  if (error) {
+    throw error;
+  }
+
+  const lesson = await getLesson(id);
+
+  if (!lesson) {
+    throw new Error("Lesson status was updated but could not be loaded.");
   }
 
   return lesson;

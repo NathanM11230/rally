@@ -3,9 +3,15 @@ import { notFound } from "next/navigation";
 
 import { DeleteLessonButton } from "@/components/DeleteLessonButton";
 import { LessonForm } from "@/components/LessonForm";
+import { LessonStatusSelect } from "@/components/LessonStatusSelect";
 import { ManualReminderActions } from "@/components/ManualReminderActions";
 import { formatLessonDateTime, getLessonTimeZone } from "@/lib/date";
 import { getInstructorProfiles } from "@/lib/instructor-profiles";
+import {
+  getLessonStatus,
+  getLessonStatusClass,
+  lessonStatusLabels,
+} from "@/lib/lesson-status";
 import { getLesson } from "@/lib/lessons";
 import { getLessonStudents } from "@/lib/manual-sms";
 
@@ -29,6 +35,8 @@ export default async function EditLessonPage({ params }: EditLessonPageProps) {
     notFound();
   }
 
+  const status = getLessonStatus(lesson);
+
   return (
     <main className="page">
       <header className="page-header">
@@ -37,6 +45,9 @@ export default async function EditLessonPage({ params }: EditLessonPageProps) {
           <div className="details-bar">
             <span className="detail-chip">{formatLessonDateTime(lesson, timeZone)}</span>
             <span className="detail-chip">{lesson.location}</span>
+            <span className={`status-pill ${getLessonStatusClass(status)}`}>
+              {lessonStatusLabels[status]}
+            </span>
             <span
               className={`status-pill ${lesson.reminder_sent ? "status-sent" : "status-not-sent"}`}
             >
@@ -58,6 +69,7 @@ export default async function EditLessonPage({ params }: EditLessonPageProps) {
           </p>
         </div>
         <div className="lesson-tool-actions">
+          <LessonStatusSelect lessonId={lesson.id} status={status} />
           <ManualReminderActions lesson={lesson} timeZone={timeZone} />
           <DeleteLessonButton lessonId={lesson.id} />
         </div>

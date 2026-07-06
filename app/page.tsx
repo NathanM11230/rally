@@ -8,6 +8,11 @@ import {
   getLessonTimeZone,
 } from "@/lib/date";
 import { getInstructorProfiles } from "@/lib/instructor-profiles";
+import {
+  getLessonStatus,
+  getLessonStatusClass,
+  lessonStatusLabels,
+} from "@/lib/lesson-status";
 import { getUpcomingLessons } from "@/lib/lessons";
 import { getLessonStudents } from "@/lib/manual-sms";
 import type { LessonWithInstructorProfile } from "@/types/database";
@@ -173,6 +178,7 @@ function LessonCard({
   showDate: boolean;
 }) {
   const students = getLessonStudents(lesson);
+  const status = getLessonStatus(lesson);
 
   return (
     <div className="lesson-card">
@@ -183,13 +189,18 @@ function LessonCard({
             : formatLessonTime(lesson, timeZone)}
           <span className="lesson-card-location">{lesson.location}</span>
         </div>
-        <span
-          className={`status-pill ${
-            lesson.reminder_sent ? "status-sent" : "status-not-sent"
-          }`}
-        >
-          {lesson.reminder_sent ? "Sent" : "Not sent"}
-        </span>
+        <div className="lesson-card-pills">
+          <span className={`status-pill ${getLessonStatusClass(status)}`}>
+            {lessonStatusLabels[status]}
+          </span>
+          <span
+            className={`status-pill ${
+              lesson.reminder_sent ? "status-sent" : "status-not-sent"
+            }`}
+          >
+            {lesson.reminder_sent ? "Sent" : "Not sent"}
+          </span>
+        </div>
       </div>
       <div className="lesson-card-body">
         <span className="lesson-card-students">
