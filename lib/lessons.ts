@@ -1,4 +1,5 @@
 import type { LessonStudentInput } from "@/lib/lesson-input";
+import { upsertContactsFromStudents } from "@/lib/contacts";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
 import type {
   LessonInstructorInsert,
@@ -100,6 +101,7 @@ export async function createLesson(
 
   await replaceLessonInstructors(data.id, instructorProfileIds);
   await replaceLessonStudents(data.id, students);
+  await upsertContactsFromStudents(students);
 
   const lesson = await getLesson(data.id);
 
@@ -126,6 +128,7 @@ export async function updateLesson(
 
   if (students) {
     await replaceLessonStudents(id, students);
+    await upsertContactsFromStudents(students);
   }
 
   if (instructorProfileIds) {

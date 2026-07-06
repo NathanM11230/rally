@@ -9,6 +9,36 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      contacts: {
+        Row: {
+          id: string;
+          full_name: string;
+          phone_number: string;
+          normalized_name: string;
+          normalized_phone: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          full_name: string;
+          phone_number: string;
+          normalized_name: string;
+          normalized_phone: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          full_name?: string;
+          phone_number?: string;
+          normalized_name?: string;
+          normalized_phone?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       instructor_profiles: {
         Row: {
           id: string;
@@ -206,6 +236,9 @@ export type Database = {
 
 export type InstructorProfile =
   Database["public"]["Tables"]["instructor_profiles"]["Row"];
+export type Contact = Database["public"]["Tables"]["contacts"]["Row"];
+export type ContactInsert = Database["public"]["Tables"]["contacts"]["Insert"];
+export type ContactUpdate = Database["public"]["Tables"]["contacts"]["Update"];
 export type InstructorProfileInsert =
   Database["public"]["Tables"]["instructor_profiles"]["Insert"];
 export type InstructorProfileUpdate =

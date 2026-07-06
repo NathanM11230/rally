@@ -37,9 +37,25 @@ create table if not exists public.instructor_profiles (
   updated_at timestamptz not null default now()
 );
 
+create table if not exists public.contacts (
+  id uuid primary key default gen_random_uuid(),
+  full_name text not null,
+  phone_number text not null,
+  normalized_name text not null,
+  normalized_phone text not null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 create unique index if not exists instructor_profiles_user_id_idx
   on public.instructor_profiles (user_id)
   where user_id is not null;
+
+create unique index if not exists contacts_normalized_phone_idx
+  on public.contacts (normalized_phone);
+
+create index if not exists contacts_normalized_name_idx
+  on public.contacts (normalized_name);
 
 -- Fresh projects get the final lessons shape here. Existing MVP databases are
 -- migrated by the alter/update/drop statements below.
@@ -301,6 +317,13 @@ before update on public.instructor_profiles
 for each row
 execute function public.set_updated_at();
 
+drop trigger if exists contacts_set_updated_at on public.contacts;
+
+create trigger contacts_set_updated_at
+before update on public.contacts
+for each row
+execute function public.set_updated_at();
+
 drop trigger if exists lessons_set_updated_at on public.lessons;
 
 create trigger lessons_set_updated_at
@@ -309,6 +332,7 @@ for each row
 execute function public.set_updated_at();
 
 alter table public.instructor_profiles enable row level security;
+alter table public.contacts enable row level security;
 alter table public.lessons enable row level security;
 alter table public.lesson_students enable row level security;
 alter table public.lesson_instructors enable row level security;

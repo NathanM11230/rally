@@ -1020,3 +1020,47 @@ select:focus {
     break-inside: avoid;
   }
 }
+
+.contact-field {
+  position: relative;
+}
+
+.contact-suggestions {
+  position: absolute;
+  right: 0;
+  left: 0;
+  z-index: 5;
+  display: grid;
+  gap: 4px;
+  margin-top: 4px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  padding: 6px;
+  box-shadow: 0 12px 28px rgba(24, 37, 29, 0.12);
+}
+
+.contact-suggestion {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text);
+  padding: 8px;
+  cursor: pointer;
+  font-weight: 800;
+  text-align: left;
+}
+
+.contact-suggestion:hover {
+  background: var(--surface-muted);
+}
+
+.contact-suggestion small {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+}

@@ -25,7 +25,7 @@ prefilled text message and the pro sends it manually from their own SMS app.
 2. Create a Supabase project and run the SQL in `supabase/schema.sql`.
 
    If you already ran an earlier Rally schema, run this updated SQL again. It
-   adds `lesson_students`, `lesson_instructors`, `lessons.status`,
+   adds `contacts`, `lesson_students`, `lesson_instructors`, `lessons.status`,
    `lessons.session_type`, and `lessons.event_title`, migrates each existing
    lesson's current student and pro into those tables, and keeps the existing
    `lessons` fields as compatibility values.
@@ -109,8 +109,23 @@ This is only a reporting tool. Rally does not process payments.
 Each lesson can have one or many students. The lesson form lets you add multiple
 student names and phone numbers to the same reservation.
 
+## Contacts
+
+Rally saves participant contacts automatically. When a pro saves a session with a
+name and phone number, Rally stores that contact club-wide. Later, typing the
+name in a student or participant field shows matching saved contacts; selecting
+one fills the phone number automatically.
+
+Names are used for search because pros usually remember names first. Phone
+numbers are normalized behind the scenes to avoid duplicate saved contacts when
+the same person is entered again.
+
 The database stores:
 
+- `contacts.full_name`
+- `contacts.phone_number`
+- `contacts.normalized_name`
+- `contacts.normalized_phone`
 - `lessons.instructor_profile_id`
 - `lessons.session_type`
 - `lessons.event_title`
@@ -144,6 +159,7 @@ toll-free verification, and Vercel Cron complexity for the MVP.
 - `GET /api/instructor-profile` lists club pros.
 - `POST /api/instructor-profile` adds a club pro.
 - `PATCH /api/instructor-profile/:id` edits a club pro.
+- `GET /api/contacts?q=name` searches saved contacts by name.
 - `GET /api/lessons` lists upcoming lessons.
 - `POST /api/lessons` creates a session with the selected pros and participants.
 - `PATCH /api/lessons/:id` edits a session, selected pros, and participants.

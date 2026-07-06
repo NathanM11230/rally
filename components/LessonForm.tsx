@@ -7,6 +7,7 @@ import { FormEvent, useState } from "react";
 import { getLessonFormDateTime } from "@/lib/date";
 import { SESSION_TYPES, sessionTypeLabels } from "@/lib/session-types";
 import type {
+  Contact,
   InstructorProfile,
   LessonWithInstructorProfile,
   SessionType,
@@ -49,6 +50,10 @@ export function LessonForm(props: LessonFormProps) {
   const [selectedInstructorIds, setSelectedInstructorIds] = useState<string[]>(() =>
     getInitialInstructorIds(lesson),
   );
+  const [activeContactRowId, setActiveContactRowId] = useState<string | null>(null);
+  const [contactSuggestions, setContactSuggestions] = useState<
+    Record<string, Contact[]>
+  >({});
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -147,6 +152,52 @@ export function LessonForm(props: LessonFormProps) {
     );
   }
 
+  async function handleStudentNameChange(id: string, value: string) {
+    updateStudent(id, "student_name", value);
+    setActiveContactRowId(id);
+
+    const query = value.trim();
+
+    if (query.length < 2) {
+      setContactSuggestions((currentSuggestions) => ({
+        ...currentSuggestions,
+        [id]: [],
+      }));
+      return;
+    }
+
+    const response = await fetch(`/api/contacts?q=${encodeURIComponent(query)}`);
+
+    if (!response.ok) {
+      return;
+    }
+
+    const body = (await response.json()) as { contacts?: Contact[] };
+    setContactSuggestions((currentSuggestions) => ({
+      ...currentSuggestions,
+      [id]: body.contacts ?? [],
+    }));
+  }
+
+  function applyContact(id: string, contact: Contact) {
+    setStudents((currentStudents) =>
+      currentStudents.map((student) =>
+        student.id === id
+          ? {
+              ...student,
+              student_name: contact.full_name,
+              student_phone: contact.phone_number,
+            }
+          : student,
+      ),
+    );
+    setContactSuggestions((currentSuggestions) => ({
+      ...currentSuggestions,
+      [id]: [],
+    }));
+    setActiveContactRowId(null);
+  }
+
   return (
     <form className="form" onSubmit={handleSubmit}>
       {error ? <div className="form-error">{error}</div> : null}
@@ -220,12 +271,16 @@ export function LessonForm(props: LessonFormProps) {
                   Remove
                 </button>
               </div>
-              <Field
+              <ContactNameField
                 label="Name"
                 name={`student_name_${student.id}`}
                 value={student.student_name}
                 required={sessionType === "lesson"}
-                onChange={(value) => updateStudent(student.id, "student_name", value)}
+                suggestions={contactSuggestions[student.id] ?? []}
+                showSuggestions={activeContactRowId === student.id}
+                onChange={(value) => handleStudentNameChange(student.id, value)}
+                onFocus={() => setActiveContactRowId(student.id)}
+                onSelectContact={(contact) => applyContact(student.id, contact)}
               />
               <Field
                 label="Phone"
@@ -297,6 +352,64 @@ type FieldProps = {
   required?: boolean;
   onChange?: (value: string) => void;
 };
+
+type ContactNameFieldProps = {
+  label: string;
+  name: string;
+  value: string;
+  required: boolean;
+  suggestions: Contact[];
+  showSuggestions: boolean;
+  onChange: (value: string) => void;
+  onFocus: () => void;
+  onSelectContact: (contact: Contact) => void;
+};
+
+function ContactNameField({
+  label,
+  name,
+  value,
+  required,
+  suggestions,
+  showSuggestions,
+  onChange,
+  onFocus,
+  onSelectContact,
+}: ContactNameFieldProps) {
+  return (
+    <div className="contact-field">
+      <label className="field">
+        {label}
+        <input
+          required={required}
+          name={name}
+          type="text"
+          value={value}
+          autoComplete="off"
+          onFocus={onFocus}
+          onChange={(event) => onChange(event.target.value)}
+        />
+      </label>
+
+      {showSuggestions && suggestions.length > 0 ? (
+        <div className="contact-suggestions">
+          {suggestions.map((contact) => (
+            <button
+              className="contact-suggestion"
+              key={contact.id}
+              type="button"
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={() => onSelectContact(contact)}
+            >
+              <span>{contact.full_name}</span>
+              <small>{contact.phone_number}</small>
+            </button>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
 
 function Field({
   label,
