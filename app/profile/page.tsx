@@ -1,14 +1,16 @@
-import { InstructorProfilesManager } from "@/components/InstructorProfilesManager";
-import { getInstructorProfiles } from "@/lib/instructor-profiles";
+import { MyProfileForm } from "@/components/MyProfileForm";
+import { requireUser } from "@/lib/auth";
+import { getInstructorProfileByUserId } from "@/lib/instructor-profiles";
 
 export const dynamic = "force-dynamic";
 
 export default async function ProfilePage() {
-  let profiles = null;
+  const user = await requireUser();
+  let profile = null;
   let canLoadProfile = true;
 
   try {
-    profiles = await getInstructorProfiles();
+    profile = await getInstructorProfileByUserId(user.id);
   } catch {
     canLoadProfile = false;
   }
@@ -34,16 +36,16 @@ export default async function ProfilePage() {
     <main className="page">
       <header className="page-header">
         <div>
-          <h1>Club pros</h1>
+          <h1>My profile</h1>
           <p className="page-subtitle">
-            Add each pro once. Lessons will use their name and phone for
-            reminders.
+            Rally uses this name and phone number when you are assigned to a
+            session reminder.
           </p>
         </div>
       </header>
 
       <section className="panel">
-        <InstructorProfilesManager profiles={profiles ?? []} />
+        <MyProfileForm profile={profile} />
       </section>
     </main>
   );

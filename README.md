@@ -12,6 +12,7 @@ prefilled text message and the pro sends it manually from their own SMS app.
 - Next.js App Router
 - TypeScript
 - Supabase Postgres
+- Supabase Auth for pro logins
 - Manual `sms:` links for reminder texts
 
 ## Setup
@@ -26,21 +27,30 @@ prefilled text message and the pro sends it manually from their own SMS app.
 
    If you already ran an earlier Rally schema, run this updated SQL again. It
    adds `contacts`, `lesson_students`, `lesson_instructors`, `lessons.status`,
-   `lessons.session_type`, and `lessons.event_title`, migrates each existing
-   lesson's current student and pro into those tables, and keeps the existing
-   `lessons` fields as compatibility values.
+   `lessons.session_type`, `lessons.event_title`, and
+   `instructor_profiles.user_id`, migrates each existing lesson's current
+   student and pro into those tables, and keeps the existing `lessons` fields
+   as compatibility values.
 
-3. Copy `.env.example` to `.env.local` and fill in:
+3. In Supabase, enable email/password signups under **Authentication**.
+
+   This is only for pro login. Rally still does not send email reminders. For
+   the easiest club MVP, you can turn email confirmations off, or leave them on
+   and have each pro confirm their email before logging in.
+
+4. Copy `.env.example` to `.env.local` and fill in:
 
    ```bash
    SUPABASE_URL=
    SUPABASE_SERVICE_ROLE_KEY=
+   SUPABASE_ANON_KEY=
    LESSON_TIME_ZONE=America/New_York
    ```
 
    Keep `SUPABASE_SERVICE_ROLE_KEY` private. It is used only from server code.
+   `SUPABASE_ANON_KEY` is used for Supabase Auth login and signup.
 
-4. Run the app locally:
+5. Run the app locally:
 
    ```bash
    npm run dev
@@ -48,22 +58,32 @@ prefilled text message and the pro sends it manually from their own SMS app.
 
    On some Windows PowerShell setups, use `npm.cmd run dev`.
 
-5. Open `http://localhost:3000`.
+6. Open `http://localhost:3000`.
 
-## Club Pros
+## Pro Logins And Profiles
 
-Rally stores each pro's name and phone number in `instructor_profiles`. In this
-club MVP, there is no login system yet; the roster is shared by the club.
+Each pro creates their own Rally login with Supabase Auth. Signup asks for the
+pro's full name and phone number, then saves that information in
+`instructor_profiles`.
 
-Go to **Manage pros** to add pros at your club. When creating or editing a
-session, choose one or more pros for that reservation. Rally uses the selected
-pros' names and phone numbers when preparing manual reminder texts.
+If a matching unclaimed pro profile already exists, Rally connects the new login
+to that profile by matching phone number first, then exact full name. Otherwise,
+Rally creates a new profile for that user.
+
+The lesson form does not ask for the logged-in pro's phone number every time.
+Rally reuses the phone number saved in that pro's profile. A pro can still assign
+other saved pros to the same reservation, and any assigned pro can edit the
+whole session.
+
+Dashboard, calendar, and pay-period reports only show sessions assigned to the
+logged-in pro. Contacts remain shared club-wide so everyone can reuse saved
+student names and phone numbers.
 
 ## Calendar
 
 Go to **Calendar** from the dashboard to see sessions in a monthly calendar view.
-Use the pro filters to show all sessions or only one pro's individual sessions.
-Each calendar item links back to the edit page for that reservation.
+The calendar shows only the logged-in pro's assigned sessions. Each calendar
+item links back to the edit page for that reservation.
 
 ## Session Types
 
@@ -98,7 +118,7 @@ starting Monday, July 6, 2026.
 Go to **Pay Periods** to:
 
 - move between previous, current, and next pay periods
-- filter the report by pro
+- review only the logged-in pro's assigned sessions
 - mark lessons as scheduled, completed, cancelled, or no-show
 - print a clean report for the selected pay period
 
@@ -156,17 +176,23 @@ toll-free verification, and Vercel Cron complexity for the MVP.
 
 ## API Routes
 
-- `GET /api/instructor-profile` lists club pros.
-- `POST /api/instructor-profile` adds a club pro.
-- `PATCH /api/instructor-profile/:id` edits a club pro.
-- `GET /api/contacts?q=name` searches saved contacts by name.
-- `GET /api/lessons` lists upcoming lessons.
+- `POST /api/auth/signup` creates a pro login and profile.
+- `POST /api/auth/login` logs a pro in.
+- `POST /api/auth/logout` logs a pro out.
+- `GET /api/instructor-profile` lists saved pros for assignment.
+- `POST /api/instructor-profile` creates or claims the logged-in pro's profile.
+- `PATCH /api/instructor-profile/:id` edits the logged-in pro's own profile.
+- `GET /api/contacts?q=name` searches shared saved contacts by name.
+- `GET /api/lessons` lists the logged-in pro's upcoming assigned lessons.
 - `POST /api/lessons` creates a session with the selected pros and participants.
 - `PATCH /api/lessons/:id` edits a session, selected pros, and participants.
 - `DELETE /api/lessons/:id` deletes a lesson.
 - `PATCH /api/lessons/:id/status` updates scheduled/completed/cancelled/no-show status.
 - `POST /api/lessons/:id/reminder-sent` marks a manual reminder as sent.
 - `DELETE /api/lessons/:id/reminder-sent` resets a reminder to not sent.
+
+Lesson edit, delete, status, and reminder-sent routes require the logged-in pro
+to be assigned to that session.
 
 ## Deploying
 
@@ -175,7 +201,11 @@ Set these Vercel environment variables:
 ```bash
 SUPABASE_URL=
 SUPABASE_SERVICE_ROLE_KEY=
+SUPABASE_ANON_KEY=
 LESSON_TIME_ZONE=America/New_York
 ```
 
 Redeploy after changing environment variables.
+
+If Supabase email confirmations are on, set the Supabase Auth site URL to your
+Vercel domain so confirmation links point back to Rally.

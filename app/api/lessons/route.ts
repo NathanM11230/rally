@@ -1,13 +1,20 @@
 import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 
-import { createLesson, getUpcomingLessons } from "@/lib/lessons";
+import { getApiAuthenticatedProfile } from "@/lib/api-auth";
 import { parseLessonInput } from "@/lib/lesson-input";
+import { createLesson, getUpcomingLessonsForInstructor } from "@/lib/lessons";
 import type { LessonInsert } from "@/types/database";
 
 export async function GET() {
   try {
-    const lessons = await getUpcomingLessons();
+    const authResult = await getApiAuthenticatedProfile();
+
+    if (!authResult.ok) {
+      return authResult.response;
+    }
+
+    const lessons = await getUpcomingLessonsForInstructor(authResult.auth.profile.id);
     return NextResponse.json({ lessons });
   } catch (error) {
     return handleApiError(error);
@@ -32,10 +39,24 @@ export async function POST(request: Request) {
   }
 
   try {
-    const lesson = await createLesson(
-      parsed.data.lesson as LessonInsert,
-      parsed.data.students,
+    const authResult = await getApiAuthenticatedProfile();
+
+    if (!authResult.ok) {
+      return authResult.response;
+    }
+
+    const instructorProfileIds = ensureProfileIsAssigned(
       parsed.data.instructorProfileIds,
+      authResult.auth.profile.id,
+    );
+    const lessonInput = {
+      ...parsed.data.lesson,
+      instructor_profile_id: instructorProfileIds[0],
+    } as LessonInsert;
+    const lesson = await createLesson(
+      lessonInput,
+      parsed.data.students,
+      instructorProfileIds,
     );
 
     revalidatePath("/");
@@ -59,4 +80,8 @@ async function readJson(request: Request) {
 function handleApiError(error: unknown) {
   const message = error instanceof Error ? error.message : "Unexpected server error.";
   return NextResponse.json({ error: message }, { status: 500 });
+}
+
+function ensureProfileIsAssigned(instructorProfileIds: string[], profileId: string) {
+  return Array.from(new Set([profileId, ...instructorProfileIds]));
 }

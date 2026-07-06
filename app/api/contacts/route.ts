@@ -1,12 +1,18 @@
 import { NextResponse } from "next/server";
 
+import { getApiAuthenticatedProfile } from "@/lib/api-auth";
 import { searchContacts } from "@/lib/contacts";
 
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const query = searchParams.get("q") ?? "";
-
   try {
+    const authResult = await getApiAuthenticatedProfile();
+
+    if (!authResult.ok) {
+      return authResult.response;
+    }
+
+    const { searchParams } = new URL(request.url);
+    const query = searchParams.get("q") ?? "";
     const contacts = await searchContacts(query);
 
     return NextResponse.json({ contacts });

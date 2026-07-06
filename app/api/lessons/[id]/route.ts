@@ -1,8 +1,12 @@
 import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 
-import { deleteLesson, getLesson, updateLesson } from "@/lib/lessons";
+import {
+  getApiAuthenticatedProfile,
+  getAuthorizedLessonForProfile,
+} from "@/lib/api-auth";
 import { parseLessonInput } from "@/lib/lesson-input";
+import { deleteLesson, updateLesson } from "@/lib/lessons";
 
 type LessonRouteContext = {
   params: Promise<{
@@ -14,13 +18,22 @@ export async function GET(_request: Request, { params }: LessonRouteContext) {
   const { id } = await params;
 
   try {
-    const lesson = await getLesson(id);
+    const authResult = await getApiAuthenticatedProfile();
 
-    if (!lesson) {
-      return NextResponse.json({ error: "Lesson not found." }, { status: 404 });
+    if (!authResult.ok) {
+      return authResult.response;
     }
 
-    return NextResponse.json({ lesson });
+    const lessonResult = await getAuthorizedLessonForProfile(
+      id,
+      authResult.auth.profile.id,
+    );
+
+    if (!lessonResult.ok) {
+      return lessonResult.response;
+    }
+
+    return NextResponse.json({ lesson: lessonResult.lesson });
   } catch (error) {
     return handleApiError(error);
   }
@@ -45,11 +58,33 @@ export async function PATCH(request: Request, { params }: LessonRouteContext) {
   }
 
   try {
+    const authResult = await getApiAuthenticatedProfile();
+
+    if (!authResult.ok) {
+      return authResult.response;
+    }
+
+    const lessonResult = await getAuthorizedLessonForProfile(
+      id,
+      authResult.auth.profile.id,
+    );
+
+    if (!lessonResult.ok) {
+      return lessonResult.response;
+    }
+
+    const instructorProfileIds = ensureProfileIsAssigned(
+      parsed.data.instructorProfileIds,
+      authResult.auth.profile.id,
+    );
     const lesson = await updateLesson(
       id,
-      parsed.data.lesson,
+      {
+        ...parsed.data.lesson,
+        instructor_profile_id: instructorProfileIds[0],
+      },
       parsed.data.students,
-      parsed.data.instructorProfileIds,
+      instructorProfileIds,
     );
     revalidatePath("/");
     revalidatePath("/calendar");
@@ -65,6 +100,21 @@ export async function DELETE(_request: Request, { params }: LessonRouteContext) 
   const { id } = await params;
 
   try {
+    const authResult = await getApiAuthenticatedProfile();
+
+    if (!authResult.ok) {
+      return authResult.response;
+    }
+
+    const lessonResult = await getAuthorizedLessonForProfile(
+      id,
+      authResult.auth.profile.id,
+    );
+
+    if (!lessonResult.ok) {
+      return lessonResult.response;
+    }
+
     await deleteLesson(id);
     revalidatePath("/");
     revalidatePath("/calendar");
@@ -86,4 +136,8 @@ async function readJson(request: Request) {
 function handleApiError(error: unknown) {
   const message = error instanceof Error ? error.message : "Unexpected server error.";
   return NextResponse.json({ error: message }, { status: 500 });
+}
+
+function ensureProfileIsAssigned(instructorProfileIds: string[], profileId: string) {
+  return Array.from(new Set([profileId, ...instructorProfileIds]));
 }

@@ -2,9 +2,9 @@ import Link from "next/link";
 
 import { LessonStatusSelect } from "@/components/LessonStatusSelect";
 import { PrintButton } from "@/components/PrintButton";
+import { requireCurrentProfile } from "@/lib/auth";
 import { formatLessonDateTime, getLessonTimeZone } from "@/lib/date";
-import { getInstructorProfiles } from "@/lib/instructor-profiles";
-import { getLessonInstructorNames, getLessonInstructors } from "@/lib/lesson-instructors";
+import { getLessonInstructorNames } from "@/lib/lesson-instructors";
 import {
   getLessonStatus,
   getLessonStatusClass,
@@ -22,25 +22,19 @@ import {
   type PayPeriod,
 } from "@/lib/pay-periods";
 import { getSessionLabel } from "@/lib/session-types";
-import type { InstructorProfile, LessonStatus, LessonWithInstructorProfile } from "@/types/database";
+import type { LessonStatus, LessonWithInstructorProfile } from "@/types/database";
 
 type PayPeriodsPageProps = {
   searchParams: Promise<{
     period?: string;
-    pro?: string;
   }>;
-};
-
-type LessonGroup = {
-  id: string;
-  name: string;
-  lessons: LessonWithInstructorProfile[];
 };
 
 export const dynamic = "force-dynamic";
 
 export default async function PayPeriodsPage({ searchParams }: PayPeriodsPageProps) {
   const params = await searchParams;
+  const { profile } = await requireCurrentProfile();
   const timeZone = getLessonTimeZone();
   const selectedPeriod = getPayPeriodFromStartDate(params.period, timeZone);
   const currentPeriod = getCurrentPayPeriod(timeZone);
@@ -49,24 +43,18 @@ export default async function PayPeriodsPage({ searchParams }: PayPeriodsPagePro
   const { start, end } = getPayPeriodQueryRange(selectedPeriod, timeZone);
 
   let lessons: LessonWithInstructorProfile[] | null = null;
-  let profiles: InstructorProfile[] | null = null;
-  let selectedProId = "";
 
   try {
-    profiles = await getInstructorProfiles();
-    selectedProId =
-      params.pro && profiles.some((profile) => profile.id === params.pro) ? params.pro : "";
     lessons = await getLessonsForCalendar({
       start,
       end,
-      instructorProfileId: selectedProId || undefined,
+      instructorProfileId: profile.id,
     });
   } catch {
     lessons = null;
-    profiles = null;
   }
 
-  if (!lessons || !profiles) {
+  if (!lessons) {
     return (
       <main className="page">
         <header className="page-header">
@@ -82,9 +70,7 @@ export default async function PayPeriodsPage({ searchParams }: PayPeriodsPagePro
     );
   }
 
-  const selectedProfile = profiles.find((profile) => profile.id === selectedProId);
   const statusCounts = getStatusCounts(lessons);
-  const groups = getLessonGroups(lessons, profiles, selectedProId);
 
   return (
     <main className="page">
@@ -92,8 +78,7 @@ export default async function PayPeriodsPage({ searchParams }: PayPeriodsPagePro
         <div>
           <h1>Pay period</h1>
           <p className="page-subtitle">
-            {formatPayPeriodLabel(selectedPeriod)}
-            {selectedProfile ? ` - ${selectedProfile.full_name}` : " - All pros"}
+            {formatPayPeriodLabel(selectedPeriod)} - {profile.full_name}
           </p>
         </div>
         <div className="button-row print-hidden">
@@ -108,45 +93,23 @@ export default async function PayPeriodsPage({ searchParams }: PayPeriodsPagePro
         <div className="button-row">
           <Link
             className="button-secondary"
-            href={buildPayPeriodHref(previousPeriod, selectedProId)}
+            href={buildPayPeriodHref(previousPeriod)}
           >
             Previous
           </Link>
           <Link
             className="button-secondary"
-            href={buildPayPeriodHref(currentPeriod, selectedProId)}
+            href={buildPayPeriodHref(currentPeriod)}
           >
             Current
           </Link>
           <Link
             className="button-secondary"
-            href={buildPayPeriodHref(nextPeriod, selectedProId)}
+            href={buildPayPeriodHref(nextPeriod)}
           >
             Next
           </Link>
         </div>
-
-        {profiles.length > 0 ? (
-          <div className="filter-row" aria-label="Pay period pro filters">
-            <Link
-              className={`filter-chip ${!selectedProId ? "filter-chip-active" : ""}`}
-              href={buildPayPeriodHref(selectedPeriod, "")}
-            >
-              All pros
-            </Link>
-            {profiles.map((profile) => (
-              <Link
-                className={`filter-chip ${
-                  selectedProId === profile.id ? "filter-chip-active" : ""
-                }`}
-                href={buildPayPeriodHref(selectedPeriod, profile.id)}
-                key={profile.id}
-              >
-                {profile.full_name}
-              </Link>
-            ))}
-          </div>
-        ) : null}
       </section>
 
       <section className="pay-summary" aria-label="Pay period status summary">
@@ -156,37 +119,24 @@ export default async function PayPeriodsPage({ searchParams }: PayPeriodsPagePro
         <SummaryCard label="No-show" value={statusCounts.no_show} />
       </section>
 
-      {profiles.length === 0 ? (
-        <section className="panel">
-          <div className="empty-state">
-            Add your club pros first, then Rally can build pay period reports.
-            <div className="button-row section-actions">
-              <Link className="button" href="/profile">
-                Add club pros
-              </Link>
-            </div>
-          </div>
-        </section>
-      ) : lessons.length === 0 ? (
+      {lessons.length === 0 ? (
         <section className="panel">
           <div className="empty-state">
             No lessons in this pay period.
           </div>
         </section>
       ) : (
-        groups.map((group) => (
-          <section className="dash-section" key={group.id}>
-            <h2 className="section-title">
-              {group.name} - {group.lessons.length}{" "}
-              {group.lessons.length === 1 ? "lesson" : "lessons"}
-            </h2>
-            <div className="lesson-cards">
-              {group.lessons.map((lesson) => (
-                <PayPeriodLessonCard key={lesson.id} lesson={lesson} timeZone={timeZone} />
-              ))}
-            </div>
-          </section>
-        ))
+        <section className="dash-section">
+          <h2 className="section-title">
+            {profile.full_name} - {lessons.length}{" "}
+            {lessons.length === 1 ? "lesson" : "lessons"}
+          </h2>
+          <div className="lesson-cards">
+            {lessons.map((lesson) => (
+              <PayPeriodLessonCard key={lesson.id} lesson={lesson} timeZone={timeZone} />
+            ))}
+          </div>
+        </section>
       )}
     </main>
   );
@@ -248,47 +198,6 @@ function SummaryCard({ label, value }: { label: string; value: number }) {
   );
 }
 
-function getLessonGroups(
-  lessons: LessonWithInstructorProfile[],
-  profiles: InstructorProfile[],
-  selectedProId: string,
-): LessonGroup[] {
-  if (selectedProId) {
-    const profile = profiles.find((item) => item.id === selectedProId);
-
-    return [
-      {
-        id: selectedProId,
-        name: profile?.full_name ?? "Selected pro",
-        lessons,
-      },
-    ];
-  }
-
-  const groups = profiles
-    .map((profile) => ({
-      id: profile.id,
-      name: profile.full_name,
-      lessons: lessons.filter((lesson) =>
-        getLessonInstructors(lesson).some((instructor) => instructor.id === profile.id),
-      ),
-    }))
-    .filter((group) => group.lessons.length > 0);
-  const missingProfileLessons = lessons.filter(
-    (lesson) => getLessonInstructors(lesson).length === 0,
-  );
-
-  if (missingProfileLessons.length > 0) {
-    groups.push({
-      id: "missing-profile",
-      name: "Missing pro",
-      lessons: missingProfileLessons,
-    });
-  }
-
-  return groups;
-}
-
 function getStatusCounts(lessons: LessonWithInstructorProfile[]) {
   return LESSON_STATUSES.reduce<Record<LessonStatus, number>>(
     (counts, status) => ({
@@ -304,12 +213,8 @@ function getStatusCounts(lessons: LessonWithInstructorProfile[]) {
   );
 }
 
-function buildPayPeriodHref(period: PayPeriod, proId: string) {
+function buildPayPeriodHref(period: PayPeriod) {
   const params = new URLSearchParams({ period: period.startDateKey });
-
-  if (proId) {
-    params.set("pro", proId);
-  }
 
   return `/pay-periods?${params.toString()}`;
 }

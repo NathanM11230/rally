@@ -1,6 +1,7 @@
 import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 
+import { getApiAuthenticatedProfile } from "@/lib/api-auth";
 import { updateInstructorProfile } from "@/lib/instructor-profiles";
 
 type InstructorProfileRouteContext = {
@@ -24,6 +25,19 @@ export async function PATCH(request: Request, { params }: InstructorProfileRoute
   }
 
   try {
+    const authResult = await getApiAuthenticatedProfile();
+
+    if (!authResult.ok) {
+      return authResult.response;
+    }
+
+    if (authResult.auth.profile.id !== id) {
+      return NextResponse.json(
+        { error: "You can only edit your own profile." },
+        { status: 403 },
+      );
+    }
+
     const profile = await updateInstructorProfile(id, parsed.data);
     revalidatePath("/");
     revalidatePath("/profile");

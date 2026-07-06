@@ -35,6 +35,14 @@ export async function getUpcomingLessons() {
   return normalizeLessons(data as LessonWithInstructorProfile[]);
 }
 
+export async function getUpcomingLessonsForInstructor(instructorProfileId: string) {
+  const lessons = await getUpcomingLessons();
+
+  return lessons.filter((lesson) =>
+    isLessonAssignedToInstructor(lesson, instructorProfileId),
+  );
+}
+
 export async function getLessonsForCalendar({
   start,
   end,
@@ -62,7 +70,7 @@ export async function getLessonsForCalendar({
   }
 
   return lessons.filter((lesson) =>
-    lessonHasInstructor(lesson, instructorProfileId),
+    isLessonAssignedToInstructor(lesson, instructorProfileId),
   );
 }
 
@@ -273,7 +281,10 @@ function normalizeLesson(lesson: LessonWithInstructorProfile) {
   };
 }
 
-function lessonHasInstructor(lesson: LessonWithInstructorProfile, instructorProfileId: string) {
+export function isLessonAssignedToInstructor(
+  lesson: LessonWithInstructorProfile,
+  instructorProfileId: string,
+) {
   return (
     lesson.instructor_profile_id === instructorProfileId ||
     (lesson.lesson_instructors ?? []).some(

@@ -1,6 +1,10 @@
 import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 
+import {
+  getApiAuthenticatedProfile,
+  getAuthorizedLessonForProfile,
+} from "@/lib/api-auth";
 import { isLessonStatus } from "@/lib/lesson-status";
 import { updateLessonStatus } from "@/lib/lessons";
 
@@ -25,6 +29,21 @@ export async function PATCH(request: Request, { params }: LessonStatusRouteConte
   }
 
   try {
+    const authResult = await getApiAuthenticatedProfile();
+
+    if (!authResult.ok) {
+      return authResult.response;
+    }
+
+    const lessonResult = await getAuthorizedLessonForProfile(
+      id,
+      authResult.auth.profile.id,
+    );
+
+    if (!lessonResult.ok) {
+      return lessonResult.response;
+    }
+
     const lesson = await updateLessonStatus(id, status);
 
     revalidatePath("/");

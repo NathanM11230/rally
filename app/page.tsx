@@ -1,20 +1,20 @@
 import Link from "next/link";
 
 import { ManualReminderActions } from "@/components/ManualReminderActions";
+import { requireCurrentProfile } from "@/lib/auth";
 import {
   formatDateKeyInTimeZone,
   formatLessonDateTime,
   formatLessonTime,
   getLessonTimeZone,
 } from "@/lib/date";
-import { getInstructorProfiles } from "@/lib/instructor-profiles";
 import { getLessonInstructorNames } from "@/lib/lesson-instructors";
 import {
   getLessonStatus,
   getLessonStatusClass,
   lessonStatusLabels,
 } from "@/lib/lesson-status";
-import { getUpcomingLessons } from "@/lib/lessons";
+import { getUpcomingLessonsForInstructor } from "@/lib/lessons";
 import { getLessonStudents } from "@/lib/manual-sms";
 import { getSessionLabel } from "@/lib/session-types";
 import type { LessonWithInstructorProfile } from "@/types/database";
@@ -22,21 +22,17 @@ import type { LessonWithInstructorProfile } from "@/types/database";
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
+  const { profile } = await requireCurrentProfile();
   let lessons = null;
-  let profiles = null;
   const timeZone = getLessonTimeZone();
 
   try {
-    [lessons, profiles] = await Promise.all([
-      getUpcomingLessons(),
-      getInstructorProfiles(),
-    ]);
+    lessons = await getUpcomingLessonsForInstructor(profile.id);
   } catch {
     lessons = null;
-    profiles = null;
   }
 
-  if (!lessons || !profiles) {
+  if (!lessons) {
     return (
       <main className="page">
         <header className="page-header">
@@ -51,8 +47,9 @@ export default async function DashboardPage() {
         <section className="panel">
           <div className="setup-note">
             Set <code>SUPABASE_URL</code> and{" "}
-            <code>SUPABASE_SERVICE_ROLE_KEY</code> in <code>.env.local</code>,
-            then restart the dev server.
+            <code>SUPABASE_SERVICE_ROLE_KEY</code> and{" "}
+            <code>SUPABASE_ANON_KEY</code> in <code>.env.local</code>, then
+            restart the dev server.
           </div>
         </section>
       </main>
@@ -86,29 +83,12 @@ export default async function DashboardPage() {
           <h1>Dashboard</h1>
           <p className="page-subtitle">{todayFormatted}</p>
         </div>
-        {profiles.length === 0 ? (
-          <Link className="button" href="/profile">
-            Add club pros
-          </Link>
-        ) : null}
       </header>
 
-      {profiles.length === 0 ? (
+      {lessons.length === 0 ? (
         <section className="panel">
           <div className="empty-state">
-            Add at least one club pro before creating lessons. Rally uses the
-            pro&apos;s name and phone number to prepare reminder texts.
-            <div className="button-row section-actions">
-              <Link className="button" href="/profile">
-                Add club pros
-              </Link>
-            </div>
-          </div>
-        </section>
-      ) : lessons.length === 0 ? (
-        <section className="panel">
-          <div className="empty-state">
-            No upcoming sessions. Create your first session to start scheduling
+            No upcoming sessions assigned to you. Create your first session to start scheduling
             reminders.
             <div className="button-row section-actions">
               <Link className="button" href="/lessons/new">

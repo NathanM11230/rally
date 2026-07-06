@@ -113,6 +113,10 @@ select {
   color: var(--accent-strong);
 }
 
+.nav-logout {
+  min-height: 34px;
+}
+
 /* ── Page layout ── */
 
 .page {
@@ -545,6 +549,14 @@ select:focus {
   font-size: 0.88rem;
 }
 
+.form-success {
+  border-radius: 8px;
+  background: var(--sent-bg);
+  color: var(--sent-text);
+  padding: 10px 14px;
+  font-size: 0.88rem;
+}
+
 .form-actions {
   display: flex;
   flex-wrap: wrap;
@@ -931,6 +943,10 @@ select:focus {
     order: 2;
   }
 
+  .nav-logout {
+    order: 2;
+  }
+
   .page {
     width: calc(100% - 24px);
     padding: 20px 0 32px;
@@ -995,6 +1011,15 @@ select:focus {
 
   .calendar-lesson {
     padding: 4px 6px;
+  }
+
+  .auth-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .auth-copy {
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
   }
 }
 
@@ -1063,4 +1088,29 @@ select:focus {
   color: var(--muted);
   font-size: 0.78rem;
   font-weight: 700;
+}
+
+.auth-page {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  padding: 24px;
+}
+
+.auth-panel {
+  display: grid;
+  width: min(720px, 100%);
+  grid-template-columns: 0.9fr 1.1fr;
+}
+
+.auth-copy {
+  display: grid;
+  align-content: center;
+  gap: 10px;
+  border-right: 1px solid var(--border);
+  padding: 28px;
+}
+
+.auth-form {
+  padding: 28px;
 }

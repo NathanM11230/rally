@@ -1,14 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 
 const navItems = [
   { href: "/", label: "Dashboard" },
   { href: "/calendar", label: "Calendar" },
   { href: "/pay-periods", label: "Pay Periods" },
-  { href: "/profile", label: "Pros" },
+  { href: "/profile", label: "Profile" },
 ];
 
 type AppShellProps = {
@@ -17,6 +17,18 @@ type AppShellProps = {
 
 export function AppShell({ children }: AppShellProps) {
   const pathname = usePathname();
+  const router = useRouter();
+  const isAuthPage = pathname === "/login" || pathname === "/signup";
+
+  async function handleLogout() {
+    await fetch("/api/auth/logout", { method: "POST" });
+    router.push("/login");
+    router.refresh();
+  }
+
+  if (isAuthPage) {
+    return <>{children}</>;
+  }
 
   return (
     <>
@@ -47,6 +59,9 @@ export function AppShell({ children }: AppShellProps) {
         <Link className="button nav-cta" href="/lessons/new">
           New session
         </Link>
+        <button className="button-secondary nav-logout" type="button" onClick={handleLogout}>
+          Log out
+        </button>
       </header>
 
       {children}

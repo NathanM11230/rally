@@ -5,6 +5,7 @@ import { DeleteLessonButton } from "@/components/DeleteLessonButton";
 import { LessonForm } from "@/components/LessonForm";
 import { LessonStatusSelect } from "@/components/LessonStatusSelect";
 import { ManualReminderActions } from "@/components/ManualReminderActions";
+import { requireCurrentProfile } from "@/lib/auth";
 import { formatLessonDateTime, getLessonTimeZone } from "@/lib/date";
 import { getInstructorProfiles } from "@/lib/instructor-profiles";
 import {
@@ -12,7 +13,7 @@ import {
   getLessonStatusClass,
   lessonStatusLabels,
 } from "@/lib/lesson-status";
-import { getLesson } from "@/lib/lessons";
+import { getLesson, isLessonAssignedToInstructor } from "@/lib/lessons";
 import { getLessonStudents } from "@/lib/manual-sms";
 import { getSessionLabel } from "@/lib/session-types";
 
@@ -26,6 +27,7 @@ export const dynamic = "force-dynamic";
 
 export default async function EditLessonPage({ params }: EditLessonPageProps) {
   const { id } = await params;
+  const { profile } = await requireCurrentProfile();
   const timeZone = getLessonTimeZone();
   const [lesson, instructorProfiles] = await Promise.all([
     getLesson(id),
@@ -33,6 +35,10 @@ export default async function EditLessonPage({ params }: EditLessonPageProps) {
   ]);
 
   if (!lesson) {
+    notFound();
+  }
+
+  if (!isLessonAssignedToInstructor(lesson, profile.id)) {
     notFound();
   }
 

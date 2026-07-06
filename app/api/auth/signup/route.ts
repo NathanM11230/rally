@@ -1,27 +1,7 @@
-import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 
-import { getApiAuthenticatedProfile } from "@/lib/api-auth";
-import { getCurrentUser } from "@/lib/auth";
-import {
-  createOrClaimInstructorProfileForUser,
-  getInstructorProfiles,
-} from "@/lib/instructor-profiles";
-
-export async function GET() {
-  try {
-    const authResult = await getApiAuthenticatedProfile();
-
-    if (!authResult.ok) {
-      return authResult.response;
-    }
-
-    const profiles = await getInstructorProfiles();
-    return NextResponse.json({ profiles });
-  } catch (error) {
-    return handleApiError(error);
-  }
-}
+import { getSupabaseAuthClient, setAuthCookies } from "@/lib/auth";
+import { createOrClaimInstructorProfileForUser } from "@/lib/instructor-profiles";
 
 export async function POST(request: Request) {
   const body = await readJson(request);
@@ -30,24 +10,41 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: body.error }, { status: 400 });
   }
 
-  const parsed = parseProfileInput(body.value);
+  const parsed = parseSignupInput(body.value);
 
   if (!parsed.ok) {
     return NextResponse.json({ error: parsed.error }, { status: 400 });
   }
 
   try {
-    const user = await getCurrentUser();
+    const supabase = getSupabaseAuthClient();
+    const { data, error } = await supabase.auth.signUp({
+      email: parsed.data.email,
+      password: parsed.data.password,
+    });
 
-    if (!user) {
-      return NextResponse.json({ error: "Log in to continue." }, { status: 401 });
+    if (error || !data.user) {
+      return NextResponse.json(
+        { error: error?.message ?? "Unable to create account." },
+        { status: 400 },
+      );
     }
 
-    const profile = await createOrClaimInstructorProfileForUser(user.id, parsed.data);
-    revalidatePath("/");
-    revalidatePath("/profile");
-    revalidatePath("/lessons/new");
-    return NextResponse.json({ profile });
+    await createOrClaimInstructorProfileForUser(data.user.id, {
+      full_name: parsed.data.full_name,
+      phone_number: parsed.data.phone_number,
+    });
+
+    const response = NextResponse.json({
+      ok: true,
+      needsEmailConfirmation: !data.session,
+    });
+
+    if (data.session) {
+      setAuthCookies(response, data.session);
+    }
+
+    return response;
   } catch (error) {
     return handleApiError(error);
   }
@@ -61,24 +58,32 @@ async function readJson(request: Request) {
   }
 }
 
-function parseProfileInput(body: unknown) {
+function parseSignupInput(body: unknown) {
   if (!isRecord(body)) {
     return { ok: false as const, error: "Request body must be a JSON object." };
   }
 
+  const email = cleanString(body.email);
+  const password = cleanString(body.password);
   const fullName = cleanString(body.full_name);
   const phoneNumber = cleanString(body.phone_number);
 
-  if (!fullName || !phoneNumber) {
+  if (!email || !password || !fullName || !phoneNumber) {
     return {
       ok: false as const,
-      error: "Instructor full name and phone number are required.",
+      error: "Email, password, full name, and phone number are required.",
     };
+  }
+
+  if (password.length < 6) {
+    return { ok: false as const, error: "Password must be at least 6 characters." };
   }
 
   return {
     ok: true as const,
     data: {
+      email,
+      password,
       full_name: fullName,
       phone_number: phoneNumber,
     },

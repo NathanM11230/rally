@@ -7,7 +7,7 @@ import {
   getCurrentMonthKey,
   getLessonTimeZone,
 } from "@/lib/date";
-import { getInstructorProfiles } from "@/lib/instructor-profiles";
+import { requireCurrentProfile } from "@/lib/auth";
 import { getLessonStatus, lessonStatusLabels } from "@/lib/lesson-status";
 import { getLessonInstructorNames } from "@/lib/lesson-instructors";
 import { getLessonsForCalendar } from "@/lib/lessons";
@@ -18,7 +18,6 @@ import type { LessonWithInstructorProfile } from "@/types/database";
 type CalendarPageProps = {
   searchParams: Promise<{
     month?: string;
-    pro?: string;
   }>;
 };
 
@@ -28,6 +27,7 @@ export const dynamic = "force-dynamic";
 
 export default async function CalendarPage({ searchParams }: CalendarPageProps) {
   const params = await searchParams;
+  const { profile } = await requireCurrentProfile();
   const timeZone = getLessonTimeZone();
   const selectedMonth = getValidMonthKey(params.month, timeZone);
   const nextMonth = shiftMonth(selectedMonth, 1);
@@ -37,24 +37,18 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
   const todayKey = formatDateKeyInTimeZone(new Date(), timeZone);
 
   let lessons: LessonWithInstructorProfile[] | null = null;
-  let profiles = null;
-  let selectedProId = "";
 
   try {
-    profiles = await getInstructorProfiles();
-    selectedProId =
-      params.pro && profiles.some((profile) => profile.id === params.pro) ? params.pro : "";
     lessons = await getLessonsForCalendar({
       start: monthStart,
       end: monthEnd,
-      instructorProfileId: selectedProId || undefined,
+      instructorProfileId: profile.id,
     });
   } catch {
     lessons = null;
-    profiles = null;
   }
 
-  if (!lessons || !profiles) {
+  if (!lessons) {
     return (
       <main className="page">
         <header className="page-header">
@@ -74,7 +68,6 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
     );
   }
 
-  const selectedProfile = profiles.find((profile) => profile.id === selectedProId);
   const calendarCells = buildCalendarCells(selectedMonth, todayKey);
   const lessonsByDate = groupLessonsByDate(lessons, timeZone);
   const monthLabel = formatMonthLabel(selectedMonth);
@@ -84,11 +77,7 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
       <header className="page-header">
         <div>
           <h1>{monthLabel}</h1>
-          <p className="page-subtitle">
-            {selectedProfile
-              ? `${selectedProfile.full_name}\u2019s lessons`
-              : "All club lessons"}
-          </p>
+          <p className="page-subtitle">{profile.full_name}&apos;s assigned sessions</p>
         </div>
       </header>
 
@@ -96,56 +85,31 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
         <div className="button-row">
           <Link
             className="button-secondary"
-            href={buildCalendarHref(previousMonth, selectedProId)}
+            href={buildCalendarHref(previousMonth)}
           >
             Previous
           </Link>
-          <Link className="button-secondary" href={buildCalendarHref(getCurrentMonthKey(timeZone), selectedProId)}>
+          <Link className="button-secondary" href={buildCalendarHref(getCurrentMonthKey(timeZone))}>
             Today
           </Link>
-          <Link className="button-secondary" href={buildCalendarHref(nextMonth, selectedProId)}>
+          <Link className="button-secondary" href={buildCalendarHref(nextMonth)}>
             Next
           </Link>
         </div>
-
-        {profiles.length > 0 ? (
-          <div className="filter-row" aria-label="Calendar pro filters">
-            <Link
-              className={`filter-chip ${!selectedProId ? "filter-chip-active" : ""}`}
-              href={buildCalendarHref(selectedMonth, "")}
-            >
-              All pros
-            </Link>
-            {profiles.map((profile) => (
-              <Link
-                className={`filter-chip ${
-                  selectedProId === profile.id ? "filter-chip-active" : ""
-                }`}
-                href={buildCalendarHref(selectedMonth, profile.id)}
-                key={profile.id}
-              >
-                {profile.full_name}
-              </Link>
-            ))}
-          </div>
-        ) : null}
       </section>
 
-      {profiles.length > 0 ? (
-        <div className="calendar-summary">
-          <strong>{lessons.length}</strong>{" "}
-          {lessons.length === 1 ? "lesson" : "lessons"} shown
-          {selectedProfile ? ` for ${selectedProfile.full_name}` : " for all pros"}.
-        </div>
-      ) : null}
+      <div className="calendar-summary">
+        <strong>{lessons.length}</strong>{" "}
+        {lessons.length === 1 ? "session" : "sessions"} assigned to you.
+      </div>
 
-      {profiles.length === 0 ? (
+      {lessons.length === 0 ? (
         <section className="panel">
           <div className="empty-state">
-            Add your club pros first, then Rally can show each pro&apos;s calendar.
+            No sessions assigned to you this month.
             <div className="button-row section-actions">
               <Link className="button" href="/profile">
-                Add club pros
+                Check profile
               </Link>
             </div>
           </div>
@@ -287,12 +251,8 @@ function shiftMonth(monthKey: string, amount: number) {
   return `${shifted.getUTCFullYear()}-${pad(shifted.getUTCMonth() + 1)}`;
 }
 
-function buildCalendarHref(monthKey: string, proId: string) {
+function buildCalendarHref(monthKey: string) {
   const params = new URLSearchParams({ month: monthKey });
-
-  if (proId) {
-    params.set("pro", proId);
-  }
 
   return `/calendar?${params.toString()}`;
 }

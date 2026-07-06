@@ -1,12 +1,14 @@
 import Link from "next/link";
 
 import { LessonForm } from "@/components/LessonForm";
+import { requireCurrentProfile } from "@/lib/auth";
 import { getLessonTimeZone } from "@/lib/date";
 import { getInstructorProfiles } from "@/lib/instructor-profiles";
 
 export const dynamic = "force-dynamic";
 
 export default async function NewLessonPage() {
+  const { profile } = await requireCurrentProfile();
   let profiles = null;
   const timeZone = getLessonTimeZone();
 
@@ -22,9 +24,9 @@ export default async function NewLessonPage() {
         <header className="page-header">
           <div>
             <p className="eyebrow">Pros required</p>
-            <h1>Add your club pros first</h1>
+            <h1>Complete your profile first</h1>
             <p className="lede">
-              Rally needs at least one saved pro before it can create session
+              Rally needs your pro profile before it can create session
               reservations.
             </p>
           </div>
@@ -32,11 +34,11 @@ export default async function NewLessonPage() {
 
         <section className="panel">
           <div className="empty-state">
-            Add each pro once, then select the right pro when creating each
+            Save your name and phone number once, then create your first
             session.
             <div className="button-row section-actions">
               <Link className="button" href="/profile">
-                Add club pros
+                Complete profile
               </Link>
             </div>
           </div>
@@ -57,7 +59,12 @@ export default async function NewLessonPage() {
       </header>
 
       <section className="panel">
-        <LessonForm mode="create" timeZone={timeZone} instructorProfiles={profiles} />
+        <LessonForm
+          mode="create"
+          timeZone={timeZone}
+          instructorProfiles={profiles}
+          defaultInstructorProfileId={profile.id}
+        />
       </section>
     </main>
   );

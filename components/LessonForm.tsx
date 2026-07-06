@@ -24,6 +24,7 @@ type LessonFormProps =
       mode: "create";
       timeZone: string;
       instructorProfiles: InstructorProfile[];
+      defaultInstructorProfileId?: string;
       lesson?: never;
     }
   | {
@@ -48,7 +49,10 @@ export function LessonForm(props: LessonFormProps) {
     lesson?.session_type ?? "lesson",
   );
   const [selectedInstructorIds, setSelectedInstructorIds] = useState<string[]>(() =>
-    getInitialInstructorIds(lesson),
+    getInitialInstructorIds(
+      lesson,
+      props.mode === "create" ? props.defaultInstructorProfileId : undefined,
+    ),
   );
   const [activeContactRowId, setActiveContactRowId] = useState<string | null>(null);
   const [contactSuggestions, setContactSuggestions] = useState<
@@ -461,9 +465,12 @@ function getInitialStudents(lesson: LessonWithInstructorProfile | null): Student
   }));
 }
 
-function getInitialInstructorIds(lesson: LessonWithInstructorProfile | null) {
+function getInitialInstructorIds(
+  lesson: LessonWithInstructorProfile | null,
+  defaultInstructorProfileId?: string,
+) {
   if (!lesson) {
-    return [];
+    return defaultInstructorProfileId ? [defaultInstructorProfileId] : [];
   }
 
   const instructorIds =
