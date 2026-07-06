@@ -1,4 +1,5 @@
 import { dateAndTimeToUtc, getLessonTimeZone } from "@/lib/date";
+import { isSessionType } from "@/lib/session-types";
 import type { LessonInsert, LessonUpdate } from "@/types/database";
 
 type LessonInputMode = "create" | "update";
@@ -15,6 +16,7 @@ type ParsedLessonData = {
       | "instructor_profile_id"
       | "student_name"
       | "student_phone"
+      | "session_type"
       | "lesson_start_time"
       | "location"
     >;
@@ -40,6 +42,8 @@ export function parseLessonInput(body: unknown, mode: LessonInputMode): LessonIn
   const errors: string[] = [];
   const values: Record<string, string> = {};
   const students = parseStudents(body.students);
+  const sessionType = cleanString(body.session_type) || "lesson";
+  const eventTitle = cleanString(body.event_title);
 
   for (const field of requiredFields) {
     const value = cleanString(body[field]);
@@ -51,8 +55,16 @@ export function parseLessonInput(body: unknown, mode: LessonInputMode): LessonIn
     }
   }
 
-  if (students.length === 0) {
-    errors.push("At least one student name and phone number is required.");
+  if (!isSessionType(sessionType)) {
+    errors.push("session_type must be lesson, clinic, or other_event.");
+  }
+
+  if (sessionType === "lesson" && students.length === 0) {
+    errors.push("At least one student name and phone number is required for lessons.");
+  }
+
+  if (sessionType === "other_event" && !eventTitle) {
+    errors.push("Other event name is required.");
   }
 
   if (values.lesson_date && !/^\d{4}-\d{2}-\d{2}$/.test(values.lesson_date)) {
@@ -67,16 +79,22 @@ export function parseLessonInput(body: unknown, mode: LessonInputMode): LessonIn
     return { data: null, errors };
   }
 
+  const normalizedSessionType = isSessionType(sessionType) ? sessionType : "lesson";
   const lessonStartTime = dateAndTimeToUtc(
     values.lesson_date,
     values.lesson_time,
     getLessonTimeZone(),
   );
-  const primaryStudent = students[0];
+  const primaryStudent = students[0] ?? {
+    student_name: normalizedSessionType === "other_event" ? eventTitle : "Clinic",
+    student_phone: "",
+  };
   const lesson: ParsedLessonData["lesson"] = {
     instructor_profile_id: values.instructor_profile_id,
     student_name: primaryStudent.student_name,
     student_phone: primaryStudent.student_phone,
+    session_type: normalizedSessionType,
+    event_title: normalizedSessionType === "other_event" ? eventTitle : null,
     lesson_start_time: lessonStartTime.toISOString(),
     location: values.location,
     notes: cleanString(body.notes) || null,

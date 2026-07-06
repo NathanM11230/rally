@@ -1,4 +1,5 @@
 import { formatLessonDateTime } from "@/lib/date";
+import { getStudentReminderSubject } from "@/lib/session-types";
 import type { LessonStudent, LessonWithInstructorProfile } from "@/types/database";
 
 type ManualSmsTarget = {
@@ -13,7 +14,8 @@ export function buildStudentReminderSms(
   timeZone: string,
 ): ManualSmsTarget {
   const instructorName = lesson.instructor_profile?.full_name ?? "your instructor";
-  const message = `Reminder: You have a tennis lesson with ${instructorName} on ${formatLessonDateTime(
+  const subject = getStudentReminderSubject(lesson);
+  const message = `Reminder: You have ${subject} with ${instructorName} on ${formatLessonDateTime(
     lesson,
     timeZone,
   )} at ${lesson.location}.`;
@@ -36,10 +38,16 @@ export function buildInstructorReminderSms(
   const studentNames = getLessonStudents(lesson)
     .map((student) => student.student_name)
     .join(", ");
-  const message = `Reminder: You have a tennis lesson with ${studentNames} on ${formatLessonDateTime(
-    lesson,
-    timeZone,
-  )} at ${lesson.location}.`;
+  const subject = getStudentReminderSubject(lesson);
+  const message = studentNames
+    ? `Reminder: You have ${subject} with ${studentNames} on ${formatLessonDateTime(
+        lesson,
+        timeZone,
+      )} at ${lesson.location}.`
+    : `Reminder: You have ${subject} on ${formatLessonDateTime(
+        lesson,
+        timeZone,
+      )} at ${lesson.location}.`;
 
   return {
     href: buildSmsHref(lesson.instructor_profile.phone_number, message),
@@ -51,6 +59,10 @@ export function buildInstructorReminderSms(
 export function getLessonStudents(lesson: LessonWithInstructorProfile) {
   if (lesson.lesson_students.length > 0) {
     return lesson.lesson_students;
+  }
+
+  if (!lesson.student_name || !lesson.student_phone) {
+    return [];
   }
 
   return [

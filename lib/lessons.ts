@@ -196,6 +196,10 @@ async function replaceLessonStudents(lessonId: string, students: LessonStudentIn
     sort_order: index,
   }));
 
+  if (rows.length === 0) {
+    return;
+  }
+
   const { error: insertError } = await supabase.from("lesson_students").insert(rows);
 
   if (insertError) {

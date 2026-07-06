@@ -42,6 +42,8 @@ export type Database = {
           instructor_profile_id: string;
           student_name: string;
           student_phone: string;
+          session_type: "lesson" | "clinic" | "other_event";
+          event_title: string | null;
           lesson_start_time: string;
           location: string;
           notes: string | null;
@@ -56,6 +58,8 @@ export type Database = {
           instructor_profile_id: string;
           student_name: string;
           student_phone: string;
+          session_type?: "lesson" | "clinic" | "other_event";
+          event_title?: string | null;
           lesson_start_time: string;
           location: string;
           notes?: string | null;
@@ -70,6 +74,8 @@ export type Database = {
           instructor_profile_id?: string;
           student_name?: string;
           student_phone?: string;
+          session_type?: "lesson" | "clinic" | "other_event";
+          event_title?: string | null;
           lesson_start_time?: string;
           location?: string;
           notes?: string | null;
@@ -129,6 +135,7 @@ export type Database = {
     Functions: Record<string, never>;
     Enums: {
       lesson_status: "scheduled" | "completed" | "cancelled" | "no_show";
+      session_type: "lesson" | "clinic" | "other_event";
     };
     CompositeTypes: Record<string, never>;
   };
@@ -144,6 +151,7 @@ export type Lesson = Database["public"]["Tables"]["lessons"]["Row"];
 export type LessonInsert = Database["public"]["Tables"]["lessons"]["Insert"];
 export type LessonUpdate = Database["public"]["Tables"]["lessons"]["Update"];
 export type LessonStatus = Database["public"]["Enums"]["lesson_status"];
+export type SessionType = Database["public"]["Enums"]["session_type"];
 export type LessonStudent =
   Database["public"]["Tables"]["lesson_students"]["Row"];
 export type LessonStudentInsert =

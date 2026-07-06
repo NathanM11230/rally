@@ -10,6 +10,13 @@ exception
   when duplicate_object then null;
 end $$;
 
+do $$
+begin
+  create type public.session_type as enum ('lesson', 'clinic', 'other_event');
+exception
+  when duplicate_object then null;
+end $$;
+
 create table if not exists public.instructor_profiles (
   id uuid primary key default gen_random_uuid(),
   user_id uuid references auth.users(id) on delete cascade,
@@ -30,6 +37,8 @@ create table if not exists public.lessons (
   instructor_profile_id uuid not null references public.instructor_profiles(id) on delete cascade,
   student_name text not null,
   student_phone text not null,
+  session_type public.session_type not null default 'lesson',
+  event_title text,
   lesson_start_time timestamptz not null,
   location text not null,
   notes text,
@@ -51,6 +60,8 @@ create table if not exists public.lesson_students (
 
 alter table public.lessons
   add column if not exists instructor_profile_id uuid,
+  add column if not exists session_type public.session_type default 'lesson',
+  add column if not exists event_title text,
   add column if not exists lesson_start_time timestamptz,
   add column if not exists location text,
   add column if not exists notes text,
@@ -177,6 +188,8 @@ end $$;
 
 alter table public.lessons
   alter column instructor_profile_id set not null,
+  alter column session_type set default 'lesson',
+  alter column session_type set not null,
   alter column lesson_start_time set not null,
   alter column location set not null,
   alter column status set default 'scheduled',
@@ -217,6 +230,9 @@ create index if not exists lessons_reminder_sent_idx
 
 create index if not exists lessons_instructor_profile_id_idx
   on public.lessons (instructor_profile_id);
+
+create index if not exists lessons_session_type_idx
+  on public.lessons (session_type);
 
 create index if not exists lessons_status_idx
   on public.lessons (status);

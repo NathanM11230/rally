@@ -1,7 +1,7 @@
 # Rally Manual SMS Lesson Reminders
 
-Rally is a lightweight MVP for tennis clubs to create lesson reservations and
-prepare SMS reminder messages for students and pros.
+Rally is a lightweight MVP for tennis clubs to create lesson, clinic, and event
+reservations and prepare SMS reminder messages for students and pros.
 
 This app is intentionally SMS-only. It does not include email reminders,
 payments, Twilio sending, or automated SMS provider delivery. Rally opens a
@@ -25,9 +25,9 @@ prefilled text message and the pro sends it manually from their own SMS app.
 2. Create a Supabase project and run the SQL in `supabase/schema.sql`.
 
    If you already ran an earlier Rally schema, run this updated SQL again. It
-   adds `lesson_students` and `lessons.status`, migrates each existing lesson's
-   current student into that table, and keeps the existing `lessons` fields as
-   compatibility values.
+   adds `lesson_students`, `lessons.status`, `lessons.session_type`, and
+   `lessons.event_title`, migrates each existing lesson's current student into
+   that table, and keeps the existing `lessons` fields as compatibility values.
 
 3. Copy `.env.example` to `.env.local` and fill in:
 
@@ -60,9 +60,26 @@ name and phone number when preparing manual reminder texts.
 
 ## Calendar
 
-Go to **Calendar** from the dashboard to see lessons in a monthly calendar view.
-Use the pro filters to show all lessons or only one pro's individual lessons.
-Each calendar lesson links back to the edit page for that reservation.
+Go to **Calendar** from the dashboard to see sessions in a monthly calendar view.
+Use the pro filters to show all sessions or only one pro's individual sessions.
+Each calendar item links back to the edit page for that reservation.
+
+## Session Types
+
+Each reservation has one type:
+
+- Lesson
+- Clinic
+- Other event
+
+When **Other event** is selected, Rally asks for the event name, such as
+`Cardio Tennis` or `Ladies Night`. That event name appears on the dashboard,
+calendar, pay period report, and manual SMS reminders.
+
+Lessons require at least one student name and phone number. Clinics and other
+events can include participants, but they can also be saved without participant
+phone numbers when the session only needs to be tracked for calendar or pay
+period reporting.
 
 ## Pay Period Reports
 
@@ -87,6 +104,8 @@ student names and phone numbers to the same reservation.
 The database stores:
 
 - `lessons.instructor_profile_id`
+- `lessons.session_type`
+- `lessons.event_title`
 - `lessons.lesson_start_time`
 - `lessons.location`
 - `lessons.notes`

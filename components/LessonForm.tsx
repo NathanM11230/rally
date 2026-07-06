@@ -5,7 +5,12 @@ import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
 
 import { getLessonFormDateTime } from "@/lib/date";
-import type { InstructorProfile, LessonWithInstructorProfile } from "@/types/database";
+import { SESSION_TYPES, sessionTypeLabels } from "@/lib/session-types";
+import type {
+  InstructorProfile,
+  LessonWithInstructorProfile,
+  SessionType,
+} from "@/types/database";
 
 type StudentFormRow = {
   id: string;
@@ -38,6 +43,9 @@ export function LessonForm(props: LessonFormProps) {
   const [students, setStudents] = useState<StudentFormRow[]>(() =>
     getInitialStudents(lesson),
   );
+  const [sessionType, setSessionType] = useState<SessionType>(
+    lesson?.session_type ?? "lesson",
+  );
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -47,6 +55,8 @@ export function LessonForm(props: LessonFormProps) {
     const formData = new FormData(event.currentTarget);
     const payload = {
       instructor_profile_id: String(formData.get("instructor_profile_id") ?? ""),
+      session_type: sessionType,
+      event_title: String(formData.get("event_title") ?? ""),
       lesson_date: String(formData.get("lesson_date") ?? ""),
       lesson_time: String(formData.get("lesson_time") ?? ""),
       location: String(formData.get("location") ?? ""),
@@ -100,7 +110,7 @@ export function LessonForm(props: LessonFormProps) {
 
   function removeStudent(id: string) {
     setStudents((currentStudents) =>
-      currentStudents.length === 1
+      currentStudents.length === 1 && sessionType === "lesson"
         ? currentStudents
         : currentStudents.filter((student) => student.id !== id),
     );
@@ -124,6 +134,36 @@ export function LessonForm(props: LessonFormProps) {
       {error ? <div className="form-error">{error}</div> : null}
 
       <div className="form-section">
+        <h3 className="form-section-title">Session</h3>
+        <div className="form-grid">
+          <label className="field">
+            Type
+            <select
+              required
+              name="session_type"
+              value={sessionType}
+              onChange={(event) => setSessionType(event.target.value as SessionType)}
+            >
+              {SESSION_TYPES.map((type) => (
+                <option key={type} value={type}>
+                  {sessionTypeLabels[type]}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          {sessionType === "other_event" ? (
+            <Field
+              label="Other event"
+              name="event_title"
+              defaultValue={lesson?.event_title ?? ""}
+              placeholder="Cardio Tennis"
+            />
+          ) : null}
+        </div>
+      </div>
+
+      <div className="form-section">
         <h3 className="form-section-title">Pro</h3>
         <select
           required
@@ -144,20 +184,22 @@ export function LessonForm(props: LessonFormProps) {
 
       <div className="form-section">
         <div className="field-heading">
-          <h3 className="form-section-title">Students</h3>
+          <h3 className="form-section-title">Students / participants</h3>
           <button className="button-secondary compact-button" type="button" onClick={addStudent}>
-            Add student
+            Add participant
           </button>
         </div>
         <div className="student-list">
           {students.map((student, index) => (
             <div className="student-row" key={student.id}>
               <div className="student-row-header">
-                <strong>Student {index + 1}</strong>
+                <strong>
+                  {sessionType === "lesson" ? "Student" : "Participant"} {index + 1}
+                </strong>
                 <button
                   className="button-danger compact-button"
                   type="button"
-                  disabled={students.length === 1}
+                  disabled={students.length === 1 && sessionType === "lesson"}
                   onClick={() => removeStudent(student.id)}
                 >
                   Remove
@@ -167,6 +209,7 @@ export function LessonForm(props: LessonFormProps) {
                 label="Name"
                 name={`student_name_${student.id}`}
                 value={student.student_name}
+                required={sessionType === "lesson"}
                 onChange={(value) => updateStudent(student.id, "student_name", value)}
               />
               <Field
@@ -175,6 +218,7 @@ export function LessonForm(props: LessonFormProps) {
                 type="tel"
                 value={student.student_phone}
                 placeholder="+15551234567"
+                required={sessionType === "lesson"}
                 onChange={(value) => updateStudent(student.id, "student_phone", value)}
               />
             </div>
@@ -183,7 +227,7 @@ export function LessonForm(props: LessonFormProps) {
       </div>
 
       <div className="form-section">
-        <h3 className="form-section-title">Lesson details</h3>
+        <h3 className="form-section-title">Session details</h3>
         <div className="form-grid">
           <Field
             label="Date"
@@ -210,7 +254,7 @@ export function LessonForm(props: LessonFormProps) {
         <h3 className="form-section-title">Notes</h3>
         <textarea
           name="notes"
-          aria-label="Lesson notes"
+          aria-label="Session notes"
           defaultValue={lesson?.notes ?? ""}
           placeholder="Optional notes for the reminder or instructor prep."
         />
@@ -218,7 +262,7 @@ export function LessonForm(props: LessonFormProps) {
 
       <div className="form-actions">
         <button className="button" type="submit" disabled={isSaving}>
-          {isSaving ? "Saving..." : props.mode === "edit" ? "Save changes" : "Create lesson"}
+          {isSaving ? "Saving..." : props.mode === "edit" ? "Save changes" : "Create session"}
         </button>
         <Link className="button-secondary" href="/">
           Cancel
@@ -235,6 +279,7 @@ type FieldProps = {
   defaultValue?: string;
   value?: string;
   placeholder?: string;
+  required?: boolean;
   onChange?: (value: string) => void;
 };
 
@@ -245,13 +290,14 @@ function Field({
   defaultValue = "",
   value,
   placeholder,
+  required = true,
   onChange,
 }: FieldProps) {
   return (
     <label className="field">
       {label}
       <input
-        required
+        required={required}
         name={name}
         type={type}
         defaultValue={value === undefined ? defaultValue : undefined}
@@ -271,12 +317,14 @@ function getInitialStudents(lesson: LessonWithInstructorProfile | null): Student
   const students =
     lesson.lesson_students.length > 0
       ? lesson.lesson_students
-      : [
-          {
-            student_name: lesson.student_name,
-            student_phone: lesson.student_phone,
-          },
-        ];
+      : lesson.student_name && lesson.student_phone
+        ? [
+            {
+              student_name: lesson.student_name,
+              student_phone: lesson.student_phone,
+            },
+          ]
+        : [];
 
   return students.map((student) => ({
     id: crypto.randomUUID(),

@@ -14,6 +14,7 @@ import {
 } from "@/lib/lesson-status";
 import { getLesson } from "@/lib/lessons";
 import { getLessonStudents } from "@/lib/manual-sms";
+import { getSessionLabel } from "@/lib/session-types";
 
 type EditLessonPageProps = {
   params: Promise<{
@@ -36,14 +37,20 @@ export default async function EditLessonPage({ params }: EditLessonPageProps) {
   }
 
   const status = getLessonStatus(lesson);
+  const students = getLessonStudents(lesson);
+  const heading =
+    students.length > 0
+      ? students.map((student) => student.student_name).join(", ")
+      : getSessionLabel(lesson);
 
   return (
     <main className="page">
       <header className="page-header">
         <div>
-          <h1>{getLessonStudents(lesson).map((student) => student.student_name).join(", ")}</h1>
+          <h1>{heading}</h1>
           <div className="details-bar">
             <span className="detail-chip">{formatLessonDateTime(lesson, timeZone)}</span>
+            <span className="detail-chip">{getSessionLabel(lesson)}</span>
             <span className="detail-chip">{lesson.location}</span>
             <span className={`status-pill ${getLessonStatusClass(status)}`}>
               {lessonStatusLabels[status]}

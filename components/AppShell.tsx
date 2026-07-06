@@ -45,7 +45,7 @@ export function AppShell({ children }: AppShellProps) {
         </nav>
 
         <Link className="button nav-cta" href="/lessons/new">
-          New lesson
+          New session
         </Link>
       </header>
 

@@ -11,6 +11,7 @@ import { getInstructorProfiles } from "@/lib/instructor-profiles";
 import { getLessonStatus, lessonStatusLabels } from "@/lib/lesson-status";
 import { getLessonsForCalendar } from "@/lib/lessons";
 import { getLessonStudents } from "@/lib/manual-sms";
+import { getSessionLabel } from "@/lib/session-types";
 import type { LessonWithInstructorProfile } from "@/types/database";
 
 type CalendarPageProps = {
@@ -189,6 +190,9 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
                             {getStudentSummary(lesson)}
                           </span>
                           <span className="calendar-lesson-meta">
+                            {getSessionLabel(lesson)}
+                          </span>
+                          <span className="calendar-lesson-meta">
                             {lesson.instructor_profile?.full_name ?? "Missing pro"}
                           </span>
                           <span className="calendar-lesson-meta">
@@ -225,6 +229,10 @@ function groupLessonsByDate(lessons: LessonWithInstructorProfile[], timeZone: st
 function getStudentSummary(lesson: LessonWithInstructorProfile) {
   const students = getLessonStudents(lesson);
   const names = students.map((student) => student.student_name);
+
+  if (names.length === 0) {
+    return getSessionLabel(lesson);
+  }
 
   if (names.length <= 2) {
     return names.join(", ");

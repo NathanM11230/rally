@@ -15,6 +15,7 @@ import {
 } from "@/lib/lesson-status";
 import { getUpcomingLessons } from "@/lib/lessons";
 import { getLessonStudents } from "@/lib/manual-sms";
+import { getSessionLabel } from "@/lib/session-types";
 import type { LessonWithInstructorProfile } from "@/types/database";
 
 export const dynamic = "force-dynamic";
@@ -106,11 +107,11 @@ export default async function DashboardPage() {
       ) : lessons.length === 0 ? (
         <section className="panel">
           <div className="empty-state">
-            No upcoming lessons. Create your first lesson to start scheduling
+            No upcoming sessions. Create your first session to start scheduling
             reminders.
             <div className="button-row section-actions">
               <Link className="button" href="/lessons/new">
-                New lesson
+                New session
               </Link>
             </div>
           </div>
@@ -179,6 +180,11 @@ function LessonCard({
 }) {
   const students = getLessonStudents(lesson);
   const status = getLessonStatus(lesson);
+  const sessionLabel = getSessionLabel(lesson);
+  const participantSummary =
+    students.length > 0
+      ? students.map((student) => student.student_name).join(", ")
+      : sessionLabel;
 
   return (
     <div className="lesson-card">
@@ -203,10 +209,9 @@ function LessonCard({
         </div>
       </div>
       <div className="lesson-card-body">
-        <span className="lesson-card-students">
-          {students.map((s) => s.student_name).join(", ")}
-        </span>
+        <span className="lesson-card-students">{participantSummary}</span>
         <span className="lesson-card-pro">
+          {students.length > 0 ? `${sessionLabel} - ` : ""}
           {lesson.instructor_profile?.full_name ?? "No pro assigned"}
         </span>
       </div>

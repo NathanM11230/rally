@@ -20,6 +20,7 @@ import {
   shiftPayPeriod,
   type PayPeriod,
 } from "@/lib/pay-periods";
+import { getSessionLabel } from "@/lib/session-types";
 import type { InstructorProfile, LessonStatus, LessonWithInstructorProfile } from "@/types/database";
 
 type PayPeriodsPageProps = {
@@ -97,7 +98,7 @@ export default async function PayPeriodsPage({ searchParams }: PayPeriodsPagePro
         <div className="button-row print-hidden">
           <PrintButton />
           <Link className="button" href="/lessons/new">
-            New lesson
+            New session
           </Link>
         </div>
       </header>
@@ -199,6 +200,11 @@ function PayPeriodLessonCard({
 }) {
   const students = getLessonStudents(lesson);
   const status = getLessonStatus(lesson);
+  const sessionLabel = getSessionLabel(lesson);
+  const participantSummary =
+    students.length > 0
+      ? students.map((student) => student.student_name).join(", ")
+      : sessionLabel;
 
   return (
     <div className="lesson-card pay-lesson-card">
@@ -212,10 +218,9 @@ function PayPeriodLessonCard({
         </span>
       </div>
       <div className="lesson-card-body">
-        <span className="lesson-card-students">
-          {students.map((student) => student.student_name).join(", ")}
-        </span>
+        <span className="lesson-card-students">{participantSummary}</span>
         <span className="lesson-card-pro">
+          {students.length > 0 ? `${sessionLabel} - ` : ""}
           {lesson.instructor_profile?.full_name ?? "No pro assigned"}
         </span>
       </div>
