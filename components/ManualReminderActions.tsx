@@ -29,6 +29,7 @@ export function ManualReminderActions({
   const instructorSmsTargets = buildInstructorReminderSmsTargets(lesson, timeZone, {
     excludeInstructorProfileId: currentInstructorProfileId,
   });
+  const hasParticipantReminderTargets = studentSmsTargets.length > 0;
 
   async function updateReminderStatus(reminderSent: boolean) {
     setIsSaving(true);
@@ -67,25 +68,27 @@ export function ManualReminderActions({
           {instructorSms.label}
         </a>
       ))}
-      {lesson.reminder_sent ? (
-        <button
-          className="button-secondary"
-          type="button"
-          disabled={isSaving}
-          onClick={() => updateReminderStatus(false)}
-        >
-          Reset status
-        </button>
-      ) : (
-        <button
-          className="button"
-          type="button"
-          disabled={isSaving}
-          onClick={() => updateReminderStatus(true)}
-        >
-          Mark sent
-        </button>
-      )}
+      {hasParticipantReminderTargets ? (
+        lesson.reminder_sent ? (
+          <button
+            className="button-secondary"
+            type="button"
+            disabled={isSaving}
+            onClick={() => updateReminderStatus(false)}
+          >
+            Reset status
+          </button>
+        ) : (
+          <button
+            className="button"
+            type="button"
+            disabled={isSaving}
+            onClick={() => updateReminderStatus(true)}
+          >
+            Mark sent
+          </button>
+        )
+      ) : null}
     </div>
   );
 }
