@@ -1,7 +1,6 @@
-import { formatLessonDateTime } from "@/lib/date";
 import { getLessonInstructors } from "@/lib/lesson-instructors";
 import { getStudentReminderSubject } from "@/lib/session-types";
-import type { LessonStudent, LessonWithInstructorProfile } from "@/types/database";
+import type { Lesson, LessonStudent, LessonWithInstructorProfile } from "@/types/database";
 
 type ManualSmsTarget = {
   href: string;
@@ -15,7 +14,7 @@ export function buildStudentReminderSms(
   timeZone: string,
 ): ManualSmsTarget {
   const firstName = getFirstName(student.student_name);
-  const lessonDateTime = formatLessonDateTime(lesson, timeZone);
+  const lessonDateTime = formatReminderDateTime(lesson, timeZone);
   const locationPhrase = buildLocationPhrase(lesson.location);
   const message = buildStudentReminderMessage({
     firstName,
@@ -40,17 +39,12 @@ export function buildInstructorReminderSmsTargets(
     .join(", ");
   const subject = getStudentReminderSubject(lesson);
   const instructors = getLessonInstructors(lesson);
+  const lessonDateTime = formatReminderDateTime(lesson, timeZone);
 
   return instructors.map((instructor) => {
     const message = studentNames
-      ? `Reminder: You have ${subject} with ${studentNames} on ${formatLessonDateTime(
-          lesson,
-          timeZone,
-        )} at ${lesson.location}.`
-      : `Reminder: You have ${subject} on ${formatLessonDateTime(
-          lesson,
-          timeZone,
-        )} at ${lesson.location}.`;
+      ? `Reminder: You have ${subject} with ${studentNames} on ${lessonDateTime} at ${lesson.location}.`
+      : `Reminder: You have ${subject} on ${lessonDateTime} at ${lesson.location}.`;
 
     return {
       href: buildSmsHref(instructor.phone_number, message),
@@ -87,6 +81,19 @@ function buildSmsHref(phoneNumber: string, message: string) {
 
 function cleanPhoneNumber(phoneNumber: string) {
   return phoneNumber.replace(/[^\d+]/g, "");
+}
+
+function formatReminderDateTime(
+  lesson: Pick<Lesson, "lesson_start_time">,
+  timeZone: string,
+) {
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    month: "long",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(new Date(lesson.lesson_start_time));
 }
 
 function buildStudentReminderMessage({

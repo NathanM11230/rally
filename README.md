@@ -194,7 +194,7 @@ toll-free verification, and Vercel Cron complexity for the MVP.
 Lesson reminder drafts are written like they are coming directly from the pro:
 
 ```txt
-Hey Nathan. Reminder about your lesson on court 3 at July 7, 2026, 4:00 PM.
+Hey Nathan. Reminder about your lesson on court 3 at July 7, 4:00 PM.
 Let me know if there is anything specific you would like to work on. Thanks!
 ```
 
