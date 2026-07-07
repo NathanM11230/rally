@@ -1,5 +1,5 @@
 import { formatLessonDateTime } from "@/lib/date";
-import { getLessonInstructorNames, getLessonInstructors } from "@/lib/lesson-instructors";
+import { getLessonInstructors } from "@/lib/lesson-instructors";
 import { getStudentReminderSubject } from "@/lib/session-types";
 import type { LessonStudent, LessonWithInstructorProfile } from "@/types/database";
 
@@ -14,12 +14,15 @@ export function buildStudentReminderSms(
   student: Pick<LessonStudent, "student_name" | "student_phone">,
   timeZone: string,
 ): ManualSmsTarget {
-  const instructorName = getLessonInstructorNames(lesson);
-  const subject = getStudentReminderSubject(lesson);
-  const message = `Reminder: You have ${subject} with ${instructorName} on ${formatLessonDateTime(
+  const firstName = getFirstName(student.student_name);
+  const lessonDateTime = formatLessonDateTime(lesson, timeZone);
+  const locationPhrase = buildLocationPhrase(lesson.location);
+  const message = buildStudentReminderMessage({
+    firstName,
     lesson,
-    timeZone,
-  )} at ${lesson.location}.`;
+    lessonDateTime,
+    locationPhrase,
+  });
 
   return {
     href: buildSmsHref(student.student_phone, message),
@@ -84,4 +87,56 @@ function buildSmsHref(phoneNumber: string, message: string) {
 
 function cleanPhoneNumber(phoneNumber: string) {
   return phoneNumber.replace(/[^\d+]/g, "");
+}
+
+function buildStudentReminderMessage({
+  firstName,
+  lesson,
+  lessonDateTime,
+  locationPhrase,
+}: {
+  firstName: string;
+  lesson: LessonWithInstructorProfile;
+  lessonDateTime: string;
+  locationPhrase: string;
+}) {
+  if (lesson.session_type === "lesson") {
+    return `Hey ${firstName}. Reminder about your lesson ${locationPhrase} at ${lessonDateTime}. Let me know if there is anything specific you would like to work on. Thanks!`;
+  }
+
+  return `Hey ${firstName}. Reminder about ${getStudentReminderSubject(
+    lesson,
+  )} ${locationPhrase} at ${lessonDateTime}.`;
+}
+
+function getFirstName(fullName: string) {
+  return fullName.trim().split(/\s+/)[0] || "there";
+}
+
+function buildLocationPhrase(location: string) {
+  const locations = location
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+  if (locations.length === 0) {
+    return "at the club";
+  }
+
+  const looksLikeCourt = locations.some(
+    (item) => /^courts?\b/i.test(item) || /\d/.test(item),
+  );
+
+  if (!looksLikeCourt) {
+    return `at ${locations.join(", ")}`;
+  }
+
+  const courts = locations.map((item) => {
+    const cleaned = item.replace(/^courts?\s*/i, "").trim();
+
+    return cleaned || item;
+  });
+  const label = courts.length === 1 ? "court" : "courts";
+
+  return `on ${label} ${courts.join(", ")}`;
 }

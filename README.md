@@ -191,6 +191,16 @@ The app does not send texts in the background. The pro reviews the prefilled
 text and taps send in their own messaging app. This avoids Twilio, A2P 10DLC,
 toll-free verification, and Vercel Cron complexity for the MVP.
 
+Lesson reminder drafts are written like they are coming directly from the pro:
+
+```txt
+Hey Nathan. Reminder about your lesson on court 3 at July 7, 2026, 4:00 PM.
+Let me know if there is anything specific you would like to work on. Thanks!
+```
+
+Clinics, team practices, and other events use the same casual format with the
+lesson type in the message.
+
 ## API Routes
 
 - `POST /api/auth/signup` creates a pro login and profile.
