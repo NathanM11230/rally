@@ -75,7 +75,7 @@ export default async function PayPeriodsPage({ searchParams }: PayPeriodsPagePro
         <div className="button-row print-hidden">
           <PrintButton />
           <Link className="button" href="/lessons/new">
-            New session
+            New lesson
           </Link>
         </div>
       </header>

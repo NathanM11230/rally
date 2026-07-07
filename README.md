@@ -73,19 +73,19 @@ Rally creates a new profile for that user.
 The lesson form does not ask for the logged-in pro's phone number every time.
 Rally reuses the phone number saved in that pro's profile. A pro can still assign
 other saved pros to the same reservation, and any assigned pro can edit the
-whole session.
+whole lesson.
 
-Dashboard, calendar, and pay-period reports only show sessions assigned to the
+Dashboard, calendar, and pay-period reports only show lessons assigned to the
 logged-in pro. Contacts remain shared club-wide so everyone can reuse saved
 student names and phone numbers.
 
 ## Calendar
 
-Go to **Calendar** from the dashboard to see sessions in a monthly calendar view.
-The calendar shows only the logged-in pro's assigned sessions. Each calendar
+Go to **Calendar** from the dashboard to see lessons in a monthly calendar view.
+The calendar shows only the logged-in pro's assigned lessons. Each calendar
 item links back to the edit page for that reservation.
 
-## Session Types
+## Lesson Types
 
 Each reservation has one type:
 
@@ -102,7 +102,7 @@ calendar, pay period report, and manual SMS reminders.
 
 Lessons require at least one student name and phone number. Clinics and other
 events can include participants, but they can also be saved without participant
-phone numbers when the session only needs to be tracked for calendar or pay
+phone numbers when the lesson only needs to be tracked for calendar or pay
 period reporting.
 
 Each reservation can also have one or more pros assigned. Rally keeps the first
@@ -111,14 +111,14 @@ and stores the full pro list in `lesson_instructors`.
 
 ## Pay Period Reports
 
-Rally groups each pro's assigned sessions into the club pay period so they can
+Rally groups each pro's assigned lessons into the club pay period so they can
 compare what was scheduled against what they were paid for. The club pay period
 is calculated in two-week windows starting Monday, July 6, 2026.
 
 Go to **Pay Periods** to:
 
 - move between previous, current, and next pay periods
-- review only the logged-in pro's assigned sessions
+- review only the logged-in pro's assigned lessons
 - print a clean report for the selected pay period
 
 This is only a reporting tool. Rally does not process payments.
@@ -130,7 +130,7 @@ student names and phone numbers to the same reservation.
 
 ## Contacts
 
-Rally saves participant contacts automatically. When a pro saves a session with a
+Rally saves participant contacts automatically. When a pro saves a lesson with a
 name and phone number, Rally stores that contact club-wide. Later, typing the
 name in a student or participant field shows matching saved contacts; selecting
 one fills the phone number automatically.
@@ -183,15 +183,15 @@ toll-free verification, and Vercel Cron complexity for the MVP.
 - `PATCH /api/instructor-profile/:id` edits the logged-in pro's own profile.
 - `GET /api/contacts?q=name` searches shared saved contacts by name.
 - `GET /api/lessons` lists the logged-in pro's upcoming assigned lessons.
-- `POST /api/lessons` creates a session with the selected pros and participants.
-- `PATCH /api/lessons/:id` edits a session, selected pros, and participants.
+- `POST /api/lessons` creates a lesson with the selected pros and participants.
+- `PATCH /api/lessons/:id` edits a lesson, selected pros, and participants.
 - `DELETE /api/lessons/:id` deletes a lesson.
 - `PATCH /api/lessons/:id/status` updates scheduled/completed/cancelled/no-show status.
 - `POST /api/lessons/:id/reminder-sent` marks a manual reminder as sent.
 - `DELETE /api/lessons/:id/reminder-sent` resets a reminder to not sent.
 
 Lesson edit, delete, status, and reminder-sent routes require the logged-in pro
-to be assigned to that session.
+to be assigned to that lesson.
 
 ## Deploying
 

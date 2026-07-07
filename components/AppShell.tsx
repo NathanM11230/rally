@@ -57,7 +57,7 @@ export function AppShell({ children }: AppShellProps) {
         </nav>
 
         <Link className="button nav-cta" href="/lessons/new">
-          New session
+          New lesson
         </Link>
         <button className="button-secondary nav-logout" type="button" onClick={handleLogout}>
           Log out

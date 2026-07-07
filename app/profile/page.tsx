@@ -39,7 +39,7 @@ export default async function ProfilePage() {
           <h1>My profile</h1>
           <p className="page-subtitle">
             Rally uses this name and phone number when you are assigned to a
-            session reminder.
+            lesson reminder.
           </p>
         </div>
       </header>

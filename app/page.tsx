@@ -88,11 +88,11 @@ export default async function DashboardPage() {
       {lessons.length === 0 ? (
         <section className="panel">
           <div className="empty-state">
-            No upcoming sessions assigned to you. Create your first session to start scheduling
+            No upcoming lessons assigned to you. Create your first lesson to start scheduling
             reminders.
             <div className="button-row section-actions">
               <Link className="button" href="/lessons/new">
-                New session
+                New lesson
               </Link>
             </div>
           </div>

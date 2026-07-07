@@ -19,7 +19,7 @@ export default async function LoginPage() {
           <span className="brand-mark">R</span>
           <h1>Log in to Rally</h1>
           <p className="page-subtitle">
-            See your assigned sessions, update statuses, and check pay periods.
+            See your assigned lessons, update statuses, and check pay periods.
           </p>
         </div>
         <AuthForm mode="login" />

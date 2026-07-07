@@ -207,7 +207,7 @@ export function LessonForm(props: LessonFormProps) {
       {error ? <div className="form-error">{error}</div> : null}
 
       <div className="form-section">
-        <h3 className="form-section-title">Session</h3>
+        <h3 className="form-section-title">Lesson</h3>
         <div className="choice-grid session-type-grid">
           {SESSION_TYPES.map((type) => (
             <button
@@ -301,7 +301,7 @@ export function LessonForm(props: LessonFormProps) {
       </div>
 
       <div className="form-section">
-        <h3 className="form-section-title">Session details</h3>
+        <h3 className="form-section-title">Lesson details</h3>
         <div className="form-grid">
           <Field
             label="Date"
@@ -328,7 +328,7 @@ export function LessonForm(props: LessonFormProps) {
         <h3 className="form-section-title">Notes</h3>
         <textarea
           name="notes"
-          aria-label="Session notes"
+          aria-label="Lesson notes"
           defaultValue={lesson?.notes ?? ""}
           placeholder="Optional notes for the reminder or instructor prep."
         />
@@ -336,7 +336,7 @@ export function LessonForm(props: LessonFormProps) {
 
       <div className="form-actions">
         <button className="button" type="submit" disabled={isSaving}>
-          {isSaving ? "Saving..." : props.mode === "edit" ? "Save changes" : "Create session"}
+          {isSaving ? "Saving..." : props.mode === "edit" ? "Save changes" : "Create lesson"}
         </button>
         <Link className="button-secondary" href="/">
           Cancel

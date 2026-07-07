@@ -26,7 +26,7 @@ export default async function NewLessonPage() {
             <p className="eyebrow">Pros required</p>
             <h1>Complete your profile first</h1>
             <p className="lede">
-              Rally needs your pro profile before it can create session
+              Rally needs your pro profile before it can create lesson
               reservations.
             </p>
           </div>
@@ -35,7 +35,7 @@ export default async function NewLessonPage() {
         <section className="panel">
           <div className="empty-state">
             Save your name and phone number once, then create your first
-            session.
+            lesson.
             <div className="button-row section-actions">
               <Link className="button" href="/profile">
                 Complete profile
@@ -51,7 +51,7 @@ export default async function NewLessonPage() {
     <main className="page">
       <header className="page-header">
         <div>
-          <h1>New session</h1>
+          <h1>New lesson</h1>
           <p className="page-subtitle">
             Choose the type, one or more pros, participants, time, and court.
           </p>

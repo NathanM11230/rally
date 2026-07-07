@@ -77,7 +77,7 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
       <header className="page-header">
         <div>
           <h1>{monthLabel}</h1>
-          <p className="page-subtitle">{profile.full_name}&apos;s assigned sessions</p>
+          <p className="page-subtitle">{profile.full_name}&apos;s assigned lessons</p>
         </div>
       </header>
 
@@ -100,13 +100,13 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
 
       <div className="calendar-summary">
         <strong>{lessons.length}</strong>{" "}
-        {lessons.length === 1 ? "session" : "sessions"} assigned to you.
+        {lessons.length === 1 ? "lesson" : "lessons"} assigned to you.
       </div>
 
       {lessons.length === 0 ? (
         <section className="panel">
           <div className="empty-state">
-            No sessions assigned to you this month.
+            No lessons assigned to you this month.
             <div className="button-row section-actions">
               <Link className="button" href="/profile">
                 Check profile
