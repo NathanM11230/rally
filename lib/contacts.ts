@@ -35,21 +35,27 @@ export async function searchContacts(query: string) {
     throw lessonStudentError;
   }
 
+  const { data: lessonData, error: lessonError } = await supabase
+    .from("lessons")
+    .select("id, student_name, student_phone, created_at")
+    .ilike("student_name", `%${query.trim()}%`)
+    .order("created_at", { ascending: false })
+    .limit(16);
+
+  if (lessonError) {
+    throw lessonError;
+  }
+
   return mergeContactResults(
     (contactData as Contact[]) ?? [],
-    (lessonStudentData ?? []).map((student) => {
-      const normalizedPhone = normalizePhone(student.student_phone);
-
-      return {
-        id: `lesson-student-${student.id}`,
-        full_name: student.student_name,
-        phone_number: student.student_phone,
-        normalized_name: normalizeName(student.student_name),
-        normalized_phone: normalizedPhone,
-        created_at: student.created_at,
-        updated_at: student.created_at,
-      };
-    }),
+    [
+      ...(lessonStudentData ?? []).map((student) =>
+        lessonHistoryContactToContact("lesson-student", student),
+      ),
+      ...(lessonData ?? []).map((lesson) =>
+        lessonHistoryContactToContact("lesson", lesson),
+      ),
+    ],
   );
 }
 
@@ -99,6 +105,26 @@ function normalizeName(value: string) {
 
 function normalizePhone(value: string) {
   return value.replace(/\D/g, "");
+}
+
+function lessonHistoryContactToContact(
+  source: "lesson-student" | "lesson",
+  contact: {
+    id: string;
+    student_name: string;
+    student_phone: string;
+    created_at: string;
+  },
+): Contact {
+  return {
+    id: `${source}-${contact.id}`,
+    full_name: contact.student_name,
+    phone_number: contact.student_phone,
+    normalized_name: normalizeName(contact.student_name),
+    normalized_phone: normalizePhone(contact.student_phone),
+    created_at: contact.created_at,
+    updated_at: contact.created_at,
+  };
 }
 
 function mergeContactResults(savedContacts: Contact[], lessonContacts: Contact[]) {
