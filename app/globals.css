@@ -1102,17 +1102,24 @@ select:focus {
   position: relative;
 }
 
+.contact-field:focus-within {
+  z-index: 20;
+}
+
 .contact-suggestions {
   position: absolute;
+  top: 100%;
   right: 0;
   left: 0;
-  z-index: 5;
+  z-index: 30;
   display: grid;
   gap: 4px;
   margin-top: 4px;
   border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--surface);
+  max-height: 220px;
+  overflow-y: auto;
   padding: 6px;
   box-shadow: 0 12px 28px rgba(24, 37, 29, 0.12);
 }

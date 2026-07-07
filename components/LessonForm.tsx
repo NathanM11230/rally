@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { FormEvent, useState } from "react";
+import { FormEvent, useRef, useState } from "react";
 
 import { getLessonFormDateTime } from "@/lib/date";
 import { SESSION_TYPES, sessionTypeLabels } from "@/lib/session-types";
@@ -80,6 +80,7 @@ export function LessonForm(props: LessonFormProps) {
   const [contactSuggestions, setContactSuggestions] = useState<
     Record<string, Contact[]>
   >({});
+  const contactSearchId = useRef(0);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -217,7 +218,15 @@ export function LessonForm(props: LessonFormProps) {
   async function handleStudentNameChange(id: string, value: string) {
     updateStudent(id, "student_name", value);
     setActiveContactRowId(id);
+    await searchContactsForStudent(id, value);
+  }
 
+  async function handleStudentNameFocus(id: string, value: string) {
+    setActiveContactRowId(id);
+    await searchContactsForStudent(id, value);
+  }
+
+  async function searchContactsForStudent(id: string, value: string) {
     const query = value.trim();
 
     if (query.length < 2) {
@@ -228,27 +237,37 @@ export function LessonForm(props: LessonFormProps) {
       return;
     }
 
-    const response = await fetch(`/api/contacts?q=${encodeURIComponent(query)}`);
+    const currentSearchId = contactSearchId.current + 1;
+    contactSearchId.current = currentSearchId;
 
-    if (!response.ok) {
-      return;
+    try {
+      const response = await fetch(`/api/contacts?q=${encodeURIComponent(query)}`);
+
+      if (!response.ok || currentSearchId !== contactSearchId.current) {
+        return;
+      }
+
+      const body = (await response.json()) as { contacts?: Contact[] };
+      const contacts = sortContactsForQuery(body.contacts ?? [], query);
+      const exactMatches = contacts.filter(
+        (contact) => normalizeContactName(contact.full_name) === normalizeContactName(query),
+      );
+
+      if (exactMatches.length === 1) {
+        applyContact(id, exactMatches[0]);
+        return;
+      }
+
+      setContactSuggestions((currentSuggestions) => ({
+        ...currentSuggestions,
+        [id]: contacts,
+      }));
+    } catch {
+      setContactSuggestions((currentSuggestions) => ({
+        ...currentSuggestions,
+        [id]: [],
+      }));
     }
-
-    const body = (await response.json()) as { contacts?: Contact[] };
-    const contacts = body.contacts ?? [];
-    const exactMatches = contacts.filter(
-      (contact) => normalizeContactName(contact.full_name) === normalizeContactName(query),
-    );
-
-    if (exactMatches.length === 1) {
-      applyContact(id, exactMatches[0]);
-      return;
-    }
-
-    setContactSuggestions((currentSuggestions) => ({
-      ...currentSuggestions,
-      [id]: contacts,
-    }));
   }
 
   function applyContact(id: string, contact: Contact) {
@@ -351,7 +370,7 @@ export function LessonForm(props: LessonFormProps) {
                 suggestions={contactSuggestions[student.id] ?? []}
                 showSuggestions={activeContactRowId === student.id}
                 onChange={(value) => handleStudentNameChange(student.id, value)}
-                onFocus={() => setActiveContactRowId(student.id)}
+                onFocus={() => handleStudentNameFocus(student.id, student.student_name)}
                 onSelectContact={(contact) => applyContact(student.id, contact)}
               />
               <Field
@@ -496,8 +515,17 @@ function ContactNameField({
               className="contact-suggestion"
               key={contact.id}
               type="button"
-              onMouseDown={(event) => event.preventDefault()}
-              onClick={() => onSelectContact(contact)}
+              aria-label={`Use ${contact.full_name}`}
+              onPointerDown={(event) => {
+                event.preventDefault();
+                onSelectContact(contact);
+              }}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  onSelectContact(contact);
+                }
+              }}
             >
               <span>{contact.full_name}</span>
               <small>{contact.phone_number}</small>
@@ -610,6 +638,43 @@ function buildLocationFromCourts(courts: CourtFormRow[]) {
 
 function normalizeContactName(value: string) {
   return value.trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+function sortContactsForQuery(contacts: Contact[], query: string) {
+  const normalizedQuery = normalizeContactName(query);
+
+  return [...contacts].sort((first, second) => {
+    const firstScore = getContactMatchScore(first, normalizedQuery);
+    const secondScore = getContactMatchScore(second, normalizedQuery);
+
+    if (firstScore !== secondScore) {
+      return firstScore - secondScore;
+    }
+
+    return first.full_name.localeCompare(second.full_name);
+  });
+}
+
+function getContactMatchScore(contact: Contact, normalizedQuery: string) {
+  const normalizedName = normalizeContactName(contact.full_name);
+
+  if (normalizedName === normalizedQuery) {
+    return 0;
+  }
+
+  if (normalizedName.startsWith(normalizedQuery)) {
+    return 1;
+  }
+
+  if (normalizedName.split(" ").some((namePart) => namePart.startsWith(normalizedQuery))) {
+    return 2;
+  }
+
+  if (normalizedName.includes(normalizedQuery)) {
+    return 3;
+  }
+
+  return 4;
 }
 
 function getInitialInstructorIds(

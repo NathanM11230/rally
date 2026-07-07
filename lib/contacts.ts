@@ -47,6 +47,7 @@ export async function searchContacts(query: string) {
   }
 
   return mergeContactResults(
+    normalizedQuery,
     (contactData as Contact[]) ?? [],
     [
       ...(lessonStudentData ?? []).map((student) =>
@@ -127,7 +128,11 @@ function lessonHistoryContactToContact(
   };
 }
 
-function mergeContactResults(savedContacts: Contact[], lessonContacts: Contact[]) {
+function mergeContactResults(
+  normalizedQuery: string,
+  savedContacts: Contact[],
+  lessonContacts: Contact[],
+) {
   const contactsByPhone = new Map<string, Contact>();
 
   for (const contact of [...savedContacts, ...lessonContacts]) {
@@ -141,6 +146,37 @@ function mergeContactResults(savedContacts: Contact[], lessonContacts: Contact[]
   }
 
   return Array.from(contactsByPhone.values())
-    .sort((first, second) => first.full_name.localeCompare(second.full_name))
+    .sort((first, second) => {
+      const firstScore = getContactMatchScore(first, normalizedQuery);
+      const secondScore = getContactMatchScore(second, normalizedQuery);
+
+      if (firstScore !== secondScore) {
+        return firstScore - secondScore;
+      }
+
+      return first.full_name.localeCompare(second.full_name);
+    })
     .slice(0, 8);
+}
+
+function getContactMatchScore(contact: Contact, normalizedQuery: string) {
+  const normalizedName = normalizeName(contact.full_name);
+
+  if (normalizedName === normalizedQuery) {
+    return 0;
+  }
+
+  if (normalizedName.startsWith(normalizedQuery)) {
+    return 1;
+  }
+
+  if (normalizedName.split(" ").some((namePart) => namePart.startsWith(normalizedQuery))) {
+    return 2;
+  }
+
+  if (normalizedName.includes(normalizedQuery)) {
+    return 3;
+  }
+
+  return 4;
 }
