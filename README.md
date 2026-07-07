@@ -119,6 +119,7 @@ Go to **Pay Periods** to:
 
 - move between previous, current, and next pay periods
 - review only the logged-in pro's assigned lessons
+- see lessons grouped by Varsity, Freshmen, Lessons, and Other events
 - print a clean report for the selected pay period
 
 This is only a reporting tool. Rally does not process payments.

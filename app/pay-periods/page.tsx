@@ -23,6 +23,12 @@ type PayPeriodsPageProps = {
   }>;
 };
 
+type PayPeriodLessonGroup = {
+  id: string;
+  title: string;
+  lessons: LessonWithInstructorProfile[];
+};
+
 export const dynamic = "force-dynamic";
 
 export default async function PayPeriodsPage({ searchParams }: PayPeriodsPageProps) {
@@ -110,20 +116,65 @@ export default async function PayPeriodsPage({ searchParams }: PayPeriodsPagePro
           </div>
         </section>
       ) : (
-        <section className="dash-section">
-          <h2 className="section-title">
-            {profile.full_name} - {lessons.length}{" "}
-            {lessons.length === 1 ? "lesson" : "lessons"}
-          </h2>
-          <div className="lesson-cards">
-            {lessons.map((lesson) => (
-              <PayPeriodLessonCard key={lesson.id} lesson={lesson} timeZone={timeZone} />
-            ))}
+        <>
+          <div className="calendar-summary">
+            <strong>{lessons.length}</strong>{" "}
+            {lessons.length === 1 ? "lesson" : "lessons"} in this pay period.
           </div>
-        </section>
+
+          {getPayPeriodLessonGroups(lessons).map((group) => (
+            <section className="dash-section" key={group.id}>
+              <h2 className="section-title">
+                {group.title} - {group.lessons.length}{" "}
+                {group.lessons.length === 1 ? "lesson" : "lessons"}
+              </h2>
+              <div className="lesson-cards">
+                {group.lessons.map((lesson) => (
+                  <PayPeriodLessonCard
+                    key={lesson.id}
+                    lesson={lesson}
+                    timeZone={timeZone}
+                  />
+                ))}
+              </div>
+            </section>
+          ))}
+        </>
       )}
     </main>
   );
+}
+
+function getPayPeriodLessonGroups(
+  lessons: LessonWithInstructorProfile[],
+): PayPeriodLessonGroup[] {
+  const groups: PayPeriodLessonGroup[] = [
+    {
+      id: "varsity",
+      title: "Varsity",
+      lessons: lessons.filter((lesson) => lesson.session_type === "varsity"),
+    },
+    {
+      id: "freshmen",
+      title: "Freshmen",
+      lessons: lessons.filter((lesson) => lesson.session_type === "freshmen"),
+    },
+    {
+      id: "lessons",
+      title: "Lessons",
+      lessons: lessons.filter((lesson) => lesson.session_type === "lesson"),
+    },
+    {
+      id: "other-events",
+      title: "Other events",
+      lessons: lessons.filter(
+        (lesson) =>
+          !["varsity", "freshmen", "lesson"].includes(lesson.session_type),
+      ),
+    },
+  ];
+
+  return groups.filter((group) => group.lessons.length > 0);
 }
 
 function PayPeriodLessonCard({
