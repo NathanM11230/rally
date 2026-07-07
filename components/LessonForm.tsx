@@ -24,6 +24,20 @@ type CourtFormRow = {
   value: string;
 };
 
+const TIME_OPTIONS = Array.from({ length: 96 }, (_, index) => {
+  const totalMinutes = index * 15;
+  const hour = Math.floor(totalMinutes / 60);
+  const minute = totalMinutes % 60;
+  const value = `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+  const labelHour = hour % 12 || 12;
+  const suffix = hour < 12 ? "AM" : "PM";
+
+  return {
+    value,
+    label: `${labelHour}:${String(minute).padStart(2, "0")} ${suffix}`,
+  };
+});
+
 type LessonFormProps =
   | {
       mode: "create";
@@ -353,10 +367,9 @@ export function LessonForm(props: LessonFormProps) {
             type="date"
             defaultValue={dateTimeDefaults.lesson_date}
           />
-          <Field
+          <TimeField
             label="Time"
             name="lesson_time"
-            type="time"
             defaultValue={dateTimeDefaults.lesson_time}
           />
         </div>
@@ -420,6 +433,12 @@ type FieldProps = {
   placeholder?: string;
   required?: boolean;
   onChange?: (value: string) => void;
+};
+
+type TimeFieldProps = {
+  label: string;
+  name: string;
+  defaultValue?: string;
 };
 
 type ContactNameFieldProps = {
@@ -502,6 +521,28 @@ function Field({
         placeholder={placeholder}
         onChange={onChange ? (event) => onChange(event.target.value) : undefined}
       />
+    </label>
+  );
+}
+
+function TimeField({ label, name, defaultValue = "" }: TimeFieldProps) {
+  const safeDefaultValue = TIME_OPTIONS.some((option) => option.value === defaultValue)
+    ? defaultValue
+    : "";
+
+  return (
+    <label className="field">
+      {label}
+      <select required name={name} defaultValue={safeDefaultValue}>
+        <option value="" disabled>
+          Select time
+        </option>
+        {TIME_OPTIONS.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
     </label>
   );
 }

@@ -81,6 +81,8 @@ export function parseLessonInput(body: unknown, mode: LessonInputMode): LessonIn
 
   if (values.lesson_time && !/^\d{2}:\d{2}$/.test(values.lesson_time)) {
     errors.push("lesson_time must use HH:mm format.");
+  } else if (values.lesson_time && !isQuarterHourTime(values.lesson_time)) {
+    errors.push("lesson_time must be in 15-minute intervals.");
   }
 
   if (errors.length > 0) {
@@ -168,4 +170,16 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function cleanString(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
+}
+
+function isQuarterHourTime(value: string) {
+  const [hour, minute] = value.split(":").map(Number);
+
+  return (
+    Number.isInteger(hour) &&
+    Number.isInteger(minute) &&
+    hour >= 0 &&
+    hour <= 23 &&
+    [0, 15, 30, 45].includes(minute)
+  );
 }
