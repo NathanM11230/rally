@@ -643,6 +643,21 @@ select:focus {
   gap: 12px;
 }
 
+.court-list {
+  display: grid;
+  gap: 10px;
+}
+
+.court-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+}
+
 /* ── Profiles ── */
 
 .details-bar {
@@ -984,6 +999,10 @@ select:focus {
   }
 
   .student-row {
+    grid-template-columns: 1fr;
+  }
+
+  .court-row {
     grid-template-columns: 1fr;
   }
 

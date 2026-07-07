@@ -109,6 +109,10 @@ Each reservation can also have one or more pros assigned. Rally keeps the first
 selected pro as the primary compatibility value on `lessons.instructor_profile_id`
 and stores the full pro list in `lesson_instructors`.
 
+Each lesson can also include one or more courts. The form lets pros add multiple
+court rows, and Rally stores them together in `lessons.location`, such as
+`Court 1, Court 2`.
+
 ## Pay Period Reports
 
 Rally groups each pro's assigned lessons into the club pay period so they can

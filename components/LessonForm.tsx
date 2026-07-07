@@ -19,6 +19,11 @@ type StudentFormRow = {
   student_phone: string;
 };
 
+type CourtFormRow = {
+  id: string;
+  value: string;
+};
+
 type LessonFormProps =
   | {
       mode: "create";
@@ -45,6 +50,9 @@ export function LessonForm(props: LessonFormProps) {
   const [students, setStudents] = useState<StudentFormRow[]>(() =>
     getInitialStudents(lesson),
   );
+  const [courts, setCourts] = useState<CourtFormRow[]>(() =>
+    getInitialCourts(lesson),
+  );
   const [sessionType, setSessionType] = useState<SessionType>(
     lesson?.session_type ?? "lesson",
   );
@@ -70,6 +78,14 @@ export function LessonForm(props: LessonFormProps) {
       return;
     }
 
+    const location = buildLocationFromCourts(courts);
+
+    if (!location) {
+      setError("Add at least one court or location.");
+      setIsSaving(false);
+      return;
+    }
+
     const formData = new FormData(event.currentTarget);
     const payload = {
       instructor_profile_id: selectedInstructorIds[0] ?? "",
@@ -78,7 +94,7 @@ export function LessonForm(props: LessonFormProps) {
       event_title: String(formData.get("event_title") ?? ""),
       lesson_date: String(formData.get("lesson_date") ?? ""),
       lesson_time: String(formData.get("lesson_time") ?? ""),
-      location: String(formData.get("location") ?? ""),
+      location,
       notes: String(formData.get("notes") ?? ""),
       students: students.map((student) => ({
         student_name: student.student_name,
@@ -125,6 +141,34 @@ export function LessonForm(props: LessonFormProps) {
       ...currentStudents,
       { id: crypto.randomUUID(), student_name: "", student_phone: "" },
     ]);
+  }
+
+  function addCourt() {
+    setCourts((currentCourts) => [
+      ...currentCourts,
+      { id: crypto.randomUUID(), value: "" },
+    ]);
+  }
+
+  function removeCourt(id: string) {
+    setCourts((currentCourts) =>
+      currentCourts.length === 1
+        ? currentCourts
+        : currentCourts.filter((court) => court.id !== id),
+    );
+  }
+
+  function updateCourt(id: string, value: string) {
+    setCourts((currentCourts) =>
+      currentCourts.map((court) =>
+        court.id === id
+          ? {
+              ...court,
+              value,
+            }
+          : court,
+      ),
+    );
   }
 
   function toggleInstructor(instructorProfileId: string) {
@@ -315,12 +359,33 @@ export function LessonForm(props: LessonFormProps) {
             type="time"
             defaultValue={dateTimeDefaults.lesson_time}
           />
-          <Field
-            label="Location"
-            name="location"
-            defaultValue={lesson?.location}
-            placeholder="Court 3"
-          />
+        </div>
+        <div className="field-heading">
+          <span className="form-section-title">Courts / location</span>
+          <button className="button-secondary compact-button" type="button" onClick={addCourt}>
+            Add court
+          </button>
+        </div>
+        <div className="court-list">
+          {courts.map((court, index) => (
+            <div className="court-row" key={court.id}>
+              <Field
+                label={`Court ${index + 1}`}
+                name={`court_${court.id}`}
+                value={court.value}
+                placeholder="Court 3"
+                onChange={(value) => updateCourt(court.id, value)}
+              />
+              <button
+                className="button-danger compact-button"
+                type="button"
+                disabled={courts.length === 1}
+                onClick={() => removeCourt(court.id)}
+              >
+                Remove
+              </button>
+            </div>
+          ))}
         </div>
       </div>
 
@@ -463,6 +528,33 @@ function getInitialStudents(lesson: LessonWithInstructorProfile | null): Student
     student_name: student.student_name,
     student_phone: student.student_phone,
   }));
+}
+
+function getInitialCourts(lesson: LessonWithInstructorProfile | null): CourtFormRow[] {
+  if (!lesson?.location) {
+    return [{ id: crypto.randomUUID(), value: "" }];
+  }
+
+  const courts = lesson.location
+    .split(",")
+    .map((court) => court.trim())
+    .filter(Boolean);
+
+  if (courts.length === 0) {
+    return [{ id: crypto.randomUUID(), value: "" }];
+  }
+
+  return courts.map((court) => ({
+    id: crypto.randomUUID(),
+    value: court,
+  }));
+}
+
+function buildLocationFromCourts(courts: CourtFormRow[]) {
+  return courts
+    .map((court) => court.value.trim())
+    .filter(Boolean)
+    .join(", ");
 }
 
 function getInitialInstructorIds(
