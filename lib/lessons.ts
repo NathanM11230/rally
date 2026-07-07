@@ -43,6 +43,23 @@ export async function getUpcomingLessonsForInstructor(instructorProfileId: strin
   );
 }
 
+export async function getLessonsForInstructor(instructorProfileId: string) {
+  const supabase = getSupabaseAdmin();
+
+  const { data, error } = await supabase
+    .from("lessons")
+    .select(lessonSelect)
+    .order("lesson_start_time", { ascending: false });
+
+  if (error) {
+    throw error;
+  }
+
+  return normalizeLessons(data as LessonWithInstructorProfile[]).filter((lesson) =>
+    isLessonAssignedToInstructor(lesson, instructorProfileId),
+  );
+}
+
 export async function getLessonsForCalendar({
   start,
   end,

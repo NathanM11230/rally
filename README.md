@@ -144,6 +144,19 @@ Names are used for search because pros usually remember names first. Phone
 numbers are normalized behind the scenes to avoid duplicate saved contacts when
 the same person is entered again.
 
+## Follow Ups
+
+Go to **Follow ups** to see the people a pro works with most often. Rally ranks
+them from the logged-in pro's lesson history and provides a manual text link
+with this draft:
+
+```txt
+Hey [FirstName], any time to hit soon?
+```
+
+The text is not sent automatically. Rally opens the pro's SMS app with the draft
+filled in.
+
 The database stores:
 
 - `contacts.full_name`

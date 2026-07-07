@@ -357,6 +357,39 @@ h2 {
 
 /* ── Status pills ── */
 
+.follow-up-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+.follow-up-card {
+  display: grid;
+  gap: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 14px;
+}
+
+.follow-up-card h3 {
+  margin: 0 0 4px;
+  font-size: 1rem;
+}
+
+.follow-up-card p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.follow-up-meta {
+  display: grid;
+  gap: 4px;
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
 .status-pill {
   display: inline-flex;
   align-items: center;
