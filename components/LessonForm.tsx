@@ -235,9 +235,19 @@ export function LessonForm(props: LessonFormProps) {
     }
 
     const body = (await response.json()) as { contacts?: Contact[] };
+    const contacts = body.contacts ?? [];
+    const exactMatches = contacts.filter(
+      (contact) => normalizeContactName(contact.full_name) === normalizeContactName(query),
+    );
+
+    if (exactMatches.length === 1) {
+      applyContact(id, exactMatches[0]);
+      return;
+    }
+
     setContactSuggestions((currentSuggestions) => ({
       ...currentSuggestions,
-      [id]: body.contacts ?? [],
+      [id]: contacts,
     }));
   }
 
@@ -596,6 +606,10 @@ function buildLocationFromCourts(courts: CourtFormRow[]) {
     .map((court) => court.value.trim())
     .filter(Boolean)
     .join(", ");
+}
+
+function normalizeContactName(value: string) {
+  return value.trim().toLowerCase().replace(/\s+/g, " ");
 }
 
 function getInitialInstructorIds(

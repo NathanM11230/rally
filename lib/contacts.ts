@@ -13,18 +13,44 @@ export async function searchContacts(query: string) {
     return [];
   }
 
-  const { data, error } = await supabase
+  const { data: contactData, error: contactError } = await supabase
     .from("contacts")
     .select(CONTACT_SELECT)
     .ilike("normalized_name", `%${normalizedQuery}%`)
     .order("full_name", { ascending: true })
     .limit(8);
 
-  if (error) {
-    throw error;
+  if (contactError) {
+    throw contactError;
   }
 
-  return data as Contact[];
+  const { data: lessonStudentData, error: lessonStudentError } = await supabase
+    .from("lesson_students")
+    .select("id, student_name, student_phone, created_at")
+    .ilike("student_name", `%${query.trim()}%`)
+    .order("student_name", { ascending: true })
+    .limit(16);
+
+  if (lessonStudentError) {
+    throw lessonStudentError;
+  }
+
+  return mergeContactResults(
+    (contactData as Contact[]) ?? [],
+    (lessonStudentData ?? []).map((student) => {
+      const normalizedPhone = normalizePhone(student.student_phone);
+
+      return {
+        id: `lesson-student-${student.id}`,
+        full_name: student.student_name,
+        phone_number: student.student_phone,
+        normalized_name: normalizeName(student.student_name),
+        normalized_phone: normalizedPhone,
+        created_at: student.created_at,
+        updated_at: student.created_at,
+      };
+    }),
+  );
 }
 
 export async function upsertContactsFromStudents(students: LessonStudentInput[]) {
@@ -73,4 +99,22 @@ function normalizeName(value: string) {
 
 function normalizePhone(value: string) {
   return value.replace(/\D/g, "");
+}
+
+function mergeContactResults(savedContacts: Contact[], lessonContacts: Contact[]) {
+  const contactsByPhone = new Map<string, Contact>();
+
+  for (const contact of [...savedContacts, ...lessonContacts]) {
+    if (!contact.normalized_phone) {
+      continue;
+    }
+
+    if (!contactsByPhone.has(contact.normalized_phone)) {
+      contactsByPhone.set(contact.normalized_phone, contact);
+    }
+  }
+
+  return Array.from(contactsByPhone.values())
+    .sort((first, second) => first.full_name.localeCompare(second.full_name))
+    .slice(0, 8);
 }
