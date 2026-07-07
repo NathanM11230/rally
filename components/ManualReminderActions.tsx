@@ -13,15 +13,22 @@ import type { LessonWithInstructorProfile } from "@/types/database";
 type ManualReminderActionsProps = {
   lesson: LessonWithInstructorProfile;
   timeZone: string;
+  currentInstructorProfileId: string;
 };
 
-export function ManualReminderActions({ lesson, timeZone }: ManualReminderActionsProps) {
+export function ManualReminderActions({
+  lesson,
+  timeZone,
+  currentInstructorProfileId,
+}: ManualReminderActionsProps) {
   const router = useRouter();
   const [isSaving, setIsSaving] = useState(false);
   const studentSmsTargets = getLessonStudents(lesson).map((student) =>
     buildStudentReminderSms(lesson, student, timeZone),
   );
-  const instructorSmsTargets = buildInstructorReminderSmsTargets(lesson, timeZone);
+  const instructorSmsTargets = buildInstructorReminderSmsTargets(lesson, timeZone, {
+    excludeInstructorProfileId: currentInstructorProfileId,
+  });
 
   async function updateReminderStatus(reminderSent: boolean) {
     setIsSaving(true);

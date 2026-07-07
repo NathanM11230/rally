@@ -123,6 +123,7 @@ export default async function DashboardPage() {
                     lesson={lesson}
                     timeZone={timeZone}
                     showDate={false}
+                    currentInstructorProfileId={profile.id}
                   />
                 ))}
               </div>
@@ -139,6 +140,7 @@ export default async function DashboardPage() {
                     lesson={lesson}
                     timeZone={timeZone}
                     showDate
+                    currentInstructorProfileId={profile.id}
                   />
                 ))}
               </div>
@@ -154,10 +156,12 @@ function LessonCard({
   lesson,
   timeZone,
   showDate,
+  currentInstructorProfileId,
 }: {
   lesson: LessonWithInstructorProfile;
   timeZone: string;
   showDate: boolean;
+  currentInstructorProfileId: string;
 }) {
   const students = getLessonStudents(lesson);
   const status = getLessonStatus(lesson);
@@ -200,7 +204,11 @@ function LessonCard({
         <p className="lesson-card-notes">{lesson.notes}</p>
       ) : null}
       <div className="lesson-card-actions">
-        <ManualReminderActions lesson={lesson} timeZone={timeZone} />
+        <ManualReminderActions
+          lesson={lesson}
+          timeZone={timeZone}
+          currentInstructorProfileId={currentInstructorProfileId}
+        />
         <Link
           className="button-secondary compact-button"
           href={`/lessons/${lesson.id}/edit`}

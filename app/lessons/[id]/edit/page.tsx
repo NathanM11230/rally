@@ -83,7 +83,11 @@ export default async function EditLessonPage({ params }: EditLessonPageProps) {
         </div>
         <div className="lesson-tool-actions">
           <LessonStatusSelect lessonId={lesson.id} status={status} />
-          <ManualReminderActions lesson={lesson} timeZone={timeZone} />
+          <ManualReminderActions
+            lesson={lesson}
+            timeZone={timeZone}
+            currentInstructorProfileId={profile.id}
+          />
           <DeleteLessonButton lessonId={lesson.id} />
         </div>
       </section>

@@ -33,12 +33,17 @@ export function buildStudentReminderSms(
 export function buildInstructorReminderSmsTargets(
   lesson: LessonWithInstructorProfile,
   timeZone: string,
+  options: {
+    excludeInstructorProfileId?: string;
+  } = {},
 ): ManualSmsTarget[] {
   const studentNames = getLessonStudents(lesson)
     .map((student) => student.student_name)
     .join(", ");
   const subject = getStudentReminderSubject(lesson);
-  const instructors = getLessonInstructors(lesson);
+  const instructors = getLessonInstructors(lesson).filter(
+    (instructor) => instructor.id !== options.excludeInstructorProfileId,
+  );
   const lessonDateTime = formatReminderDateTime(lesson, timeZone);
 
   return instructors.map((instructor) => {

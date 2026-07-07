@@ -183,9 +183,11 @@ filled with the first student as a compatibility fallback.
 On the dashboard and edit page, each lesson has actions to:
 
 - open a prefilled SMS to each student
-- open a prefilled SMS to the selected pro
+- open a prefilled SMS to other assigned pros
 - mark the reminder as sent
 - reset the sent status if needed
+
+Rally does not show a pro a text link to their own phone number.
 
 The app does not send texts in the background. The pro reviews the prefilled
 text and taps send in their own messaging app. This avoids Twilio, A2P 10DLC,
