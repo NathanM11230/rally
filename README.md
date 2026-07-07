@@ -111,15 +111,14 @@ and stores the full pro list in `lesson_instructors`.
 
 ## Pay Period Reports
 
-Rally tracks lesson work status so pros can compare completed lessons against
-what they were paid for. The club pay period is calculated in two-week windows
-starting Monday, July 6, 2026.
+Rally groups each pro's assigned sessions into the club pay period so they can
+compare what was scheduled against what they were paid for. The club pay period
+is calculated in two-week windows starting Monday, July 6, 2026.
 
 Go to **Pay Periods** to:
 
 - move between previous, current, and next pay periods
 - review only the logged-in pro's assigned sessions
-- mark lessons as scheduled, completed, cancelled, or no-show
 - print a clean report for the selected pay period
 
 This is only a reporting tool. Rally does not process payments.

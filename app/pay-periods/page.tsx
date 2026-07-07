@@ -1,16 +1,9 @@
 import Link from "next/link";
 
-import { LessonStatusSelect } from "@/components/LessonStatusSelect";
 import { PrintButton } from "@/components/PrintButton";
 import { requireCurrentProfile } from "@/lib/auth";
 import { formatLessonDateTime, getLessonTimeZone } from "@/lib/date";
 import { getLessonInstructorNames } from "@/lib/lesson-instructors";
-import {
-  getLessonStatus,
-  getLessonStatusClass,
-  LESSON_STATUSES,
-  lessonStatusLabels,
-} from "@/lib/lesson-status";
 import { getLessonsForCalendar } from "@/lib/lessons";
 import { getLessonStudents } from "@/lib/manual-sms";
 import {
@@ -22,7 +15,7 @@ import {
   type PayPeriod,
 } from "@/lib/pay-periods";
 import { getSessionLabel } from "@/lib/session-types";
-import type { LessonStatus, LessonWithInstructorProfile } from "@/types/database";
+import type { LessonWithInstructorProfile } from "@/types/database";
 
 type PayPeriodsPageProps = {
   searchParams: Promise<{
@@ -70,8 +63,6 @@ export default async function PayPeriodsPage({ searchParams }: PayPeriodsPagePro
     );
   }
 
-  const statusCounts = getStatusCounts(lessons);
-
   return (
     <main className="page">
       <header className="page-header print-compact">
@@ -112,13 +103,6 @@ export default async function PayPeriodsPage({ searchParams }: PayPeriodsPagePro
         </div>
       </section>
 
-      <section className="pay-summary" aria-label="Pay period status summary">
-        <SummaryCard label="Completed" value={statusCounts.completed} />
-        <SummaryCard label="Scheduled" value={statusCounts.scheduled} />
-        <SummaryCard label="Cancelled" value={statusCounts.cancelled} />
-        <SummaryCard label="No-show" value={statusCounts.no_show} />
-      </section>
-
       {lessons.length === 0 ? (
         <section className="panel">
           <div className="empty-state">
@@ -150,7 +134,6 @@ function PayPeriodLessonCard({
   timeZone: string;
 }) {
   const students = getLessonStudents(lesson);
-  const status = getLessonStatus(lesson);
   const sessionLabel = getSessionLabel(lesson);
   const participantSummary =
     students.length > 0
@@ -164,9 +147,6 @@ function PayPeriodLessonCard({
           {formatLessonDateTime(lesson, timeZone)}
           <span className="lesson-card-location">{lesson.location}</span>
         </div>
-        <span className={`status-pill ${getLessonStatusClass(status)}`}>
-          {lessonStatusLabels[status]}
-        </span>
       </div>
       <div className="lesson-card-body">
         <span className="lesson-card-students">{participantSummary}</span>
@@ -177,7 +157,6 @@ function PayPeriodLessonCard({
       </div>
       {lesson.notes ? <p className="lesson-card-notes">{lesson.notes}</p> : null}
       <div className="lesson-card-actions">
-        <LessonStatusSelect lessonId={lesson.id} status={status} />
         <Link
           className="button-secondary compact-button print-hidden"
           href={`/lessons/${lesson.id}/edit`}
@@ -186,30 +165,6 @@ function PayPeriodLessonCard({
         </Link>
       </div>
     </div>
-  );
-}
-
-function SummaryCard({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="pay-summary-card">
-      <span>{label}</span>
-      <strong>{value}</strong>
-    </div>
-  );
-}
-
-function getStatusCounts(lessons: LessonWithInstructorProfile[]) {
-  return LESSON_STATUSES.reduce<Record<LessonStatus, number>>(
-    (counts, status) => ({
-      ...counts,
-      [status]: lessons.filter((lesson) => getLessonStatus(lesson) === status).length,
-    }),
-    {
-      scheduled: 0,
-      completed: 0,
-      cancelled: 0,
-      no_show: 0,
-    },
   );
 }
 
