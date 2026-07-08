@@ -45,10 +45,13 @@ prefilled text message and the pro sends it manually from their own SMS app.
    SUPABASE_SERVICE_ROLE_KEY=
    SUPABASE_ANON_KEY=
    LESSON_TIME_ZONE=America/New_York
+   CALENDAR_TOKEN_SECRET=
    ```
 
    Keep `SUPABASE_SERVICE_ROLE_KEY` private. It is used only from server code.
    `SUPABASE_ANON_KEY` is used for Supabase Auth login and signup.
+   `CALENDAR_TOKEN_SECRET` is optional; if omitted, Rally signs calendar
+   download links with `SUPABASE_SERVICE_ROLE_KEY`.
 
 5. Run the app locally:
 
@@ -89,7 +92,9 @@ Each lesson also has an **Add to calendar** link. Rally downloads a standard
 `.ics` calendar file that can be opened by Apple Calendar, Outlook, Google
 Calendar, and most phone calendar apps. The file includes the lesson type,
 participants, assigned pros, court/location, notes, and a one-hour default event
-duration.
+duration. Calendar links include a signed token so iPhone calendar/download
+handoff can fetch the file even when the calendar app does not send the Rally
+login cookie.
 
 ## Lesson Types
 
@@ -253,6 +258,7 @@ SUPABASE_URL=
 SUPABASE_SERVICE_ROLE_KEY=
 SUPABASE_ANON_KEY=
 LESSON_TIME_ZONE=America/New_York
+CALENDAR_TOKEN_SECRET=
 ```
 
 Redeploy after changing environment variables.

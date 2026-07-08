@@ -8,6 +8,9 @@ import {
   buildLessonCalendarFile,
   buildLessonCalendarFilename,
 } from "@/lib/calendar-event";
+import { isValidLessonCalendarToken } from "@/lib/calendar-token";
+import { getLesson } from "@/lib/lessons";
+import type { LessonWithInstructorProfile } from "@/types/database";
 
 type CalendarRouteContext = {
   params: Promise<{
@@ -15,10 +18,22 @@ type CalendarRouteContext = {
   }>;
 };
 
-export async function GET(_request: Request, { params }: CalendarRouteContext) {
+export async function GET(request: Request, { params }: CalendarRouteContext) {
   const { id } = await params;
 
   try {
+    const token = new URL(request.url).searchParams.get("token");
+
+    if (isValidLessonCalendarToken(id, token)) {
+      const lesson = await getLesson(id);
+
+      if (!lesson) {
+        return NextResponse.json({ error: "Lesson not found." }, { status: 404 });
+      }
+
+      return buildCalendarResponse(lesson);
+    }
+
     const authResult = await getApiAuthenticatedProfile();
 
     if (!authResult.ok) {
@@ -34,18 +49,22 @@ export async function GET(_request: Request, { params }: CalendarRouteContext) {
       return lessonResult.response;
     }
 
-    const calendarFile = buildLessonCalendarFile(lessonResult.lesson);
-    const filename = buildLessonCalendarFilename(lessonResult.lesson);
-
-    return new Response(calendarFile, {
-      headers: {
-        "Content-Type": "text/calendar; charset=utf-8",
-        "Content-Disposition": `attachment; filename="${filename}"`,
-      },
-    });
+    return buildCalendarResponse(lessonResult.lesson);
   } catch (error) {
     return handleApiError(error);
   }
+}
+
+function buildCalendarResponse(lesson: LessonWithInstructorProfile) {
+  const calendarFile = buildLessonCalendarFile(lesson);
+  const filename = buildLessonCalendarFilename(lesson);
+
+  return new Response(calendarFile, {
+    headers: {
+      "Content-Type": "text/calendar; charset=utf-8",
+      "Content-Disposition": `attachment; filename="${filename}"`,
+    },
+  });
 }
 
 function handleApiError(error: unknown) {
