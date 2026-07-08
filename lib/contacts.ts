@@ -6,105 +6,52 @@ const CONTACT_SELECT =
   "id, full_name, phone_number, normalized_name, normalized_phone, created_at, updated_at";
 
 export async function getContactDirectory() {
-  const supabase = getSupabaseAdmin();
-  const { data: contactData, error: contactError } = await supabase
-    .from("contacts")
-    .select(CONTACT_SELECT)
-    .order("full_name", { ascending: true })
-    .limit(500);
-
-  if (contactError) {
-    throw contactError;
-  }
-
-  const { data: lessonStudentData, error: lessonStudentError } = await supabase
-    .from("lesson_students")
-    .select("id, student_name, student_phone, created_at")
-    .neq("student_phone", "")
-    .order("student_name", { ascending: true })
-    .limit(500);
-
-  if (lessonStudentError) {
-    throw lessonStudentError;
-  }
-
-  const { data: lessonData, error: lessonError } = await supabase
-    .from("lessons")
-    .select("id, student_name, student_phone, created_at")
-    .neq("student_phone", "")
-    .order("student_name", { ascending: true })
-    .limit(500);
-
-  if (lessonError) {
-    throw lessonError;
-  }
+  const [contactData, lessonStudentData, lessonData] = await Promise.all([
+    getSavedContactRows(500),
+    getLessonStudentContactRows(500),
+    getLessonContactRows(500),
+  ]);
 
   return mergeContactResults(
     "",
-    (contactData as Contact[]) ?? [],
+    contactData,
     [
-      ...(lessonStudentData ?? []).map((student) =>
+      ...lessonStudentData.map((student) =>
         lessonHistoryContactToContact("lesson-student", student),
       ),
-      ...(lessonData ?? []).map((lesson) =>
+      ...lessonData.map((lesson) =>
         lessonHistoryContactToContact("lesson", lesson),
       ),
     ],
+    500,
   );
 }
 
 export async function searchContacts(query: string) {
   const normalizedQuery = normalizeName(query);
-  const supabase = getSupabaseAdmin();
 
   if (!normalizedQuery) {
     return [];
   }
 
-  const { data: contactData, error: contactError } = await supabase
-    .from("contacts")
-    .select(CONTACT_SELECT)
-    .ilike("normalized_name", `%${normalizedQuery}%`)
-    .order("full_name", { ascending: true })
-    .limit(8);
-
-  if (contactError) {
-    throw contactError;
-  }
-
-  const { data: lessonStudentData, error: lessonStudentError } = await supabase
-    .from("lesson_students")
-    .select("id, student_name, student_phone, created_at")
-    .ilike("student_name", `%${query.trim()}%`)
-    .order("student_name", { ascending: true })
-    .limit(16);
-
-  if (lessonStudentError) {
-    throw lessonStudentError;
-  }
-
-  const { data: lessonData, error: lessonError } = await supabase
-    .from("lessons")
-    .select("id, student_name, student_phone, created_at")
-    .ilike("student_name", `%${query.trim()}%`)
-    .order("created_at", { ascending: false })
-    .limit(16);
-
-  if (lessonError) {
-    throw lessonError;
-  }
+  const [contactData, lessonStudentData, lessonData] = await Promise.all([
+    getSavedContactRows(16, normalizedQuery),
+    getLessonStudentContactRows(16, query.trim()),
+    getLessonContactRows(16, query.trim()),
+  ]);
 
   return mergeContactResults(
     normalizedQuery,
-    (contactData as Contact[]) ?? [],
+    contactData,
     [
-      ...(lessonStudentData ?? []).map((student) =>
+      ...lessonStudentData.map((student) =>
         lessonHistoryContactToContact("lesson-student", student),
       ),
-      ...(lessonData ?? []).map((lesson) =>
+      ...lessonData.map((lesson) =>
         lessonHistoryContactToContact("lesson", lesson),
       ),
     ],
+    8,
   );
 }
 
@@ -121,8 +68,75 @@ export async function upsertContactsFromStudents(students: LessonStudentInput[])
     .upsert(contactRows, { onConflict: "normalized_phone" });
 
   if (error) {
-    throw error;
+    return;
   }
+}
+
+async function getSavedContactRows(limit: number, normalizedQuery?: string) {
+  const supabase = getSupabaseAdmin();
+  let request = supabase
+    .from("contacts")
+    .select(CONTACT_SELECT)
+    .order("full_name", { ascending: true })
+    .limit(limit);
+
+  if (normalizedQuery) {
+    request = request.ilike("normalized_name", `%${normalizedQuery}%`);
+  }
+
+  const { data, error } = await request;
+
+  if (error) {
+    return [];
+  }
+
+  return (data as Contact[]) ?? [];
+}
+
+async function getLessonStudentContactRows(limit: number, searchQuery?: string) {
+  const supabase = getSupabaseAdmin();
+  let request = supabase
+    .from("lesson_students")
+    .select("id, student_name, student_phone, created_at")
+    .neq("student_phone", "")
+    .order("student_name", { ascending: true })
+    .limit(limit);
+
+  if (searchQuery) {
+    request = request.ilike("student_name", `%${searchQuery}%`);
+  }
+
+  const { data, error } = await request;
+
+  if (error) {
+    return [];
+  }
+
+  return data ?? [];
+}
+
+async function getLessonContactRows(limit: number, searchQuery?: string) {
+  const supabase = getSupabaseAdmin();
+  let request = supabase
+    .from("lessons")
+    .select("id, student_name, student_phone, created_at")
+    .neq("student_phone", "")
+    .order(searchQuery ? "created_at" : "student_name", {
+      ascending: searchQuery ? false : true,
+    })
+    .limit(limit);
+
+  if (searchQuery) {
+    request = request.ilike("student_name", `%${searchQuery}%`);
+  }
+
+  const { data, error } = await request;
+
+  if (error) {
+    return [];
+  }
+
+  return data ?? [];
 }
 
 function getUniqueContactRows(students: LessonStudentInput[]) {
@@ -180,6 +194,7 @@ function mergeContactResults(
   normalizedQuery: string,
   savedContacts: Contact[],
   lessonContacts: Contact[],
+  limit: number,
 ) {
   const contactsByPhone = new Map<string, Contact>();
 
@@ -204,7 +219,7 @@ function mergeContactResults(
 
       return first.full_name.localeCompare(second.full_name);
     })
-    .slice(0, 8);
+    .slice(0, limit);
 }
 
 function getContactMatchScore(contact: Contact, normalizedQuery: string) {
