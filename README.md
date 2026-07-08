@@ -85,6 +85,12 @@ Go to **Calendar** from the dashboard to see lessons in a monthly calendar view.
 The calendar shows only the logged-in pro's assigned lessons. Each calendar
 item links back to the edit page for that reservation.
 
+Each lesson also has an **Add to calendar** link. Rally downloads a standard
+`.ics` calendar file that can be opened by Apple Calendar, Outlook, Google
+Calendar, and most phone calendar apps. The file includes the lesson type,
+participants, assigned pros, court/location, notes, and a one-hour default event
+duration.
+
 ## Lesson Types
 
 Each reservation has one type:
@@ -230,6 +236,7 @@ lesson type in the message.
 - `POST /api/lessons` creates a lesson with the selected pros and participants.
 - `PATCH /api/lessons/:id` edits a lesson, selected pros, and participants.
 - `DELETE /api/lessons/:id` deletes a lesson.
+- `GET /api/lessons/:id/calendar` downloads an `.ics` calendar event.
 - `PATCH /api/lessons/:id/status` updates scheduled/completed/cancelled/no-show status.
 - `POST /api/lessons/:id/reminder-sent` marks a manual reminder as sent.
 - `DELETE /api/lessons/:id/reminder-sent` resets a reminder to not sent.

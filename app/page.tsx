@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { AddToCalendarLink } from "@/components/AddToCalendarLink";
 import { ManualReminderActions } from "@/components/ManualReminderActions";
 import { requireCurrentProfile } from "@/lib/auth";
 import {
@@ -209,6 +210,7 @@ function LessonCard({
           timeZone={timeZone}
           currentInstructorProfileId={currentInstructorProfileId}
         />
+        <AddToCalendarLink lessonId={lesson.id} />
         <Link
           className="button-secondary compact-button"
           href={`/lessons/${lesson.id}/edit`}

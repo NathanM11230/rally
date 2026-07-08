@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { AddToCalendarLink } from "@/components/AddToCalendarLink";
 import { DeleteLessonButton } from "@/components/DeleteLessonButton";
 import { LessonForm } from "@/components/LessonForm";
 import { LessonStatusSelect } from "@/components/LessonStatusSelect";
@@ -90,6 +91,7 @@ export default async function EditLessonPage({ params }: EditLessonPageProps) {
             timeZone={timeZone}
             currentInstructorProfileId={profile.id}
           />
+          <AddToCalendarLink lessonId={lesson.id} />
           <DeleteLessonButton lessonId={lesson.id} />
         </div>
       </section>
