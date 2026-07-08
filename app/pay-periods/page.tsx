@@ -14,7 +14,7 @@ import {
   shiftPayPeriod,
   type PayPeriod,
 } from "@/lib/pay-periods";
-import { getSessionLabel } from "@/lib/session-types";
+import { getSessionLabel, SESSION_TYPES } from "@/lib/session-types";
 import type { LessonWithInstructorProfile } from "@/types/database";
 
 type PayPeriodsPageProps = {
@@ -27,6 +27,15 @@ type PayPeriodLessonGroup = {
   id: string;
   title: string;
   lessons: LessonWithInstructorProfile[];
+};
+
+const payPeriodSummaryLabels = {
+  lesson: "Lessons",
+  clinic: "Clinics",
+  other_event: "Other events",
+  freshmen: "Freshmen",
+  varsity: "Varsity",
+  team: "Team",
 };
 
 export const dynamic = "force-dynamic";
@@ -109,6 +118,18 @@ export default async function PayPeriodsPage({ searchParams }: PayPeriodsPagePro
         </div>
       </section>
 
+      <section className="dash-section">
+        <h2 className="section-title">Overview</h2>
+        <div className="pay-summary">
+          {getPayPeriodSummary(lessons).map((item) => (
+            <div className="pay-summary-card" key={item.id}>
+              <span>{item.label}</span>
+              <strong>{item.count}</strong>
+            </div>
+          ))}
+        </div>
+      </section>
+
       {lessons.length === 0 ? (
         <section className="panel">
           <div className="empty-state">
@@ -143,6 +164,21 @@ export default async function PayPeriodsPage({ searchParams }: PayPeriodsPagePro
       )}
     </main>
   );
+}
+
+function getPayPeriodSummary(lessons: LessonWithInstructorProfile[]) {
+  return [
+    {
+      id: "total",
+      label: "Total",
+      count: lessons.length,
+    },
+    ...SESSION_TYPES.map((sessionType) => ({
+      id: sessionType,
+      label: payPeriodSummaryLabels[sessionType],
+      count: lessons.filter((lesson) => lesson.session_type === sessionType).length,
+    })),
+  ];
 }
 
 function getPayPeriodLessonGroups(

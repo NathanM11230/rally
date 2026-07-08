@@ -109,9 +109,9 @@ Each reservation can also have one or more pros assigned. Rally keeps the first
 selected pro as the primary compatibility value on `lessons.instructor_profile_id`
 and stores the full pro list in `lesson_instructors`.
 
-Each lesson can also include one or more courts. The form lets pros add multiple
-court rows from a defined dropdown: Tennis Courts 1-8, Pickleball Courts 1-4,
-and Paddle Courts 1-5. Rally stores selected courts together in
+Each lesson can also include one or more courts. The form uses one multi-select
+court picker with Tennis Courts 1-8, Pickleball Courts 1-4, and Paddle Courts
+1-5. Rally stores selected courts together in
 `lessons.location`, such as `Tennis Court 1, Pickleball Court 2`.
 
 Lesson times are selected in 15-minute intervals. Rally also validates this on
@@ -127,6 +127,7 @@ Go to **Pay Periods** to:
 
 - move between previous, current, and next pay periods
 - review only the logged-in pro's assigned lessons
+- see high-level counts for total lessons, clinics, junior groups, teams, and other events
 - see lessons grouped by Varsity, Freshmen, Lessons, and Other events
 - print a clean report for the selected pay period
 

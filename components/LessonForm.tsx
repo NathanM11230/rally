@@ -19,11 +19,6 @@ type StudentFormRow = {
   student_phone: string;
 };
 
-type CourtFormRow = {
-  id: string;
-  value: string;
-};
-
 const TIME_OPTIONS = Array.from({ length: 96 }, (_, index) => {
   const totalMinutes = index * 15;
   const hour = Math.floor(totalMinutes / 60);
@@ -84,8 +79,8 @@ export function LessonForm(props: LessonFormProps) {
   const [students, setStudents] = useState<StudentFormRow[]>(() =>
     getInitialStudents(lesson),
   );
-  const [courts, setCourts] = useState<CourtFormRow[]>(() =>
-    getInitialCourts(lesson),
+  const [selectedCourts, setSelectedCourts] = useState<string[]>(() =>
+    getInitialCourtValues(lesson),
   );
   const [sessionType, setSessionType] = useState<SessionType>(
     lesson?.session_type ?? "lesson",
@@ -114,10 +109,10 @@ export function LessonForm(props: LessonFormProps) {
       return;
     }
 
-    const location = buildLocationFromCourts(courts);
+    const location = buildLocationFromCourtValues(selectedCourts);
 
     if (!location) {
-      setError("Add at least one court or location.");
+      setError("Select at least one court.");
       setIsSaving(false);
       return;
     }
@@ -179,34 +174,6 @@ export function LessonForm(props: LessonFormProps) {
     ]);
   }
 
-  function addCourt() {
-    setCourts((currentCourts) => [
-      ...currentCourts,
-      { id: crypto.randomUUID(), value: "" },
-    ]);
-  }
-
-  function removeCourt(id: string) {
-    setCourts((currentCourts) =>
-      currentCourts.length === 1
-        ? currentCourts
-        : currentCourts.filter((court) => court.id !== id),
-    );
-  }
-
-  function updateCourt(id: string, value: string) {
-    setCourts((currentCourts) =>
-      currentCourts.map((court) =>
-        court.id === id
-          ? {
-              ...court,
-              value,
-            }
-          : court,
-      ),
-    );
-  }
-
   function toggleInstructor(instructorProfileId: string) {
     setSelectedInstructorIds((currentIds) =>
       currentIds.includes(instructorProfileId)
@@ -233,6 +200,14 @@ export function LessonForm(props: LessonFormProps) {
             }
           : student,
       ),
+    );
+  }
+
+  function toggleCourt(court: string) {
+    setSelectedCourts((currentCourts) =>
+      currentCourts.includes(court)
+        ? currentCourts.filter((currentCourt) => currentCourt !== court)
+        : [...currentCourts, court],
     );
   }
 
@@ -444,30 +419,11 @@ export function LessonForm(props: LessonFormProps) {
         </div>
         <div className="field-heading">
           <span className="form-section-title">Courts / location</span>
-          <button className="button-secondary compact-button" type="button" onClick={addCourt}>
-            Add court
-          </button>
         </div>
-        <div className="court-list">
-          {courts.map((court, index) => (
-            <div className="court-row" key={court.id}>
-              <CourtSelectField
-                label={`Court ${index + 1}`}
-                name={`court_${court.id}`}
-                value={court.value}
-                onChange={(value) => updateCourt(court.id, value)}
-              />
-              <button
-                className="button-danger compact-button"
-                type="button"
-                disabled={courts.length === 1}
-                onClick={() => removeCourt(court.id)}
-              >
-                Remove
-              </button>
-            </div>
-          ))}
-        </div>
+        <CourtMultiSelectField
+          selectedCourts={selectedCourts}
+          onToggleCourt={toggleCourt}
+        />
       </div>
 
       <div className="form-section">
@@ -509,11 +465,9 @@ type TimeFieldProps = {
   defaultValue?: string;
 };
 
-type CourtSelectFieldProps = {
-  label: string;
-  name: string;
-  value: string;
-  onChange: (value: string) => void;
+type CourtMultiSelectFieldProps = {
+  selectedCourts: string[];
+  onToggleCourt: (court: string) => void;
 };
 
 type ContactNameFieldProps = {
@@ -631,33 +585,78 @@ function TimeField({ label, name, defaultValue = "" }: TimeFieldProps) {
   );
 }
 
-function CourtSelectField({ label, name, value, onChange }: CourtSelectFieldProps) {
-  const hasLegacyValue = value && !COURT_OPTION_VALUES.has(value);
+function CourtMultiSelectField({
+  selectedCourts,
+  onToggleCourt,
+}: CourtMultiSelectFieldProps) {
+  const selectedCourtSummary =
+    selectedCourts.length > 0
+      ? selectedCourts.join(", ")
+      : "Select one or more courts";
+  const legacyCourtValues = selectedCourts.filter(
+    (court) => !COURT_OPTION_VALUES.has(court),
+  );
 
   return (
-    <label className="field">
-      {label}
-      <select
-        required
-        name={name}
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-      >
-        <option value="" disabled>
-          Select court
-        </option>
-        {hasLegacyValue ? <option value={value}>{value}</option> : null}
+    <details className="court-picker">
+      <summary>
+        <span>Selected courts</span>
+        <strong>{selectedCourtSummary}</strong>
+      </summary>
+      <div className="court-picker-options">
+        {legacyCourtValues.length > 0 ? (
+          <div className="court-option-group">
+            <span className="court-option-group-title">Saved locations</span>
+            <div className="court-option-grid">
+              {legacyCourtValues.map((court) => (
+                <CourtOptionButton
+                  court={court}
+                  isSelected={selectedCourts.includes(court)}
+                  key={court}
+                  onToggleCourt={onToggleCourt}
+                />
+              ))}
+            </div>
+          </div>
+        ) : null}
         {COURT_OPTION_GROUPS.map((group) => (
-          <optgroup key={group.label} label={group.label}>
-            {group.options.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </optgroup>
+          <div className="court-option-group" key={group.label}>
+            <span className="court-option-group-title">{group.label}</span>
+            <div className="court-option-grid">
+              {group.options.map((option) => (
+                <CourtOptionButton
+                  court={option.value}
+                  isSelected={selectedCourts.includes(option.value)}
+                  key={option.value}
+                  onToggleCourt={onToggleCourt}
+                />
+              ))}
+            </div>
+          </div>
         ))}
-      </select>
-    </label>
+      </div>
+    </details>
+  );
+}
+
+function CourtOptionButton({
+  court,
+  isSelected,
+  onToggleCourt,
+}: {
+  court: string;
+  isSelected: boolean;
+  onToggleCourt: (court: string) => void;
+}) {
+  return (
+    <button
+      aria-pressed={isSelected}
+      className={`court-option-button ${isSelected ? "court-option-active" : ""}`}
+      type="button"
+      onClick={() => onToggleCourt(court)}
+    >
+      {court}
+    </button>
   );
 }
 
@@ -685,9 +684,9 @@ function getInitialStudents(lesson: LessonWithInstructorProfile | null): Student
   }));
 }
 
-function getInitialCourts(lesson: LessonWithInstructorProfile | null): CourtFormRow[] {
+function getInitialCourtValues(lesson: LessonWithInstructorProfile | null): string[] {
   if (!lesson?.location) {
-    return [{ id: crypto.randomUUID(), value: "" }];
+    return [];
   }
 
   const courts = lesson.location
@@ -696,18 +695,15 @@ function getInitialCourts(lesson: LessonWithInstructorProfile | null): CourtForm
     .filter(Boolean);
 
   if (courts.length === 0) {
-    return [{ id: crypto.randomUUID(), value: "" }];
+    return [];
   }
 
-  return courts.map((court) => ({
-    id: crypto.randomUUID(),
-    value: normalizeCourtValue(court),
-  }));
+  return Array.from(new Set(courts.map(normalizeCourtValue)));
 }
 
-function buildLocationFromCourts(courts: CourtFormRow[]) {
+function buildLocationFromCourtValues(courts: string[]) {
   const selectedCourts = courts
-    .map((court) => court.value.trim())
+    .map((court) => court.trim())
     .filter(Boolean);
 
   return Array.from(new Set(selectedCourts))
