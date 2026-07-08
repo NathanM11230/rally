@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { ContactDirectory } from "@/components/ContactDirectory";
 import { requireCurrentProfile } from "@/lib/auth";
 import { getContactDirectory } from "@/lib/contacts";
 import type { Contact } from "@/types/database";
@@ -53,40 +54,8 @@ export default async function ContactsPage() {
           </div>
         </section>
       ) : (
-        <section className="dash-section">
-          <h2 className="section-title">
-            {contacts.length} saved {contacts.length === 1 ? "contact" : "contacts"}
-          </h2>
-          <div className="contact-directory-grid">
-            {contacts.map((contact) => (
-              <ContactCard contact={contact} key={contact.id} />
-            ))}
-          </div>
-        </section>
+        <ContactDirectory contacts={contacts} />
       )}
     </main>
   );
-}
-
-function ContactCard({ contact }: { contact: Contact }) {
-  return (
-    <div className="contact-directory-card">
-      <div>
-        <h3>{contact.full_name}</h3>
-        <p>{contact.phone_number}</p>
-      </div>
-      <div className="button-row">
-        <a className="button-secondary compact-button" href={buildSmsHref(contact.phone_number)}>
-          Text
-        </a>
-        <Link className="button-secondary compact-button" href="/lessons/new">
-          New lesson
-        </Link>
-      </div>
-    </div>
-  );
-}
-
-function buildSmsHref(phoneNumber: string) {
-  return `sms:${phoneNumber.replace(/[^\d+]/g, "")}`;
 }

@@ -144,11 +144,12 @@ name and phone number, Rally stores that contact club-wide.
 Go to **Contacts** to review the automatic directory. The directory is built
 from saved contacts plus existing lesson history, so older lesson entries can
 still be reused even if they were created before the contact feature existed.
+The Contacts page is searchable instead of showing every contact at once.
 
-When creating or editing a lesson, each participant row has a **Saved contact**
-dropdown. Selecting a saved contact fills the participant name and phone number
-immediately. Typing in the name field also shows matching saved contacts from
-the same directory.
+When creating or editing a lesson, type a few characters in the participant name
+field. Rally filters saved contacts from the directory right under the name
+field. Selecting a saved contact fills the participant name and phone number
+immediately.
 
 Names are used for search because pros usually remember names first. Phone
 numbers are normalized behind the scenes to avoid duplicate saved contacts when

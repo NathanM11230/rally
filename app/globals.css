@@ -369,6 +369,21 @@ h2 {
   gap: 12px;
 }
 
+.contact-search-panel {
+  display: grid;
+  gap: 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  padding: 16px;
+}
+
+.contact-search-panel p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
 .follow-up-card {
   display: grid;
   gap: 12px;
@@ -700,10 +715,6 @@ select:focus {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-}
-
-.saved-contact-picker {
-  grid-column: 1 / -1;
 }
 
 .court-list {

@@ -232,7 +232,7 @@ export function LessonForm(props: LessonFormProps) {
   async function searchContactsForStudent(id: string, value: string) {
     const query = value.trim();
 
-    if (query.length < 2) {
+    if (query.length === 0) {
       setContactSuggestions((currentSuggestions) => ({
         ...currentSuggestions,
         [id]: [],
@@ -254,6 +254,10 @@ export function LessonForm(props: LessonFormProps) {
       ...currentSuggestions,
       [id]: localContacts,
     }));
+
+    if (query.length < 2) {
+      return;
+    }
 
     const currentSearchId = contactSearchId.current + 1;
     contactSearchId.current = currentSearchId;
@@ -380,12 +384,6 @@ export function LessonForm(props: LessonFormProps) {
                   Remove
                 </button>
               </div>
-              {savedContacts.length > 0 ? (
-                <SavedContactSelect
-                  contacts={savedContacts}
-                  onSelectContact={(contact) => applyContact(student.id, contact)}
-                />
-              ) : null}
               <ContactNameField
                 label="Name"
                 name={`student_name_${student.id}`}
@@ -505,40 +503,6 @@ type ContactNameFieldProps = {
   onFocus: () => void;
   onSelectContact: (contact: Contact) => void;
 };
-
-type SavedContactSelectProps = {
-  contacts: Contact[];
-  onSelectContact: (contact: Contact) => void;
-};
-
-function SavedContactSelect({ contacts, onSelectContact }: SavedContactSelectProps) {
-  return (
-    <label className="field saved-contact-picker">
-      Saved contact
-      <select
-        defaultValue=""
-        onChange={(event) => {
-          const contact = contacts.find(
-            (savedContact) => savedContact.id === event.currentTarget.value,
-          );
-
-          if (contact) {
-            onSelectContact(contact);
-          }
-
-          event.currentTarget.value = "";
-        }}
-      >
-        <option value="">Choose saved contact</option>
-        {contacts.map((contact) => (
-          <option key={contact.id} value={contact.id}>
-            {contact.full_name} - {contact.phone_number}
-          </option>
-        ))}
-      </select>
-    </label>
-  );
-}
 
 function ContactNameField({
   label,
@@ -701,7 +665,7 @@ function normalizeContactName(value: string) {
 function getMatchingContacts(contacts: Contact[], query: string) {
   const normalizedQuery = normalizeContactName(query);
 
-  if (normalizedQuery.length < 2) {
+  if (normalizedQuery.length === 0) {
     return [];
   }
 
