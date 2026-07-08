@@ -6,6 +6,7 @@ import { LessonForm } from "@/components/LessonForm";
 import { LessonStatusSelect } from "@/components/LessonStatusSelect";
 import { ManualReminderActions } from "@/components/ManualReminderActions";
 import { requireCurrentProfile } from "@/lib/auth";
+import { getContactDirectory } from "@/lib/contacts";
 import { formatLessonDateTime, getLessonTimeZone } from "@/lib/date";
 import { getInstructorProfiles } from "@/lib/instructor-profiles";
 import {
@@ -29,9 +30,10 @@ export default async function EditLessonPage({ params }: EditLessonPageProps) {
   const { id } = await params;
   const { profile } = await requireCurrentProfile();
   const timeZone = getLessonTimeZone();
-  const [lesson, instructorProfiles] = await Promise.all([
+  const [lesson, instructorProfiles, contacts] = await Promise.all([
     getLesson(id),
     getInstructorProfiles(),
+    getContactDirectory().catch(() => []),
   ]);
 
   if (!lesson) {
@@ -98,6 +100,7 @@ export default async function EditLessonPage({ params }: EditLessonPageProps) {
           lesson={lesson}
           timeZone={timeZone}
           instructorProfiles={instructorProfiles}
+          contacts={contacts}
         />
       </section>
     </main>

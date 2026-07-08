@@ -43,6 +43,7 @@ type LessonFormProps =
       mode: "create";
       timeZone: string;
       instructorProfiles: InstructorProfile[];
+      contacts: Contact[];
       defaultInstructorProfileId?: string;
       lesson?: never;
     }
@@ -50,6 +51,7 @@ type LessonFormProps =
       mode: "edit";
       timeZone: string;
       instructorProfiles: InstructorProfile[];
+      contacts: Contact[];
       lesson: LessonWithInstructorProfile;
     };
 
@@ -76,6 +78,7 @@ export function LessonForm(props: LessonFormProps) {
       props.mode === "create" ? props.defaultInstructorProfileId : undefined,
     ),
   );
+  const savedContacts = sortContactsForQuery(props.contacts, "");
   const [activeContactRowId, setActiveContactRowId] = useState<string | null>(null);
   const [contactSuggestions, setContactSuggestions] = useState<
     Record<string, Contact[]>
@@ -237,6 +240,21 @@ export function LessonForm(props: LessonFormProps) {
       return;
     }
 
+    const localContacts = getMatchingContacts(savedContacts, query);
+    const exactLocalMatches = localContacts.filter(
+      (contact) => normalizeContactName(contact.full_name) === normalizeContactName(query),
+    );
+
+    if (exactLocalMatches.length === 1) {
+      applyContact(id, exactLocalMatches[0]);
+      return;
+    }
+
+    setContactSuggestions((currentSuggestions) => ({
+      ...currentSuggestions,
+      [id]: localContacts,
+    }));
+
     const currentSearchId = contactSearchId.current + 1;
     contactSearchId.current = currentSearchId;
 
@@ -248,7 +266,10 @@ export function LessonForm(props: LessonFormProps) {
       }
 
       const body = (await response.json()) as { contacts?: Contact[] };
-      const contacts = sortContactsForQuery(body.contacts ?? [], query);
+      const contacts = sortContactsForQuery(
+        mergeContactsByPhone([...localContacts, ...(body.contacts ?? [])]),
+        query,
+      );
       const exactMatches = contacts.filter(
         (contact) => normalizeContactName(contact.full_name) === normalizeContactName(query),
       );
@@ -263,10 +284,7 @@ export function LessonForm(props: LessonFormProps) {
         [id]: contacts,
       }));
     } catch {
-      setContactSuggestions((currentSuggestions) => ({
-        ...currentSuggestions,
-        [id]: [],
-      }));
+      // Keep the local directory matches visible if the live search is unavailable.
     }
   }
 
@@ -362,6 +380,12 @@ export function LessonForm(props: LessonFormProps) {
                   Remove
                 </button>
               </div>
+              {savedContacts.length > 0 ? (
+                <SavedContactSelect
+                  contacts={savedContacts}
+                  onSelectContact={(contact) => applyContact(student.id, contact)}
+                />
+              ) : null}
               <ContactNameField
                 label="Name"
                 name={`student_name_${student.id}`}
@@ -481,6 +505,40 @@ type ContactNameFieldProps = {
   onFocus: () => void;
   onSelectContact: (contact: Contact) => void;
 };
+
+type SavedContactSelectProps = {
+  contacts: Contact[];
+  onSelectContact: (contact: Contact) => void;
+};
+
+function SavedContactSelect({ contacts, onSelectContact }: SavedContactSelectProps) {
+  return (
+    <label className="field saved-contact-picker">
+      Saved contact
+      <select
+        defaultValue=""
+        onChange={(event) => {
+          const contact = contacts.find(
+            (savedContact) => savedContact.id === event.currentTarget.value,
+          );
+
+          if (contact) {
+            onSelectContact(contact);
+          }
+
+          event.currentTarget.value = "";
+        }}
+      >
+        <option value="">Choose saved contact</option>
+        {contacts.map((contact) => (
+          <option key={contact.id} value={contact.id}>
+            {contact.full_name} - {contact.phone_number}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
 
 function ContactNameField({
   label,
@@ -640,6 +698,28 @@ function normalizeContactName(value: string) {
   return value.trim().toLowerCase().replace(/\s+/g, " ");
 }
 
+function getMatchingContacts(contacts: Contact[], query: string) {
+  const normalizedQuery = normalizeContactName(query);
+
+  if (normalizedQuery.length < 2) {
+    return [];
+  }
+
+  return sortContactsForQuery(
+    contacts.filter((contact) => {
+      const normalizedName = normalizeContactName(contact.full_name);
+      const normalizedPhone = contact.phone_number.replace(/\D/g, "");
+      const normalizedQueryPhone = query.replace(/\D/g, "");
+
+      return (
+        normalizedName.includes(normalizedQuery) ||
+        (normalizedQueryPhone.length > 0 && normalizedPhone.includes(normalizedQueryPhone))
+      );
+    }),
+    query,
+  ).slice(0, 8);
+}
+
 function sortContactsForQuery(contacts: Contact[], query: string) {
   const normalizedQuery = normalizeContactName(query);
 
@@ -653,6 +733,22 @@ function sortContactsForQuery(contacts: Contact[], query: string) {
 
     return first.full_name.localeCompare(second.full_name);
   });
+}
+
+function mergeContactsByPhone(contacts: Contact[]) {
+  const contactsByPhone = new Map<string, Contact>();
+
+  for (const contact of contacts) {
+    const phoneKey = contact.normalized_phone || contact.phone_number.replace(/\D/g, "");
+
+    if (!phoneKey || contactsByPhone.has(phoneKey)) {
+      continue;
+    }
+
+    contactsByPhone.set(phoneKey, contact);
+  }
+
+  return Array.from(contactsByPhone.values());
 }
 
 function getContactMatchScore(contact: Contact, normalizedQuery: string) {

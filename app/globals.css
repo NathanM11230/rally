@@ -363,7 +363,22 @@ h2 {
   gap: 12px;
 }
 
+.contact-directory-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+}
+
 .follow-up-card {
+  display: grid;
+  gap: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 14px;
+}
+
+.contact-directory-card {
   display: grid;
   gap: 12px;
   border: 1px solid var(--border);
@@ -377,7 +392,18 @@ h2 {
   font-size: 1rem;
 }
 
+.contact-directory-card h3 {
+  margin: 0 0 4px;
+  font-size: 1rem;
+}
+
 .follow-up-card p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.contact-directory-card p {
   margin: 0;
   color: var(--muted);
   font-size: 0.9rem;
@@ -674,6 +700,10 @@ select:focus {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+}
+
+.saved-contact-picker {
+  grid-column: 1 / -1;
 }
 
 .court-list {

@@ -2,20 +2,29 @@ import Link from "next/link";
 
 import { LessonForm } from "@/components/LessonForm";
 import { requireCurrentProfile } from "@/lib/auth";
+import { getContactDirectory } from "@/lib/contacts";
 import { getLessonTimeZone } from "@/lib/date";
 import { getInstructorProfiles } from "@/lib/instructor-profiles";
+import type { Contact } from "@/types/database";
 
 export const dynamic = "force-dynamic";
 
 export default async function NewLessonPage() {
   const { profile } = await requireCurrentProfile();
   let profiles = null;
+  let contacts: Contact[] = [];
   const timeZone = getLessonTimeZone();
 
   try {
     profiles = await getInstructorProfiles();
   } catch {
     profiles = null;
+  }
+
+  try {
+    contacts = await getContactDirectory();
+  } catch {
+    contacts = [];
   }
 
   if (!profiles || profiles.length === 0) {
@@ -64,6 +73,7 @@ export default async function NewLessonPage() {
           timeZone={timeZone}
           instructorProfiles={profiles}
           defaultInstructorProfileId={profile.id}
+          contacts={contacts}
         />
       </section>
     </main>

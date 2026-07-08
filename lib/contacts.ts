@@ -5,6 +5,54 @@ import type { Contact, ContactInsert } from "@/types/database";
 const CONTACT_SELECT =
   "id, full_name, phone_number, normalized_name, normalized_phone, created_at, updated_at";
 
+export async function getContactDirectory() {
+  const supabase = getSupabaseAdmin();
+  const { data: contactData, error: contactError } = await supabase
+    .from("contacts")
+    .select(CONTACT_SELECT)
+    .order("full_name", { ascending: true })
+    .limit(500);
+
+  if (contactError) {
+    throw contactError;
+  }
+
+  const { data: lessonStudentData, error: lessonStudentError } = await supabase
+    .from("lesson_students")
+    .select("id, student_name, student_phone, created_at")
+    .neq("student_phone", "")
+    .order("student_name", { ascending: true })
+    .limit(500);
+
+  if (lessonStudentError) {
+    throw lessonStudentError;
+  }
+
+  const { data: lessonData, error: lessonError } = await supabase
+    .from("lessons")
+    .select("id, student_name, student_phone, created_at")
+    .neq("student_phone", "")
+    .order("student_name", { ascending: true })
+    .limit(500);
+
+  if (lessonError) {
+    throw lessonError;
+  }
+
+  return mergeContactResults(
+    "",
+    (contactData as Contact[]) ?? [],
+    [
+      ...(lessonStudentData ?? []).map((student) =>
+        lessonHistoryContactToContact("lesson-student", student),
+      ),
+      ...(lessonData ?? []).map((lesson) =>
+        lessonHistoryContactToContact("lesson", lesson),
+      ),
+    ],
+  );
+}
+
 export async function searchContacts(query: string) {
   const normalizedQuery = normalizeName(query);
   const supabase = getSupabaseAdmin();

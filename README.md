@@ -139,9 +139,16 @@ student names and phone numbers to the same reservation.
 ## Contacts
 
 Rally saves participant contacts automatically. When a pro saves a lesson with a
-name and phone number, Rally stores that contact club-wide. Later, typing the
-name in a student or participant field shows matching saved contacts; selecting
-one fills the phone number automatically.
+name and phone number, Rally stores that contact club-wide.
+
+Go to **Contacts** to review the automatic directory. The directory is built
+from saved contacts plus existing lesson history, so older lesson entries can
+still be reused even if they were created before the contact feature existed.
+
+When creating or editing a lesson, each participant row has a **Saved contact**
+dropdown. Selecting a saved contact fills the participant name and phone number
+immediately. Typing in the name field also shows matching saved contacts from
+the same directory.
 
 Names are used for search because pros usually remember names first. Phone
 numbers are normalized behind the scenes to avoid duplicate saved contacts when
@@ -215,6 +222,7 @@ lesson type in the message.
 - `POST /api/instructor-profile` creates or claims the logged-in pro's profile.
 - `PATCH /api/instructor-profile/:id` edits the logged-in pro's own profile.
 - `GET /api/contacts?q=name` searches shared saved contacts by name.
+- `GET /contacts` shows the automatic shared contact directory.
 - `GET /api/lessons` lists the logged-in pro's upcoming assigned lessons.
 - `POST /api/lessons` creates a lesson with the selected pros and participants.
 - `PATCH /api/lessons/:id` edits a lesson, selected pros, and participants.
