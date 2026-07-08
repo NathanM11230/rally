@@ -110,8 +110,9 @@ selected pro as the primary compatibility value on `lessons.instructor_profile_i
 and stores the full pro list in `lesson_instructors`.
 
 Each lesson can also include one or more courts. The form lets pros add multiple
-court rows, and Rally stores them together in `lessons.location`, such as
-`Court 1, Court 2`.
+court rows from a defined dropdown: Tennis Courts 1-8, Pickleball Courts 1-4,
+and Paddle Courts 1-5. Rally stores selected courts together in
+`lessons.location`, such as `Tennis Court 1, Pickleball Court 2`.
 
 Lesson times are selected in 15-minute intervals. Rally also validates this on
 the server before saving.
@@ -207,7 +208,7 @@ toll-free verification, and Vercel Cron complexity for the MVP.
 Lesson reminder drafts are written like they are coming directly from the pro:
 
 ```txt
-Hey Nathan. Reminder about your lesson on court 3 at July 7, 4:00 PM.
+Hey Nathan. Reminder about your lesson on Tennis Court 3 at July 7, 4:00 PM.
 Let me know if there is anything specific you would like to work on. Thanks!
 ```
 

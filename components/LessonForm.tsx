@@ -38,6 +38,24 @@ const TIME_OPTIONS = Array.from({ length: 96 }, (_, index) => {
   };
 });
 
+const COURT_OPTION_GROUPS = [
+  {
+    label: "Tennis courts",
+    options: buildCourtOptions("Tennis Court", 8),
+  },
+  {
+    label: "Pickleball courts",
+    options: buildCourtOptions("Pickleball Court", 4),
+  },
+  {
+    label: "Paddle courts",
+    options: buildCourtOptions("Paddle Court", 5),
+  },
+];
+const COURT_OPTION_VALUES = new Set(
+  COURT_OPTION_GROUPS.flatMap((group) => group.options.map((option) => option.value)),
+);
+
 type LessonFormProps =
   | {
       mode: "create";
@@ -433,11 +451,10 @@ export function LessonForm(props: LessonFormProps) {
         <div className="court-list">
           {courts.map((court, index) => (
             <div className="court-row" key={court.id}>
-              <Field
+              <CourtSelectField
                 label={`Court ${index + 1}`}
                 name={`court_${court.id}`}
                 value={court.value}
-                placeholder="Court 3"
                 onChange={(value) => updateCourt(court.id, value)}
               />
               <button
@@ -490,6 +507,13 @@ type TimeFieldProps = {
   label: string;
   name: string;
   defaultValue?: string;
+};
+
+type CourtSelectFieldProps = {
+  label: string;
+  name: string;
+  value: string;
+  onChange: (value: string) => void;
 };
 
 type ContactNameFieldProps = {
@@ -607,6 +631,36 @@ function TimeField({ label, name, defaultValue = "" }: TimeFieldProps) {
   );
 }
 
+function CourtSelectField({ label, name, value, onChange }: CourtSelectFieldProps) {
+  const hasLegacyValue = value && !COURT_OPTION_VALUES.has(value);
+
+  return (
+    <label className="field">
+      {label}
+      <select
+        required
+        name={name}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+      >
+        <option value="" disabled>
+          Select court
+        </option>
+        {hasLegacyValue ? <option value={value}>{value}</option> : null}
+        {COURT_OPTION_GROUPS.map((group) => (
+          <optgroup key={group.label} label={group.label}>
+            {group.options.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </optgroup>
+        ))}
+      </select>
+    </label>
+  );
+}
+
 function getInitialStudents(lesson: LessonWithInstructorProfile | null): StudentFormRow[] {
   if (!lesson) {
     return [{ id: crypto.randomUUID(), student_name: "", student_phone: "" }];
@@ -647,14 +701,16 @@ function getInitialCourts(lesson: LessonWithInstructorProfile | null): CourtForm
 
   return courts.map((court) => ({
     id: crypto.randomUUID(),
-    value: court,
+    value: normalizeCourtValue(court),
   }));
 }
 
 function buildLocationFromCourts(courts: CourtFormRow[]) {
-  return courts
+  const selectedCourts = courts
     .map((court) => court.value.trim())
-    .filter(Boolean)
+    .filter(Boolean);
+
+  return Array.from(new Set(selectedCourts))
     .join(", ");
 }
 
@@ -751,4 +807,45 @@ function getInitialInstructorIds(
       : [lesson.instructor_profile_id];
 
   return Array.from(new Set(instructorIds.filter(Boolean)));
+}
+
+function buildCourtOptions(prefix: string, count: number) {
+  return Array.from({ length: count }, (_, index) => {
+    const courtNumber = index + 1;
+    const value = `${prefix} ${courtNumber}`;
+
+    return {
+      value,
+      label: value,
+    };
+  });
+}
+
+function normalizeCourtValue(value: string) {
+  const trimmedValue = value.trim();
+  const numberedCourtMatch = /^court\s+([1-8])$/i.exec(trimmedValue);
+
+  if (numberedCourtMatch?.[1]) {
+    return `Tennis Court ${numberedCourtMatch[1]}`;
+  }
+
+  const tennisCourtMatch = /^tennis\s+(?:court\s+)?([1-8])$/i.exec(trimmedValue);
+
+  if (tennisCourtMatch?.[1]) {
+    return `Tennis Court ${tennisCourtMatch[1]}`;
+  }
+
+  const pickleballCourtMatch = /^pickleball\s+(?:court\s+)?([1-4])$/i.exec(trimmedValue);
+
+  if (pickleballCourtMatch?.[1]) {
+    return `Pickleball Court ${pickleballCourtMatch[1]}`;
+  }
+
+  const paddleCourtMatch = /^paddle\s+(?:court\s+)?([1-5])$/i.exec(trimmedValue);
+
+  if (paddleCourtMatch?.[1]) {
+    return `Paddle Court ${paddleCourtMatch[1]}`;
+  }
+
+  return trimmedValue;
 }
