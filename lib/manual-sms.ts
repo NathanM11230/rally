@@ -45,11 +45,12 @@ export function buildInstructorReminderSmsTargets(
     (instructor) => instructor.id !== options.excludeInstructorProfileId,
   );
   const lessonDateTime = formatReminderDateTime(lesson, timeZone);
+  const locationPhrase = buildLocationPhrase(lesson.location);
 
   return instructors.map((instructor) => {
     const message = studentNames
-      ? `Reminder: You have ${subject} with ${studentNames} on ${lessonDateTime} at ${lesson.location}.`
-      : `Reminder: You have ${subject} on ${lessonDateTime} at ${lesson.location}.`;
+      ? `Reminder: You have ${subject} with ${studentNames} on ${lessonDateTime} ${locationPhrase}.`
+      : `Reminder: You have ${subject} on ${lessonDateTime} ${locationPhrase}.`;
 
     return {
       href: buildSmsHref(instructor.phone_number, message),
@@ -143,12 +144,83 @@ function buildLocationPhrase(location: string) {
     return `at ${locations.join(", ")}`;
   }
 
-  const courts = locations.map((item) => {
-    const cleaned = item.replace(/^courts?\s*/i, "").trim();
+  const parsedCourts = locations.map(parseCourtLocation);
+  const knownCourtTypes = parsedCourts
+    .map((court) => court.type)
+    .filter((type): type is NonNullable<CourtLocation["type"]> => Boolean(type));
 
-    return cleaned || item;
-  });
-  const label = courts.length === 1 ? "court" : "courts";
+  if (
+    parsedCourts.every((court) => court.number) &&
+    knownCourtTypes.length === parsedCourts.length
+  ) {
+    const courtNumbers = parsedCourts.map((court) => court.number);
+    const label = courtNumbers.length === 1 ? "court" : "courts";
 
-  return `on ${label} ${courts.join(", ")}`;
+    return `on ${label} ${formatList(courtNumbers)}`;
+  }
+
+  if (parsedCourts.every((court) => court.number && !court.type)) {
+    const courtNumbers = parsedCourts.map((court) => court.number);
+    const label = courtNumbers.length === 1 ? "court" : "courts";
+
+    return `on ${label} ${formatList(courtNumbers)}`;
+  }
+
+  return `on ${formatList(locations)}`;
+}
+
+type CourtLocation = {
+  type: "tennis" | "pickleball" | "paddle" | null;
+  number: string;
+};
+
+function parseCourtLocation(location: string): CourtLocation {
+  const trimmedLocation = location.trim();
+  const courtMatch =
+    /^(?:(tennis|pickleball|paddle)\s+)?courts?\s+([a-z0-9]+)$/i.exec(
+      trimmedLocation,
+    ) ||
+    /^(tennis|pickleball|paddle)\s+([a-z0-9]+)$/i.exec(trimmedLocation);
+
+  if (!courtMatch) {
+    return {
+      type: null,
+      number: "",
+    };
+  }
+
+  return {
+    type: normalizeCourtType(courtMatch[1]),
+    number: courtMatch[2],
+  };
+}
+
+function normalizeCourtType(value: string | undefined) {
+  if (!value) {
+    return null;
+  }
+
+  const courtType = value.toLowerCase();
+
+  if (
+    courtType === "tennis" ||
+    courtType === "pickleball" ||
+    courtType === "paddle"
+  ) {
+    return courtType;
+  }
+
+  return null;
+}
+
+function formatList(items: string[]) {
+  if (items.length <= 1) {
+    return items[0] ?? "";
+  }
+
+  if (items.length === 2) {
+    return `${items[0]} and ${items[1]}`;
+  }
+
+  return `${items.slice(0, -1).join(", ")}, and ${items[items.length - 1]}`;
 }
