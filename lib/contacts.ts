@@ -72,6 +72,42 @@ export async function upsertContactsFromStudents(students: LessonStudentInput[])
   }
 }
 
+export async function upsertContact(input: {
+  full_name: string;
+  phone_number: string;
+}) {
+  const fullName = input.full_name.trim();
+  const phoneNumber = input.phone_number.trim();
+  const normalizedPhone = normalizePhone(phoneNumber);
+
+  if (!fullName) {
+    throw new Error("Contact name is required.");
+  }
+
+  if (!phoneNumber || !normalizedPhone) {
+    throw new Error("Contact phone number is required.");
+  }
+
+  const contactRow: ContactInsert = {
+    full_name: fullName,
+    phone_number: phoneNumber,
+    normalized_name: normalizeName(fullName),
+    normalized_phone: normalizedPhone,
+  };
+  const supabase = getSupabaseAdmin();
+  const { data, error } = await supabase
+    .from("contacts")
+    .upsert(contactRow, { onConflict: "normalized_phone" })
+    .select(CONTACT_SELECT)
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  return data as Contact;
+}
+
 async function getSavedContactRows(limit: number, normalizedQuery?: string) {
   const supabase = getSupabaseAdmin();
   let request = supabase

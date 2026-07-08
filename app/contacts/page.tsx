@@ -42,15 +42,21 @@ export default async function ContactsPage() {
             Automatically saved from lesson names and phone numbers.
           </p>
         </div>
-        <Link className="button" href="/lessons/new">
-          New lesson
+        <Link className="button" href="/contacts/new">
+          New contact
         </Link>
       </header>
 
       {contacts.length === 0 ? (
         <section className="panel">
           <div className="empty-state">
-            No contacts yet. Add a lesson with a participant name and phone number first.
+            No contacts yet. Add a contact or create a lesson with a participant
+            name and phone number.
+            <div className="button-row section-actions">
+              <Link className="button" href="/contacts/new">
+                New contact
+              </Link>
+            </div>
           </div>
         </section>
       ) : (

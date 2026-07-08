@@ -158,6 +158,7 @@ Go to **Contacts** to review the automatic directory. The directory is built
 from saved contacts plus existing lesson history, so older lesson entries can
 still be reused even if they were created before the contact feature existed.
 The Contacts page is searchable instead of showing every contact at once.
+Use **New contact** to save a name and phone number without creating a lesson.
 
 When creating or editing a lesson, type a few characters in the participant name
 field. Rally filters saved contacts from the directory right under the name
@@ -236,6 +237,7 @@ lesson type in the message.
 - `POST /api/instructor-profile` creates or claims the logged-in pro's profile.
 - `PATCH /api/instructor-profile/:id` edits the logged-in pro's own profile.
 - `GET /api/contacts?q=name` searches shared saved contacts by name.
+- `POST /api/contacts` creates or updates a shared saved contact.
 - `GET /contacts` shows the automatic shared contact directory.
 - `GET /api/lessons` lists the logged-in pro's upcoming assigned lessons.
 - `POST /api/lessons` creates a lesson with the selected pros and participants.
