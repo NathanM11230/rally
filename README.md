@@ -125,8 +125,8 @@ court picker with Tennis Courts 1-8, Pickleball Courts 1-4, and Paddle Courts
 1-5. Rally stores selected courts together in
 `lessons.location`, such as `Tennis Court 1, Pickleball Court 2`.
 
-Lesson times are selected in 15-minute intervals. Rally also validates this on
-the server before saving.
+Lesson times are selected in 15-minute intervals from 6:00 AM through 9:00 PM.
+Rally also validates this on the server before saving.
 
 ## Pay Period Reports
 

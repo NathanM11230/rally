@@ -19,19 +19,31 @@ type StudentFormRow = {
   student_phone: string;
 };
 
-const TIME_OPTIONS = Array.from({ length: 96 }, (_, index) => {
-  const totalMinutes = index * 15;
-  const hour = Math.floor(totalMinutes / 60);
-  const minute = totalMinutes % 60;
-  const value = `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
-  const labelHour = hour % 12 || 12;
-  const suffix = hour < 12 ? "AM" : "PM";
+const FIRST_LESSON_MINUTES = 6 * 60;
+const LAST_LESSON_MINUTES = 21 * 60;
+const TIME_OPTION_INTERVAL_MINUTES = 15;
+const TIME_OPTIONS = Array.from(
+  {
+    length:
+      (LAST_LESSON_MINUTES - FIRST_LESSON_MINUTES) /
+      TIME_OPTION_INTERVAL_MINUTES +
+      1,
+  },
+  (_, index) => {
+    const totalMinutes =
+      FIRST_LESSON_MINUTES + index * TIME_OPTION_INTERVAL_MINUTES;
+    const hour = Math.floor(totalMinutes / 60);
+    const minute = totalMinutes % 60;
+    const value = `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+    const labelHour = hour % 12 || 12;
+    const suffix = hour < 12 ? "AM" : "PM";
 
-  return {
-    value,
-    label: `${labelHour}:${String(minute).padStart(2, "0")} ${suffix}`,
-  };
-});
+    return {
+      value,
+      label: `${labelHour}:${String(minute).padStart(2, "0")} ${suffix}`,
+    };
+  },
+);
 
 const COURT_OPTION_GROUPS = [
   {

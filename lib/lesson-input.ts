@@ -33,6 +33,8 @@ const requiredFields = [
   "lesson_time",
   "location",
 ] as const;
+const FIRST_LESSON_MINUTES = 6 * 60;
+const LAST_LESSON_MINUTES = 21 * 60;
 
 export function parseLessonInput(body: unknown, mode: LessonInputMode): LessonInputResult {
   if (!isRecord(body)) {
@@ -83,6 +85,8 @@ export function parseLessonInput(body: unknown, mode: LessonInputMode): LessonIn
     errors.push("lesson_time must use HH:mm format.");
   } else if (values.lesson_time && !isQuarterHourTime(values.lesson_time)) {
     errors.push("lesson_time must be in 15-minute intervals.");
+  } else if (values.lesson_time && !isLessonTimeInAllowedRange(values.lesson_time)) {
+    errors.push("lesson_time must be between 6:00 AM and 9:00 PM.");
   }
 
   if (errors.length > 0) {
@@ -181,5 +185,16 @@ function isQuarterHourTime(value: string) {
     hour >= 0 &&
     hour <= 23 &&
     [0, 15, 30, 45].includes(minute)
+  );
+}
+
+function isLessonTimeInAllowedRange(value: string) {
+  const [hour, minute] = value.split(":").map(Number);
+  const totalMinutes = hour * 60 + minute;
+
+  return (
+    Number.isInteger(totalMinutes) &&
+    totalMinutes >= FIRST_LESSON_MINUTES &&
+    totalMinutes <= LAST_LESSON_MINUTES
   );
 }
