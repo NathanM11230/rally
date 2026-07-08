@@ -18,9 +18,6 @@ export default async function LoginPage() {
         <div className="auth-copy">
           <span className="brand-mark">R</span>
           <h1>Log in to Rally</h1>
-          <p className="page-subtitle">
-            See your assigned lessons, update statuses, and check pay periods.
-          </p>
         </div>
         <AuthForm mode="login" />
       </section>
