@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 
+import { cleanString, handleApiError, isRecord, readJson } from "@/lib/api-helpers";
 import { getSupabaseAuthClient, setAuthCookies } from "@/lib/auth";
-import { createOrClaimInstructorProfileForUser } from "@/lib/instructor-profiles";
+import { createOrUpdateInstructorProfileForUser } from "@/lib/instructor-profiles";
+import { validateSignupAccess } from "@/lib/signup-access";
 
 export async function POST(request: Request) {
   const body = await readJson(request);
@@ -14,6 +16,15 @@ export async function POST(request: Request) {
 
   if (!parsed.ok) {
     return NextResponse.json({ error: parsed.error }, { status: 400 });
+  }
+
+  const signupAccess = validateSignupAccess({
+    email: parsed.data.email,
+    inviteCode: parsed.data.invite_code,
+  });
+
+  if (!signupAccess.ok) {
+    return NextResponse.json({ error: signupAccess.error }, { status: 403 });
   }
 
   try {
@@ -30,7 +41,7 @@ export async function POST(request: Request) {
       );
     }
 
-    await createOrClaimInstructorProfileForUser(data.user.id, {
+    await createOrUpdateInstructorProfileForUser(data.user.id, {
       full_name: parsed.data.full_name,
       phone_number: parsed.data.phone_number,
     });
@@ -50,14 +61,6 @@ export async function POST(request: Request) {
   }
 }
 
-async function readJson(request: Request) {
-  try {
-    return { ok: true as const, value: await request.json() };
-  } catch {
-    return { ok: false as const, error: "Request body must be valid JSON." };
-  }
-}
-
 function parseSignupInput(body: unknown) {
   if (!isRecord(body)) {
     return { ok: false as const, error: "Request body must be a JSON object." };
@@ -67,6 +70,7 @@ function parseSignupInput(body: unknown) {
   const password = cleanString(body.password);
   const fullName = cleanString(body.full_name);
   const phoneNumber = cleanString(body.phone_number);
+  const inviteCode = cleanString(body.invite_code);
 
   if (!email || !password || !fullName || !phoneNumber) {
     return {
@@ -75,8 +79,8 @@ function parseSignupInput(body: unknown) {
     };
   }
 
-  if (password.length < 6) {
-    return { ok: false as const, error: "Password must be at least 6 characters." };
+  if (password.length < 10) {
+    return { ok: false as const, error: "Password must be at least 10 characters." };
   }
 
   return {
@@ -86,19 +90,7 @@ function parseSignupInput(body: unknown) {
       password,
       full_name: fullName,
       phone_number: phoneNumber,
+      invite_code: inviteCode,
     },
   };
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-function cleanString(value: unknown) {
-  return typeof value === "string" ? value.trim() : "";
-}
-
-function handleApiError(error: unknown) {
-  const message = error instanceof Error ? error.message : "Unexpected server error.";
-  return NextResponse.json({ error: message }, { status: 500 });
 }

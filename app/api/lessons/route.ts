@@ -2,6 +2,7 @@ import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 
 import { getApiAuthenticatedProfile } from "@/lib/api-auth";
+import { handleApiError, readJson } from "@/lib/api-helpers";
 import { parseLessonInput } from "@/lib/lesson-input";
 import { createLesson, getUpcomingLessonsForInstructor } from "@/lib/lessons";
 import type { LessonInsert } from "@/types/database";
@@ -67,19 +68,6 @@ export async function POST(request: Request) {
   } catch (error) {
     return handleApiError(error);
   }
-}
-
-async function readJson(request: Request) {
-  try {
-    return { ok: true as const, value: await request.json() };
-  } catch {
-    return { ok: false as const, error: "Request body must be valid JSON." };
-  }
-}
-
-function handleApiError(error: unknown) {
-  const message = error instanceof Error ? error.message : "Unexpected server error.";
-  return NextResponse.json({ error: message }, { status: 500 });
 }
 
 function ensureProfileIsAssigned(instructorProfileIds: string[], profileId: string) {

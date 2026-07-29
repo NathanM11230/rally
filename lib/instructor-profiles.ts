@@ -55,7 +55,7 @@ export async function getInstructorProfileByUserId(userId: string) {
   return data;
 }
 
-export async function createOrClaimInstructorProfileForUser(
+export async function createOrUpdateInstructorProfileForUser(
   userId: string,
   input: Pick<InstructorProfileInsert, "full_name" | "phone_number">,
 ) {
@@ -65,52 +65,12 @@ export async function createOrClaimInstructorProfileForUser(
     return updateInstructorProfile(existingProfile.id, input);
   }
 
-  const supabase = getSupabaseAdmin();
-  const { data: phoneMatch, error: phoneMatchError } = await supabase
-    .from("instructor_profiles")
-    .select("*")
-    .is("user_id", null)
-    .eq("phone_number", input.phone_number)
-    .order("created_at", { ascending: true })
-    .limit(1)
-    .maybeSingle();
-
-  if (phoneMatchError) {
-    throw phoneMatchError;
-  }
-
-  const matchingProfile =
-    phoneMatch ?? (await getUnclaimedInstructorProfileByName(input.full_name));
-
-  if (matchingProfile) {
-    return updateInstructorProfile(matchingProfile.id, {
-      ...input,
-      user_id: userId,
-    });
-  }
-
+  // Self-serve signup must not claim existing unlinked profiles by name or phone.
+  // Existing profiles should be attached to a user_id by a trusted admin action.
   return createInstructorProfile({
     ...input,
     user_id: userId,
   });
-}
-
-async function getUnclaimedInstructorProfileByName(fullName: string) {
-  const supabase = getSupabaseAdmin();
-  const { data, error } = await supabase
-    .from("instructor_profiles")
-    .select("*")
-    .is("user_id", null)
-    .eq("full_name", fullName)
-    .order("created_at", { ascending: true })
-    .limit(1)
-    .maybeSingle();
-
-  if (error) {
-    throw error;
-  }
-
-  return data;
 }
 
 export async function createInstructorProfile(input: InstructorProfileInsert) {

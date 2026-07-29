@@ -91,7 +91,7 @@ export default async function EditLessonPage({ params }: EditLessonPageProps) {
             timeZone={timeZone}
             currentInstructorProfileId={profile.id}
           />
-          <AddToCalendarLink lessonId={lesson.id} />
+          <AddToCalendarLink lessonId={lesson.id} instructorProfileId={profile.id} />
           <DeleteLessonButton lessonId={lesson.id} />
         </div>
       </section>

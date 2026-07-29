@@ -1,6 +1,7 @@
 import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 
+import { cleanString, handleApiError, isRecord, readJson } from "@/lib/api-helpers";
 import { getApiAuthenticatedProfile } from "@/lib/api-auth";
 import { searchContacts, upsertContact } from "@/lib/contacts";
 
@@ -54,14 +55,6 @@ export async function POST(request: Request) {
   }
 }
 
-async function readJson(request: Request) {
-  try {
-    return { ok: true as const, value: await request.json() };
-  } catch {
-    return { ok: false as const, error: "Request body must be valid JSON." };
-  }
-}
-
 function parseContactInput(value: unknown) {
   if (!isRecord(value)) {
     return { ok: false as const, error: "Contact input must be an object." };
@@ -85,17 +78,4 @@ function parseContactInput(value: unknown) {
       phone_number: phoneNumber,
     },
   };
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-function cleanString(value: unknown) {
-  return typeof value === "string" ? value.trim() : "";
-}
-
-function handleApiError(error: unknown) {
-  const message = error instanceof Error ? error.message : "Unexpected server error.";
-  return NextResponse.json({ error: message }, { status: 500 });
 }

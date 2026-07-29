@@ -8,9 +8,10 @@ import {
   buildLessonCalendarFile,
   buildLessonCalendarFilename,
 } from "@/lib/calendar-event";
-import { isValidLessonCalendarToken } from "@/lib/calendar-token";
-import { getLesson } from "@/lib/lessons";
+import { getValidLessonCalendarTokenPayload } from "@/lib/calendar-token";
+import { getLesson, isLessonAssignedToInstructor } from "@/lib/lessons";
 import type { LessonWithInstructorProfile } from "@/types/database";
+import { handleApiError } from "@/lib/api-helpers";
 
 type CalendarRouteContext = {
   params: Promise<{
@@ -23,11 +24,15 @@ export async function GET(request: Request, { params }: CalendarRouteContext) {
 
   try {
     const token = new URL(request.url).searchParams.get("token");
+    const tokenPayload = getValidLessonCalendarTokenPayload(id, token);
 
-    if (isValidLessonCalendarToken(id, token)) {
+    if (tokenPayload) {
       const lesson = await getLesson(id);
 
-      if (!lesson) {
+      if (
+        !lesson ||
+        !isLessonAssignedToInstructor(lesson, tokenPayload.instructorProfileId)
+      ) {
         return NextResponse.json({ error: "Lesson not found." }, { status: 404 });
       }
 
@@ -65,9 +70,4 @@ function buildCalendarResponse(lesson: LessonWithInstructorProfile) {
       "Content-Disposition": `attachment; filename="${filename}"`,
     },
   });
-}
-
-function handleApiError(error: unknown) {
-  const message = error instanceof Error ? error.message : "Unexpected server error.";
-  return NextResponse.json({ error: message }, { status: 500 });
 }

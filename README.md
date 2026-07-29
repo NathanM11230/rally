@@ -45,13 +45,18 @@ prefilled text message and the pro sends it manually from their own SMS app.
    SUPABASE_SERVICE_ROLE_KEY=
    SUPABASE_ANON_KEY=
    LESSON_TIME_ZONE=America/New_York
+   SIGNUP_INVITE_CODE=
+   SIGNUP_ALLOWED_EMAILS=
    CALENDAR_TOKEN_SECRET=
    ```
 
    Keep `SUPABASE_SERVICE_ROLE_KEY` private. It is used only from server code.
    `SUPABASE_ANON_KEY` is used for Supabase Auth login and signup.
-   `CALENDAR_TOKEN_SECRET` is optional; if omitted, Rally signs calendar
-   download links with `SUPABASE_SERVICE_ROLE_KEY`.
+   Signup is closed unless either `SIGNUP_INVITE_CODE` or
+   `SIGNUP_ALLOWED_EMAILS` is set. `SIGNUP_ALLOWED_EMAILS` should be a
+   comma-separated list, such as `pro1@example.com,pro2@example.com`.
+   `CALENDAR_TOKEN_SECRET` is required for signed calendar download links.
+   Use a long random value and do not reuse your Supabase service role key.
 
 5. Run the app locally:
 
@@ -66,12 +71,18 @@ prefilled text message and the pro sends it manually from their own SMS app.
 ## Pro Logins And Profiles
 
 Each pro creates their own Rally login with Supabase Auth. Signup asks for the
-pro's full name and phone number, then saves that information in
-`instructor_profiles`.
+pro's full name, phone number, and optional club invite code, then saves that
+information in `instructor_profiles`. Passwords must be at least 10 characters.
 
-If a matching unclaimed pro profile already exists, Rally connects the new login
-to that profile by matching phone number first, then exact full name. Otherwise,
-Rally creates a new profile for that user.
+For safety, self-serve signup does not claim existing unlinked pro profiles by
+matching name or phone number. If you already have an unclaimed
+`instructor_profiles` row that should belong to a new login, connect it by
+setting that row's `user_id` to the Supabase Auth user id in Supabase.
+
+Signup is gated on the server. Configure at least one of:
+
+- `SIGNUP_INVITE_CODE`: a shared club code pros must enter when creating an account
+- `SIGNUP_ALLOWED_EMAILS`: a comma-separated list of email addresses allowed to sign up
 
 The lesson form does not ask for the logged-in pro's phone number every time.
 Rally reuses the phone number saved in that pro's profile. A pro can still assign
@@ -92,9 +103,12 @@ Each lesson also has an **Add to calendar** link. Rally downloads a standard
 `.ics` calendar file that can be opened by Apple Calendar, Outlook, Google
 Calendar, and most phone calendar apps. The file includes the lesson type,
 participants, assigned pros, court/location, notes, and a one-hour default event
-duration. Calendar links include a signed token so iPhone calendar/download
-handoff can fetch the file even when the calendar app does not send the Rally
-login cookie.
+duration.
+
+Calendar links include a signed token so iPhone calendar/download handoff can
+fetch the file even when the calendar app does not send the Rally login cookie.
+Those tokens expire after 14 days and are bound to the pro profile that generated
+the link. The lesson must still be assigned to that pro when the token is used.
 
 ## Lesson Types
 
@@ -221,7 +235,7 @@ toll-free verification, and Vercel Cron complexity for the MVP.
 Lesson reminder drafts are written like they are coming directly from the pro:
 
 ```txt
-Hey Nathan. Reminder about your lesson on Tennis Court 3 at July 7, 4:00 PM.
+Hey Nathan. Reminder about your lesson on court 3 at July 7, 4:00 PM.
 Let me know if there is anything specific you would like to work on. Thanks!
 ```
 
@@ -230,11 +244,11 @@ lesson type in the message.
 
 ## API Routes
 
-- `POST /api/auth/signup` creates a pro login and profile.
+- `POST /api/auth/signup` creates a gated pro login and profile.
 - `POST /api/auth/login` logs a pro in.
 - `POST /api/auth/logout` logs a pro out.
 - `GET /api/instructor-profile` lists saved pros for assignment.
-- `POST /api/instructor-profile` creates or claims the logged-in pro's profile.
+- `POST /api/instructor-profile` creates or updates the logged-in pro's profile.
 - `PATCH /api/instructor-profile/:id` edits the logged-in pro's own profile.
 - `GET /api/contacts?q=name` searches shared saved contacts by name.
 - `POST /api/contacts` creates or updates a shared saved contact.
@@ -260,10 +274,14 @@ SUPABASE_URL=
 SUPABASE_SERVICE_ROLE_KEY=
 SUPABASE_ANON_KEY=
 LESSON_TIME_ZONE=America/New_York
+SIGNUP_INVITE_CODE=
+SIGNUP_ALLOWED_EMAILS=
 CALENDAR_TOKEN_SECRET=
 ```
 
-Redeploy after changing environment variables.
+Set at least one signup gate: `SIGNUP_INVITE_CODE` or `SIGNUP_ALLOWED_EMAILS`.
+Set `CALENDAR_TOKEN_SECRET` to a long random value. Redeploy after changing
+environment variables.
 
 If Supabase email confirmations are on, set the Supabase Auth site URL to your
 Vercel domain so confirmation links point back to Rally.

@@ -2,9 +2,10 @@ import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 
 import { getApiAuthenticatedProfile } from "@/lib/api-auth";
+import { cleanString, handleApiError, isRecord, readJson } from "@/lib/api-helpers";
 import { getCurrentUser } from "@/lib/auth";
 import {
-  createOrClaimInstructorProfileForUser,
+  createOrUpdateInstructorProfileForUser,
   getInstructorProfiles,
 } from "@/lib/instructor-profiles";
 
@@ -43,21 +44,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Log in to continue." }, { status: 401 });
     }
 
-    const profile = await createOrClaimInstructorProfileForUser(user.id, parsed.data);
+    const profile = await createOrUpdateInstructorProfileForUser(user.id, parsed.data);
     revalidatePath("/");
     revalidatePath("/profile");
     revalidatePath("/lessons/new");
     return NextResponse.json({ profile });
   } catch (error) {
     return handleApiError(error);
-  }
-}
-
-async function readJson(request: Request) {
-  try {
-    return { ok: true as const, value: await request.json() };
-  } catch {
-    return { ok: false as const, error: "Request body must be valid JSON." };
   }
 }
 
@@ -83,17 +76,4 @@ function parseProfileInput(body: unknown) {
       phone_number: phoneNumber,
     },
   };
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-function cleanString(value: unknown) {
-  return typeof value === "string" ? value.trim() : "";
-}
-
-function handleApiError(error: unknown) {
-  const message = error instanceof Error ? error.message : "Unexpected server error.";
-  return NextResponse.json({ error: message }, { status: 500 });
 }

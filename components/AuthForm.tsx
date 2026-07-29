@@ -31,6 +31,7 @@ export function AuthForm({ mode }: AuthFormProps) {
       password: String(formData.get("password") ?? ""),
       full_name: String(formData.get("full_name") ?? ""),
       phone_number: String(formData.get("phone_number") ?? ""),
+      invite_code: String(formData.get("invite_code") ?? ""),
     };
 
     try {
@@ -70,11 +71,17 @@ export function AuthForm({ mode }: AuthFormProps) {
         <div className="form-grid">
           <Field label="Full name" name="full_name" />
           <Field label="Phone number" name="phone_number" type="tel" />
+          <Field label="Invite code" name="invite_code" required={false} />
         </div>
       ) : null}
 
       <Field label="Email" name="email" type="email" />
-      <Field label="Password" name="password" type="password" />
+      <Field
+        label="Password"
+        name="password"
+        type="password"
+        minLength={isSignup ? 10 : undefined}
+      />
 
       <div className="form-actions">
         <button className="button" type="submit" disabled={isSaving}>
@@ -98,13 +105,21 @@ type FieldProps = {
   label: string;
   name: string;
   type?: string;
+  minLength?: number;
+  required?: boolean;
 };
 
-function Field({ label, name, type = "text" }: FieldProps) {
+function Field({
+  label,
+  name,
+  type = "text",
+  minLength,
+  required = true,
+}: FieldProps) {
   return (
     <label className="field">
       {label}
-      <input required name={name} type={type} />
+      <input required={required} name={name} type={type} minLength={minLength} />
     </label>
   );
 }

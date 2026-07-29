@@ -5,6 +5,7 @@ import {
   getApiAuthenticatedProfile,
   getAuthorizedLessonForProfile,
 } from "@/lib/api-auth";
+import { handleApiError, readJson } from "@/lib/api-helpers";
 import { isLessonStatus } from "@/lib/lesson-status";
 import { updateLessonStatus } from "@/lib/lessons";
 
@@ -55,17 +56,4 @@ export async function PATCH(request: Request, { params }: LessonStatusRouteConte
   } catch (error) {
     return handleApiError(error);
   }
-}
-
-async function readJson(request: Request) {
-  try {
-    return { ok: true as const, value: await request.json() };
-  } catch {
-    return { ok: false as const, error: "Request body must be valid JSON." };
-  }
-}
-
-function handleApiError(error: unknown) {
-  const message = error instanceof Error ? error.message : "Unexpected server error.";
-  return NextResponse.json({ error: message }, { status: 500 });
 }

@@ -5,6 +5,7 @@ import {
   getApiAuthenticatedProfile,
   getAuthorizedLessonForProfile,
 } from "@/lib/api-auth";
+import { handleApiError, readJson } from "@/lib/api-helpers";
 import { parseLessonInput } from "@/lib/lesson-input";
 import { deleteLesson, updateLesson } from "@/lib/lessons";
 
@@ -123,19 +124,6 @@ export async function DELETE(_request: Request, { params }: LessonRouteContext) 
   } catch (error) {
     return handleApiError(error);
   }
-}
-
-async function readJson(request: Request) {
-  try {
-    return { ok: true as const, value: await request.json() };
-  } catch {
-    return { ok: false as const, error: "Request body must be valid JSON." };
-  }
-}
-
-function handleApiError(error: unknown) {
-  const message = error instanceof Error ? error.message : "Unexpected server error.";
-  return NextResponse.json({ error: message }, { status: 500 });
 }
 
 function ensureProfileIsAssigned(instructorProfileIds: string[], profileId: string) {

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { cleanString, handleApiError, isRecord, readJson } from "@/lib/api-helpers";
 import { getSupabaseAuthClient, setAuthCookies } from "@/lib/auth";
 
 export async function POST(request: Request) {
@@ -35,14 +36,6 @@ export async function POST(request: Request) {
   }
 }
 
-async function readJson(request: Request) {
-  try {
-    return { ok: true as const, value: await request.json() };
-  } catch {
-    return { ok: false as const, error: "Request body must be valid JSON." };
-  }
-}
-
 function parseLoginInput(body: unknown) {
   if (!isRecord(body)) {
     return { ok: false as const, error: "Request body must be a JSON object." };
@@ -56,17 +49,4 @@ function parseLoginInput(body: unknown) {
   }
 
   return { ok: true as const, data: { email, password } };
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-function cleanString(value: unknown) {
-  return typeof value === "string" ? value.trim() : "";
-}
-
-function handleApiError(error: unknown) {
-  const message = error instanceof Error ? error.message : "Unexpected server error.";
-  return NextResponse.json({ error: message }, { status: 500 });
 }

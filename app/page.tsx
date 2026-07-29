@@ -210,7 +210,10 @@ function LessonCard({
           timeZone={timeZone}
           currentInstructorProfileId={currentInstructorProfileId}
         />
-        <AddToCalendarLink lessonId={lesson.id} />
+        <AddToCalendarLink
+          lessonId={lesson.id}
+          instructorProfileId={currentInstructorProfileId}
+        />
         <Link
           className="button-secondary compact-button"
           href={`/lessons/${lesson.id}/edit`}

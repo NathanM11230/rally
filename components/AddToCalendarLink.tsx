@@ -2,10 +2,14 @@ import { buildLessonCalendarToken } from "@/lib/calendar-token";
 
 type AddToCalendarLinkProps = {
   lessonId: string;
+  instructorProfileId: string;
 };
 
-export function AddToCalendarLink({ lessonId }: AddToCalendarLinkProps) {
-  const token = buildLessonCalendarToken(lessonId);
+export function AddToCalendarLink({
+  lessonId,
+  instructorProfileId,
+}: AddToCalendarLinkProps) {
+  const token = buildLessonCalendarToken(lessonId, instructorProfileId);
   const href = token
     ? `/api/lessons/${lessonId}/calendar?token=${encodeURIComponent(token)}`
     : `/api/lessons/${lessonId}/calendar`;

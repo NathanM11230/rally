@@ -19,8 +19,7 @@ export default async function SignupPage() {
           <span className="brand-mark">R</span>
           <h1>Create your Rally login</h1>
           <p className="page-subtitle">
-            Use the same name and phone already used in Rally to claim your pro
-            profile.
+            Use your club invite or approved email to create your pro profile.
           </p>
         </div>
         <AuthForm mode="signup" />

@@ -5,6 +5,7 @@ import {
   getApiAuthenticatedProfile,
   getAuthorizedLessonForProfile,
 } from "@/lib/api-auth";
+import { handleApiError } from "@/lib/api-helpers";
 import { markLessonReminderSent } from "@/lib/lessons";
 
 type ReminderSentRouteContext = {
@@ -67,9 +68,4 @@ export async function DELETE(_request: Request, { params }: ReminderSentRouteCon
   } catch (error) {
     return handleApiError(error);
   }
-}
-
-function handleApiError(error: unknown) {
-  const message = error instanceof Error ? error.message : "Unexpected server error.";
-  return NextResponse.json({ error: message }, { status: 500 });
 }
