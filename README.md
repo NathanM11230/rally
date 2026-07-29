@@ -285,3 +285,20 @@ environment variables.
 
 If Supabase email confirmations are on, set the Supabase Auth site URL to your
 Vercel domain so confirmation links point back to Rally.
+
+Before sharing Rally with pros, run through
+[`SECURITY_CHECKLIST.md`](./SECURITY_CHECKLIST.md). It includes the production
+environment variable checks, live-site verification steps, and Supabase audit
+queries.
+
+## Security Notes
+
+Signup and login have a lightweight in-memory attempt cap to slow down repeated
+guessing. This is intentionally simple for the MVP; the invite code should still
+be long and random, not a club phrase.
+
+Run the focused regression tests before security-sensitive changes:
+
+```bash
+npm test
+```

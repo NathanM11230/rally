@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "test": "tsc -p tsconfig.test.json && node --test .test-build/tests/signup-access.test.js .test-build/tests/calendar-token.test.js .test-build/tests/auth-rate-limit.test.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.4",

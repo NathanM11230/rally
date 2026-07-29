@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { cleanString, handleApiError, isRecord, readJson } from "@/lib/api-helpers";
+import { enforceAuthRateLimit } from "@/lib/auth-rate-limit";
 import { getSupabaseAuthClient, setAuthCookies } from "@/lib/auth";
 import { createOrUpdateInstructorProfileForUser } from "@/lib/instructor-profiles";
 import { validateSignupAccess } from "@/lib/signup-access";
@@ -16,6 +17,20 @@ export async function POST(request: Request) {
 
   if (!parsed.ok) {
     return NextResponse.json({ error: parsed.error }, { status: 400 });
+  }
+
+  const rateLimit = enforceAuthRateLimit(request, "signup");
+
+  if (!rateLimit.ok) {
+    return NextResponse.json(
+      { error: "Too many signup attempts. Try again in a few minutes." },
+      {
+        status: 429,
+        headers: {
+          "Retry-After": String(rateLimit.retryAfterSeconds),
+        },
+      },
+    );
   }
 
   const signupAccess = validateSignupAccess({
