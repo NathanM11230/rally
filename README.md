@@ -293,9 +293,11 @@ queries.
 
 ## Security Notes
 
-Signup and login have a lightweight in-memory attempt cap to slow down repeated
-guessing. This is intentionally simple for the MVP; the invite code should still
-be long and random, not a club phrase.
+Signup and login have a lightweight in-memory attempt cap to slow down naive
+repeated guessing. On Vercel this is best-effort only because serverless
+instances do not share memory and can be recycled. For this MVP, the real signup
+protection is the server-side invite gate or email allowlist, so the invite code
+must be long and random, not a club phrase.
 
 Run the focused regression tests before security-sensitive changes:
 

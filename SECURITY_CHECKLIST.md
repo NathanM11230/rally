@@ -26,6 +26,11 @@ node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"
 Do not use a club name, season, year, or easy phrase as the invite code. Do not
 reuse `SUPABASE_SERVICE_ROLE_KEY` for `CALENDAR_TOKEN_SECRET`.
 
+Rally includes a lightweight in-memory attempt cap for signup and login, but it
+is best-effort only on Vercel. Serverless instances do not share memory, and cold
+starts reset the counter. The invite code or email allowlist is the real signup
+gate, so keep the invite code long and random.
+
 ## Live-Site Verification
 
 After redeploying, verify these on the live Vercel URL:
@@ -89,4 +94,4 @@ The current tests cover:
 - allowlisted emails work case-insensitively
 - calendar links require `CALENDAR_TOKEN_SECRET`
 - calendar tokens reject expiration, tampering, wrong lesson ids, and malformed tokens
-- login/signup rate limiting blocks repeated attempts
+- the best-effort login/signup limiter blocks repeated attempts within one server instance

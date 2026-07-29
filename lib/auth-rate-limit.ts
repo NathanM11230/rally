@@ -15,6 +15,8 @@ type CheckRateLimitInput = {
   windowMs?: number;
 };
 
+// Best-effort only: Vercel serverless instances do not share this module memory.
+// The real signup protection is a long random invite code or email allowlist.
 const attempts = new Map<string, AttemptWindow>();
 
 export function enforceAuthRateLimit(
