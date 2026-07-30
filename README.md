@@ -1,311 +1,271 @@
-# Rally Manual SMS Lesson Reminders
-
-Rally is a lightweight MVP for tennis clubs to create lesson, clinic, and event
-reservations and prepare SMS reminder messages for students and pros.
-
-This app is intentionally SMS-only. It does not include email reminders,
-payments, Twilio sending, or automated SMS provider delivery. Rally opens a
-prefilled text message and the pro sends it manually from their own SMS app.
-
-## Stack
-
-- Next.js App Router
-- TypeScript
-- Supabase Postgres
-- Supabase Auth for pro logins
-- Manual `sms:` links for reminder texts
-
-## Setup
-
-1. Install dependencies:
-
-   ```bash
-   npm install
-   ```
-
-2. Create a Supabase project and run the SQL in `supabase/schema.sql`.
-
-   If you already ran an earlier Rally schema, run this updated SQL again. It
-   adds `contacts`, `lesson_students`, `lesson_instructors`, `lessons.status`,
-   `lessons.session_type`, `lessons.event_title`, and
-   `instructor_profiles.user_id`, migrates each existing lesson's current
-   student and pro into those tables, and keeps the existing `lessons` fields
-   as compatibility values.
-
-3. In Supabase, enable email/password signups under **Authentication**.
-
-   This is only for pro login. Rally still does not send email reminders. For
-   the easiest club MVP, you can turn email confirmations off, or leave them on
-   and have each pro confirm their email before logging in.
-
-4. Copy `.env.example` to `.env.local` and fill in:
-
-   ```bash
-   SUPABASE_URL=
-   SUPABASE_SERVICE_ROLE_KEY=
-   SUPABASE_ANON_KEY=
-   LESSON_TIME_ZONE=America/New_York
-   SIGNUP_INVITE_CODE=
-   SIGNUP_ALLOWED_EMAILS=
-   CALENDAR_TOKEN_SECRET=
-   ```
-
-   Keep `SUPABASE_SERVICE_ROLE_KEY` private. It is used only from server code.
-   `SUPABASE_ANON_KEY` is used for Supabase Auth login and signup.
-   Signup is closed unless either `SIGNUP_INVITE_CODE` or
-   `SIGNUP_ALLOWED_EMAILS` is set. `SIGNUP_ALLOWED_EMAILS` should be a
-   comma-separated list, such as `pro1@example.com,pro2@example.com`.
-   `CALENDAR_TOKEN_SECRET` is required for signed calendar download links.
-   Use a long random value and do not reuse your Supabase service role key.
-
-5. Run the app locally:
-
-   ```bash
-   npm run dev
-   ```
-
-   On some Windows PowerShell setups, use `npm.cmd run dev`.
-
-6. Open `http://localhost:3000`.
-
-## Pro Logins And Profiles
-
-Each pro creates their own Rally login with Supabase Auth. Signup asks for the
-pro's full name, phone number, and optional club invite code, then saves that
-information in `instructor_profiles`. Passwords must be at least 10 characters.
-
-For safety, self-serve signup does not claim existing unlinked pro profiles by
-matching name or phone number. If you already have an unclaimed
-`instructor_profiles` row that should belong to a new login, connect it by
-setting that row's `user_id` to the Supabase Auth user id in Supabase.
-
-Signup is gated on the server. Configure at least one of:
-
-- `SIGNUP_INVITE_CODE`: a shared club code pros must enter when creating an account
-- `SIGNUP_ALLOWED_EMAILS`: a comma-separated list of email addresses allowed to sign up
-
-The lesson form does not ask for the logged-in pro's phone number every time.
-Rally reuses the phone number saved in that pro's profile. A pro can still assign
-other saved pros to the same reservation, and any assigned pro can edit the
-whole lesson.
-
-Dashboard, calendar, and pay-period reports only show lessons assigned to the
-logged-in pro. Contacts remain shared club-wide so everyone can reuse saved
-student names and phone numbers.
-
-## Calendar
-
-Go to **Calendar** from the dashboard to see lessons in a monthly calendar view.
-The calendar shows only the logged-in pro's assigned lessons. Each calendar
-item links back to the edit page for that reservation.
-
-Each lesson also has an **Add to calendar** link. Rally downloads a standard
-`.ics` calendar file that can be opened by Apple Calendar, Outlook, Google
-Calendar, and most phone calendar apps. The file includes the lesson type,
-participants, assigned pros, court/location, notes, and a one-hour default event
-duration.
-
-Calendar links include a signed token so iPhone calendar/download handoff can
-fetch the file even when the calendar app does not send the Rally login cookie.
-Those tokens expire after 14 days and are bound to the pro profile that generated
-the link. The lesson must still be assigned to that pro when the token is used.
-
-## Lesson Types
-
-Each reservation has one type:
-
-- Lesson
-- Clinic
-- Other event
-- Freshmen
-- Varsity
-- Team
-
-When **Other event** is selected, Rally asks for the event name, such as
-`Cardio Tennis` or `Ladies Night`. That event name appears on the dashboard,
-calendar, pay period report, and manual SMS reminders.
-
-Lessons require at least one student name and phone number. Clinics and other
-events can include participants, but they can also be saved without participant
-phone numbers when the lesson only needs to be tracked for calendar or pay
-period reporting.
-
-Each reservation can also have one or more pros assigned. Rally keeps the first
-selected pro as the primary compatibility value on `lessons.instructor_profile_id`
-and stores the full pro list in `lesson_instructors`.
-
-Each lesson can also include one or more courts. The form uses one multi-select
-court picker with Tennis Courts 1-8, Pickleball Courts 1-4, and Paddle Courts
-1-5. Rally stores selected courts together in
-`lessons.location`, such as `Tennis Court 1, Pickleball Court 2`.
-
-Lesson times are selected in 15-minute intervals from 6:00 AM through 9:00 PM.
-Rally also validates this on the server before saving.
-
-## Pay Period Reports
-
-Rally groups each pro's assigned lessons into the club pay period so they can
-compare what was scheduled against what they were paid for. The club pay period
-is calculated in two-week windows starting Monday, July 6, 2026.
-
-Go to **Pay Periods** to:
-
-- move between previous, current, and next pay periods
-- review only the logged-in pro's assigned lessons
-- see high-level counts for total lessons, clinics, junior groups, teams, and other events
-- see lessons grouped by Varsity, Freshmen, Lessons, and Other events
-- print a clean report for the selected pay period
-
-This is only a reporting tool. Rally does not process payments.
-
-## Multi-Student Reservations
-
-Each lesson can have one or many students. The lesson form lets you add multiple
-student names and phone numbers to the same reservation.
-
-## Contacts
-
-Rally saves participant contacts automatically. When a pro saves a lesson with a
-name and phone number, Rally stores that contact club-wide.
-
-Go to **Contacts** to review the automatic directory. The directory is built
-from saved contacts plus existing lesson history, so older lesson entries can
-still be reused even if they were created before the contact feature existed.
-The Contacts page is searchable instead of showing every contact at once.
-Use **New contact** to save a name and phone number without creating a lesson.
-
-When creating or editing a lesson, type a few characters in the participant name
-field. Rally filters saved contacts from the directory right under the name
-field. Selecting a saved contact fills the participant name and phone number
-immediately.
-
-Names are used for search because pros usually remember names first. Phone
-numbers are normalized behind the scenes to avoid duplicate saved contacts when
-the same person is entered again.
-
-## Follow Ups
-
-Go to **Follow ups** to see the people a pro works with most often. Rally ranks
-them from the logged-in pro's lesson history and provides a manual text link
-with this draft:
-
-```txt
-Hey [FirstName], any time to hit soon?
-```
-
-The text is not sent automatically. Rally opens the pro's SMS app with the draft
-filled in.
-
-The database stores:
-
-- `contacts.full_name`
-- `contacts.phone_number`
-- `contacts.normalized_name`
-- `contacts.normalized_phone`
-- `lessons.instructor_profile_id`
-- `lessons.session_type`
-- `lessons.event_title`
-- `lessons.lesson_start_time`
-- `lessons.location`
-- `lessons.notes`
-- `lessons.status`
-- `lessons.reminder_sent`
-- `lesson_students.student_name`
-- `lesson_students.student_phone`
-- `lesson_instructors.instructor_profile_id`
-
-The older `lessons.student_name` and `lessons.student_phone` columns are still
-filled with the first student as a compatibility fallback.
-
-## Manual SMS Reminders
-
-On the dashboard and edit page, each lesson has actions to:
-
-- open a prefilled SMS to each student
-- open a prefilled SMS to other assigned pros
-- mark the reminder as sent
-- reset the sent status if needed
-
-Rally does not show a pro a text link to their own phone number.
-
-The app does not send texts in the background. The pro reviews the prefilled
-text and taps send in their own messaging app. This avoids Twilio, A2P 10DLC,
-toll-free verification, and Vercel Cron complexity for the MVP.
-
-Lesson reminder drafts are written like they are coming directly from the pro:
-
-```txt
-Hey Nathan. Reminder about your lesson on court 3 at July 7, 4:00 PM.
-Let me know if there is anything specific you would like to work on. Thanks!
-```
-
-Clinics, team practices, and other events use the same casual format with the
-lesson type in the message.
-
-## API Routes
-
-- `POST /api/auth/signup` creates a gated pro login and profile.
-- `POST /api/auth/login` logs a pro in.
-- `POST /api/auth/logout` logs a pro out.
-- `GET /api/instructor-profile` lists saved pros for assignment.
-- `POST /api/instructor-profile` creates or updates the logged-in pro's profile.
-- `PATCH /api/instructor-profile/:id` edits the logged-in pro's own profile.
-- `GET /api/contacts?q=name` searches shared saved contacts by name.
-- `POST /api/contacts` creates or updates a shared saved contact.
-- `GET /contacts` shows the automatic shared contact directory.
-- `GET /api/lessons` lists the logged-in pro's upcoming assigned lessons.
-- `POST /api/lessons` creates a lesson with the selected pros and participants.
-- `PATCH /api/lessons/:id` edits a lesson, selected pros, and participants.
-- `DELETE /api/lessons/:id` deletes a lesson.
-- `GET /api/lessons/:id/calendar` downloads an `.ics` calendar event.
-- `PATCH /api/lessons/:id/status` updates scheduled/completed/cancelled/no-show status.
-- `POST /api/lessons/:id/reminder-sent` marks a manual reminder as sent.
-- `DELETE /api/lessons/:id/reminder-sent` resets a reminder to not sent.
-
-Lesson edit, delete, status, and reminder-sent routes require the logged-in pro
-to be assigned to that lesson.
-
-## Deploying
-
-Set these Vercel environment variables:
+# Rally
+
+Rally is a mobile-first lesson tracker for racquet-sports professionals. It
+keeps each pro's schedule, participant contacts, reminder texts, calendar
+handoffs, and pay-period records in one place.
+
+[Open Rally](https://rally.management) ·
+[Pro guide](./PRO_GUIDE.md) ·
+[Security checklist](./SECURITY_CHECKLIST.md)
+
+The live deployment is private. A club invite or approved email address is
+required to create an account. All names and phone numbers shown below are
+sample data.
+
+<p align="center">
+  <img src="./docs/images/rally-dashboard.png" alt="Rally dashboard showing upcoming lessons and reminder actions" width="320">
+</p>
+
+## Why Rally exists
+
+Most lesson management at a small club happens across a calendar, a contact
+list, text messages, and a separate payroll record. Rally brings those pieces
+together without trying to become a full club-management platform.
+
+A pro can create a lesson in a few taps, reuse a saved participant, open a
+ready-to-send reminder in the phone's messaging app, add the lesson to a
+personal calendar, and later check the club's two-week pay period for anything
+that may have been missed.
+
+Rally deliberately does **not** send messages in the background. Reminder links
+open the pro's own SMS app with the recipient and message filled in. The pro
+reviews the text and taps Send.
+
+## Product tour
+
+<table>
+  <tr>
+    <td width="50%" align="center">
+      <img src="./docs/images/rally-new-lesson.png" alt="Creating a new lesson in Rally" width="280">
+    </td>
+    <td width="50%" align="center">
+      <img src="./docs/images/rally-contact-autofill.png" alt="Searching saved contacts while creating a lesson" width="280">
+    </td>
+  </tr>
+  <tr>
+    <td valign="top">
+      <strong>Create the whole reservation</strong><br>
+      Choose a lesson type, assign one or more pros, add participants, pick a
+      time, and select one or more courts.
+    </td>
+    <td valign="top">
+      <strong>Reuse club contacts</strong><br>
+      Typing a participant's name searches the shared directory. Selecting a
+      result fills the saved name and phone number.
+    </td>
+  </tr>
+</table>
+
+<table>
+  <tr>
+    <td width="50%" align="center">
+      <img src="./docs/images/rally-reminder-text.png" alt="A Rally lesson reminder opened in the iPhone Messages app" width="280">
+    </td>
+    <td width="50%" align="center">
+      <img src="./docs/images/rally-follow-ups.png" alt="Rally follow-up suggestions based on lesson history" width="280">
+    </td>
+  </tr>
+  <tr>
+    <td valign="top">
+      <strong>Send reminders from the pro's phone</strong><br>
+      Rally writes a natural reminder using the participant, date, time, and
+      court, then hands it to the phone's messaging app.
+    </td>
+    <td valign="top">
+      <strong>Keep regular players engaged</strong><br>
+      Follow ups ranks frequent lesson contacts and opens a short scheduling
+      text for the pro to review and send.
+    </td>
+  </tr>
+</table>
+
+<table>
+  <tr>
+    <td width="50%" align="center">
+      <img src="./docs/images/rally-calendar.png" alt="Rally monthly lesson calendar" width="280">
+    </td>
+    <td width="50%" align="center">
+      <img src="./docs/images/rally-apple-calendar.png" alt="A Rally lesson imported into Apple Calendar" width="280">
+    </td>
+  </tr>
+  <tr>
+    <td valign="top">
+      <strong>See an individual schedule</strong><br>
+      Dashboard and calendar views show only lessons assigned to the logged-in
+      pro, including shared reservations with multiple pros.
+    </td>
+    <td valign="top">
+      <strong>Use a personal calendar</strong><br>
+      A signed, expiring calendar link creates a standard <code>.ics</code>
+      event for Apple Calendar, Google Calendar, Outlook, and other clients.
+    </td>
+  </tr>
+</table>
+
+<table>
+  <tr>
+    <td width="50%" align="center">
+      <img src="./docs/images/rally-pay-period.png" alt="Rally two-week pay-period report" width="280">
+    </td>
+    <td width="50%" valign="middle">
+      <h3>Cross-check the pay period</h3>
+      <p>
+        Rally groups each pro's assigned work into the club's two-week pay
+        periods. The report includes totals and a breakdown for lessons,
+        clinics, other events, Freshmen, Varsity, and Team reservations.
+      </p>
+      <p>
+        It is a reconciliation tool, not a payroll or payment system. Pros can
+        compare the report with their pay statement and flag anything that was
+        missed.
+      </p>
+    </td>
+  </tr>
+</table>
+
+## How the club workflow works
+
+1. A pro signs up with the club invite code and saves a name and phone number
+   to their profile.
+2. The pro creates a Lesson, Clinic, Other event, Freshmen, Varsity, or Team
+   reservation.
+3. One or more pros and participants can be assigned to the same reservation.
+4. Participant details are saved to the shared club contact directory.
+5. Assigned pros see the reservation on their own dashboard and calendar.
+6. A reminder button opens a prepared SMS on the pro's phone. Rally can then
+   mark the reminder as sent to prevent accidental duplicates.
+7. The reservation appears in each assigned pro's pay-period report and can be
+   added to a personal calendar.
+
+Lesson times are offered in 15-minute intervals from 6:00 AM through 9:00 PM.
+The court picker includes Tennis Courts 1-8, Pickleball Courts 1-4, and Paddle
+Courts 1-5.
+
+## Access model
+
+- Each pro has a Supabase Auth login and an `instructor_profiles` record.
+- Dashboard, calendar, lesson history, follow ups, and pay-period reports are
+  scoped to the logged-in pro's assigned lessons.
+- Any pro assigned to a lesson can edit the entire reservation.
+- A pro can create a reservation and assign another pro.
+- The participant contact directory is shared across the club.
+- Signup is closed unless the server has an invite code or email allowlist
+  configured.
+
+## Technical overview
+
+| Area | Implementation |
+| --- | --- |
+| Web app | Next.js App Router, React, TypeScript |
+| Authentication | Supabase Auth with server-managed HTTP-only cookies |
+| Database | Supabase Postgres |
+| Data access | Next.js route handlers using the server-only Supabase service role |
+| Messaging | Manual `sms:` links opened in the pro's native messaging app |
+| Calendar | Signed, expiring `.ics` downloads |
+| Hosting | Vercel |
+| Tests | Node test runner with TypeScript fixtures |
+
+Supabase Row Level Security is enabled with no anonymous policies. Browser
+requests go through Rally's authenticated server routes; the service-role key
+is never sent to the client.
+
+Calendar downloads use a dedicated HMAC secret, expire after 14 days, and are
+bound to the pro who generated the link. Signup and login also have a
+best-effort in-memory attempt cap. On Vercel that cap is per serverless instance,
+so the long random invite code or email allowlist remains the primary signup
+control.
+
+## Local setup
+
+### 1. Install the app
 
 ```bash
-SUPABASE_URL=
-SUPABASE_SERVICE_ROLE_KEY=
-SUPABASE_ANON_KEY=
-LESSON_TIME_ZONE=America/New_York
-SIGNUP_INVITE_CODE=
-SIGNUP_ALLOWED_EMAILS=
-CALENDAR_TOKEN_SECRET=
+git clone https://github.com/NathanM11230/rally.git
+cd rally
+npm install
 ```
 
-Set at least one signup gate: `SIGNUP_INVITE_CODE` or `SIGNUP_ALLOWED_EMAILS`.
-Set `CALENDAR_TOKEN_SECRET` to a long random value. Redeploy after changing
-environment variables.
+### 2. Create the Supabase database
 
-If Supabase email confirmations are on, set the Supabase Auth site URL to your
-Vercel domain so confirmation links point back to Rally.
+Create a Supabase project, open its SQL Editor, and run:
 
-Before sharing Rally with pros, run through
-[`SECURITY_CHECKLIST.md`](./SECURITY_CHECKLIST.md). It includes the production
-environment variable checks, live-site verification steps, and Supabase audit
-queries.
+```text
+supabase/schema.sql
+```
 
-If creating a contact shows a setup error about missing contacts, run
-[`supabase/contacts-table.sql`](./supabase/contacts-table.sql) in the Supabase
-SQL Editor. That creates the saved contacts table without rerunning the full
-schema.
+The schema is written to be rerunnable for an existing Rally database. If an
+older deployment only needs the contact directory repair, run
+[`supabase/contacts-table.sql`](./supabase/contacts-table.sql).
 
-## Security Notes
+### 3. Configure Supabase Auth
 
-Signup and login have a lightweight in-memory attempt cap to slow down naive
-repeated guessing. On Vercel this is best-effort only because serverless
-instances do not share memory and can be recycled. For this MVP, the real signup
-protection is the server-side invite gate or email allowlist, so the invite code
-must be long and random, not a club phrase.
+Enable email/password authentication. Email is used only for account access;
+Rally does not send email lesson reminders.
 
-Run the focused regression tests before security-sensitive changes:
+If email confirmation is enabled, set the Supabase Auth Site URL to the
+production Rally URL and add both the production URL and
+`http://localhost:3000` as allowed redirect URLs.
+
+### 4. Add environment variables
+
+Copy `.env.example` to `.env.local` and set:
+
+| Variable | Purpose |
+| --- | --- |
+| `SUPABASE_URL` | Supabase project URL |
+| `SUPABASE_SERVICE_ROLE_KEY` | Server-only database access |
+| `SUPABASE_ANON_KEY` | Supabase Auth login and signup |
+| `LESSON_TIME_ZONE` | Club timezone, such as `America/New_York` |
+| `SIGNUP_INVITE_CODE` | Long random code shared with approved pros |
+| `SIGNUP_ALLOWED_EMAILS` | Optional comma-separated signup allowlist |
+| `CALENDAR_TOKEN_SECRET` | Independent random secret for calendar links |
+
+At least one signup gate, `SIGNUP_INVITE_CODE` or `SIGNUP_ALLOWED_EMAILS`, must
+be set. Do not reuse the Supabase service-role key as the calendar secret.
+
+### 5. Start Rally
+
+```bash
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000). On Windows PowerShell,
+`npm.cmd run dev` can be used if `npm` script execution is restricted.
+
+## Verification
+
+Run the focused security tests, lint, and production build before deployment:
 
 ```bash
 npm test
+npm run lint
+npm run build
 ```
+
+The current tests cover signup gating, calendar-token validation, and the auth
+attempt limiter.
+
+## Deploying to Vercel
+
+1. Import `NathanM11230/rally` into Vercel and use `main` as the production
+   branch.
+2. Add the same environment variables listed above to the Production
+   environment.
+3. Deploy, then update the Supabase Auth Site URL and redirect allowlist with
+   the final Vercel or custom domain.
+4. Test signup, login, contact creation, lesson creation, a reminder handoff,
+   and an Add to calendar link on a real phone.
+5. Complete [`SECURITY_CHECKLIST.md`](./SECURITY_CHECKLIST.md) before inviting
+   additional pros.
+
+Environment-variable changes require a new Vercel deployment before they take
+effect.
+
+## Scope
+
+Rally is intentionally small. It includes scheduling, shared contacts, manual
+SMS reminders, calendar handoff, follow ups, and pay-period reconciliation.
+It does not include automated SMS delivery, email reminders, billing, payments,
+court availability management, or a public registration flow.
+
+For day-to-day instructions, see [`PRO_GUIDE.md`](./PRO_GUIDE.md).
