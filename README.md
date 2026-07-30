@@ -222,6 +222,35 @@ best-effort in-memory attempt cap. On Vercel that cap is per serverless instance
 so the long random invite code or email allowlist remains the primary signup
 control.
 
+## Capacity and scaling
+
+Rally's lesson data is stored in Supabase, not on the Vercel server. As of July
+2026, the Supabase Free plan includes a 500 MB database and places the database
+in read-only mode if that limit is exceeded. Existing records remain readable,
+but new lessons and edits would fail until storage is reduced or the project is
+upgraded. See the current
+[Supabase database-size documentation](https://supabase.com/docs/guides/platform/database-size).
+
+Based on Rally's current tables and indexes, a reasonable planning estimate is
+roughly **75,000-200,000 typical reservations** within that 500 MB limit. This
+is not a load-tested ceiling: multiple participants, long notes, database
+overhead, and index growth all affect the real number. At a combined 20 lessons
+per day for two pros, six days per week, even the low end represents more than
+12 years of lesson history.
+
+Vercel processes the web requests but does not retain the lesson records.
+Vercel Hobby currently includes up to 1,000,000 function invocations per month,
+far beyond the expected traffic from two pros. However, Vercel describes Hobby
+as a personal, non-commercial plan, so a club production deployment should
+review the current [Vercel Hobby terms and limits](https://vercel.com/docs/plans/hobby)
+and use Pro when appropriate.
+
+The first practical scaling improvement would be query efficiency rather than
+storage. Some Rally reports currently load the complete lesson history before
+filtering it for the logged-in pro. Before expanding to many pros or tens of
+thousands of lessons, those queries should filter by pro and date in Supabase
+and paginate long histories.
+
 ## Local setup
 
 ### 1. Install the app
