@@ -4,17 +4,13 @@ Rally is a mobile-first lesson tracker for racquet-sports professionals. It
 keeps each pro's schedule, participant contacts, reminder texts, calendar
 handoffs, and pay-period records in one place.
 
-[Open Rally](https://rally.management) ·
-[Pro guide](./PRO_GUIDE.md) ·
+[Open Rally](https://rally.management) |
+[Pro guide](./PRO_GUIDE.md) |
 [Security checklist](./SECURITY_CHECKLIST.md)
 
 The live deployment is private. A club invite or approved email address is
 required to create an account. All names and phone numbers shown below are
 sample data.
-
-<p align="center">
-  <img src="./docs/images/rally-dashboard.png" alt="Rally dashboard showing upcoming lessons and reminder actions" width="320">
-</p>
 
 ## Why Rally exists
 
@@ -36,6 +32,29 @@ open the pro's own SMS app with the recipient and message filled in. The pro
 reviews the text and taps Send.
 
 ## Product tour
+
+<table>
+  <tr>
+    <td width="50%" align="center">
+      <img src="./docs/images/rally-dashboard.png" alt="Rally dashboard showing upcoming lessons and reminder actions" width="280">
+    </td>
+    <td width="50%" align="center">
+      <img src="./docs/images/rally-reminder-text.png" alt="A Rally lesson reminder opened in the iPhone Messages app" width="280">
+    </td>
+  </tr>
+  <tr>
+    <td valign="top">
+      <strong>Run the day from the dashboard</strong><br>
+      Each pro sees only lessons assigned to them, with the participant, time,
+      court, reminder status, calendar link, and editing controls together.
+    </td>
+    <td valign="top">
+      <strong>Send reminders from the pro's phone</strong><br>
+      Tapping the participant's Text button opens a natural reminder with the
+      date, time, and court already filled in. The pro reviews it and taps Send.
+    </td>
+  </tr>
+</table>
 
 <table>
   <tr>
@@ -77,7 +96,7 @@ also be added directly from the Contacts page when no lesson is being created.
 <table>
   <tr>
     <td width="50%" align="center">
-      <img src="./docs/images/rally-reminder-text.png" alt="A Rally lesson reminder opened in the iPhone Messages app" width="280">
+      <img src="./docs/images/rally-follow-ups.png" alt="Rally follow-up suggestions based on lesson history" width="280">
     </td>
     <td width="50%" align="center">
       <img src="./docs/images/rally-follow-up-text.png" alt="A Rally scheduling follow-up opened in the iPhone Messages app" width="280">
@@ -85,60 +104,36 @@ also be added directly from the Contacts page when no lesson is being created.
   </tr>
   <tr>
     <td valign="top">
-      <strong>Send reminders from the pro's phone</strong><br>
-      Rally writes a natural reminder using the participant, date, time, and
-      court, then hands it to the phone's messaging app.
+      <strong>See who may be ready for another lesson</strong><br>
+      Follow ups ranks the people a pro teaches most often and shows their
+      lesson count and most recent lesson.
     </td>
     <td valign="top">
       <strong>Start the next conversation</strong><br>
-      Follow ups opens a short, editable scheduling message: “Hey Benjamin,
-      any time to hit soon?”
+      Tapping Text opens a short, editable scheduling message: "Hey Benjamin,
+      any time to hit soon?"
     </td>
   </tr>
 </table>
 
-<table>
-  <tr>
-    <td width="50%" align="center">
-      <img src="./docs/images/rally-follow-ups.png" alt="Rally follow-up suggestions based on lesson history" width="280">
-    </td>
-    <td width="50%" valign="middle">
-      <h3>Follow up from lesson history</h3>
-      <p>
-        Rally ranks the people a pro teaches most often and shows the date of
-        their latest lesson. Tapping Text opens a prepared scheduling message
-        in the phone's native messaging app.
-      </p>
-      <p>
-        Nothing is sent automatically. The pro can edit the wording, choose
-        when to reach out, and tap Send personally.
-      </p>
-    </td>
-  </tr>
-</table>
+### Follow up from lesson history
 
-<table>
-  <tr>
-    <td width="50%" align="center">
-      <img src="./docs/images/rally-calendar.png" alt="Rally monthly lesson calendar" width="280">
-    </td>
-    <td width="50%" align="center">
-      <img src="./docs/images/rally-apple-calendar.png" alt="A Rally lesson imported into Apple Calendar" width="280">
-    </td>
-  </tr>
-  <tr>
-    <td valign="top">
-      <strong>See an individual schedule</strong><br>
-      Dashboard and calendar views show only lessons assigned to the logged-in
-      pro, including shared reservations with multiple pros.
-    </td>
-    <td valign="top">
-      <strong>Use a personal calendar</strong><br>
-      A signed, expiring calendar link creates a standard <code>.ics</code>
-      event for Apple Calendar, Google Calendar, Outlook, and other clients.
-    </td>
-  </tr>
-</table>
+Rally uses the logged-in pro's lesson history to surface the people they teach
+most often. Tapping Text opens the prepared scheduling message in the phone's
+messaging app. Nothing is sent automatically: the pro can edit the wording,
+choose when to reach out, and tap Send personally.
+
+<p align="center">
+  <img src="./docs/images/rally-apple-calendar.png" alt="A Rally lesson imported into Apple Calendar" width="320">
+</p>
+
+### Use a personal calendar
+
+A signed, expiring calendar link creates a standard `.ics` event for Apple
+Calendar, Google Calendar, Outlook, and other clients. Rally also has its own
+Calendar tab for pros who prefer to view their assigned lessons inside the
+site. Both calendar options show only lessons assigned to the logged-in pro,
+including reservations shared with multiple pros.
 
 <table>
   <tr>
