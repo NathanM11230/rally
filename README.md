@@ -117,17 +117,36 @@ most often. Tapping Text opens the prepared scheduling message in the phone's
 messaging app. Nothing is sent automatically: the pro can edit the wording,
 choose when to reach out, and tap Send personally.
 
-<p align="center">
-  <img src="./docs/images/rally-apple-calendar.png" alt="A Rally lesson imported into Apple Calendar" width="320">
-</p>
-
 ### Use a personal calendar
 
-A signed, expiring calendar link creates a standard `.ics` event for Apple
-Calendar, Google Calendar, Outlook, and other clients. Rally also has its own
-Calendar tab for pros who prefer to view their assigned lessons inside the
-site. Both calendar options show only lessons assigned to the logged-in pro,
-including reservations shared with multiple pros.
+<table>
+  <tr>
+    <td width="50%" align="center">
+      <img src="./docs/images/rally-dashboard.png" alt="Rally dashboard with an Add to calendar button on each lesson" width="280">
+    </td>
+    <td width="50%" align="center">
+      <img src="./docs/images/rally-apple-calendar.png" alt="A Rally lesson opened in Apple Calendar" width="280">
+    </td>
+  </tr>
+  <tr>
+    <td valign="top">
+      <strong>Tap Add to calendar</strong><br>
+      Each lesson card on the dashboard includes an Add to calendar button.
+      Tapping it prepares a calendar event using that lesson's details.
+    </td>
+    <td valign="top">
+      <strong>Review and save the event</strong><br>
+      The phone opens its calendar with the participant, date, time, court,
+      assigned pros, and notes already filled in.
+    </td>
+  </tr>
+</table>
+
+Behind the button, Rally creates a signed, expiring `.ics` calendar link that
+works with Apple Calendar, Google Calendar, Outlook, and other clients. Rally
+also has its own Calendar tab for pros who prefer to view their assigned lessons
+inside the site. Both calendar options show only lessons assigned to the
+logged-in pro, including reservations shared with multiple pros.
 
 <table>
   <tr>
