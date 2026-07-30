@@ -122,7 +122,7 @@ choose when to reach out, and tap Send personally.
 <table>
   <tr>
     <td width="50%" align="center">
-      <img src="./docs/images/rally-dashboard.png" alt="Rally dashboard with an Add to calendar button on each lesson" width="280">
+      <img src="./docs/images/rally-molly-calendar-source.png" alt="Molly Brown lesson on the Rally dashboard with its Add to calendar button" width="280">
     </td>
     <td width="50%" align="center">
       <img src="./docs/images/rally-apple-calendar.png" alt="A Rally lesson opened in Apple Calendar" width="280">
@@ -130,14 +130,14 @@ choose when to reach out, and tap Send personally.
   </tr>
   <tr>
     <td valign="top">
-      <strong>Tap Add to calendar</strong><br>
-      Each lesson card on the dashboard includes an Add to calendar button.
-      Tapping it prepares a calendar event using that lesson's details.
+      <strong>Tap Add to calendar on the lesson</strong><br>
+      Molly Brown's lesson card includes the Add to calendar button. Tapping it
+      prepares a calendar event using that specific lesson's details.
     </td>
     <td valign="top">
       <strong>Review and save the event</strong><br>
-      The phone opens its calendar with the participant, date, time, court,
-      assigned pros, and notes already filled in.
+      The same Molly Brown lesson opens in the phone's calendar with the date,
+      time, court, assigned pros, and notes already filled in.
     </td>
   </tr>
 </table>
