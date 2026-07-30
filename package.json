@@ -7,23 +7,28 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "test": "tsc -p tsconfig.test.json && node --test .test-build/tests/signup-access.test.js .test-build/tests/calendar-token.test.js .test-build/tests/auth-rate-limit.test.js"
+    "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test tests/*.test.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.4",
-    "next": "16.2.10",
+    "next": "^16.2.12",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
   "overrides": {
-    "postcss": "8.5.10"
+    "next": {
+      "postcss": "8.5.25",
+      "sharp": "0.35.3"
+    }
   },
   "devDependencies": {
     "@types/node": "^20.16.11",
     "@types/react": "^18.3.11",
     "@types/react-dom": "^18.3.0",
     "eslint": "9.30.1",
-    "eslint-config-next": "16.2.10",
+    "eslint-config-next": "16.2.12",
+    "tsx": "^4.23.1",
     "typescript": "^5.6.3"
   }
 }

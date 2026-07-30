@@ -19,3 +19,26 @@ export function getLessonInstructorNames(lesson: LessonWithInstructorProfile) {
 
   return names.length > 0 ? names.join(", ") : "No pro assigned";
 }
+
+export function ensureInstructorIsAssigned(
+  instructorProfileIds: string[],
+  currentInstructorProfileId: string,
+) {
+  return Array.from(
+    new Set([...instructorProfileIds, currentInstructorProfileId]),
+  );
+}
+
+export function getPrimaryInstructorProfileId(
+  instructorProfileIds: string[],
+  previousPrimaryInstructorProfileId?: string,
+) {
+  if (
+    previousPrimaryInstructorProfileId &&
+    instructorProfileIds.includes(previousPrimaryInstructorProfileId)
+  ) {
+    return previousPrimaryInstructorProfileId;
+  }
+
+  return instructorProfileIds[0] ?? null;
+}

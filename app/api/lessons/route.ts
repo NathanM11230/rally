@@ -4,6 +4,10 @@ import { NextResponse } from "next/server";
 import { getApiAuthenticatedProfile } from "@/lib/api-auth";
 import { handleApiError, readJson } from "@/lib/api-helpers";
 import { parseLessonInput } from "@/lib/lesson-input";
+import {
+  ensureInstructorIsAssigned,
+  getPrimaryInstructorProfileId,
+} from "@/lib/lesson-instructors";
 import { createLesson, getUpcomingLessonsForInstructor } from "@/lib/lessons";
 import type { LessonInsert } from "@/types/database";
 
@@ -46,13 +50,20 @@ export async function POST(request: Request) {
       return authResult.response;
     }
 
-    const instructorProfileIds = ensureProfileIsAssigned(
+    const instructorProfileIds = ensureInstructorIsAssigned(
       parsed.data.instructorProfileIds,
       authResult.auth.profile.id,
     );
+    const primaryInstructorProfileId =
+      getPrimaryInstructorProfileId(instructorProfileIds);
+
+    if (!primaryInstructorProfileId) {
+      return NextResponse.json({ error: "At least one pro is required." }, { status: 400 });
+    }
+
     const lessonInput = {
       ...parsed.data.lesson,
-      instructor_profile_id: instructorProfileIds[0],
+      instructor_profile_id: primaryInstructorProfileId,
     } as LessonInsert;
     const lesson = await createLesson(
       lessonInput,
@@ -68,8 +79,4 @@ export async function POST(request: Request) {
   } catch (error) {
     return handleApiError(error);
   }
-}
-
-function ensureProfileIsAssigned(instructorProfileIds: string[], profileId: string) {
-  return Array.from(new Set([profileId, ...instructorProfileIds]));
 }

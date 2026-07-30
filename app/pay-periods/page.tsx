@@ -58,7 +58,8 @@ export default async function PayPeriodsPage({ searchParams }: PayPeriodsPagePro
       end,
       instructorProfileId: profile.id,
     });
-  } catch {
+  } catch (error) {
+    console.error("Unable to load Rally pay periods.", error);
     lessons = null;
   }
 
@@ -69,8 +70,8 @@ export default async function PayPeriodsPage({ searchParams }: PayPeriodsPagePro
           <div>
             <h1>Pay periods</h1>
             <p className="lede">
-              Add your Supabase environment variables before Rally can load pay
-              period reports.
+              Rally could not load pay-period reports. Try again in a moment.
+              If this continues, check the Supabase connection and Vercel logs.
             </p>
           </div>
         </header>

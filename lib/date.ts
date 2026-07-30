@@ -77,6 +77,39 @@ export function dateAndTimeToUtc(dateValue: string, timeValue: string, timeZone:
   return utcDate;
 }
 
+export function isValidDateTimeInTimeZone(
+  dateValue: string,
+  timeValue: string,
+  timeZone: string,
+) {
+  if (!isValidDateKey(dateValue) || !/^\d{2}:\d{2}$/.test(timeValue)) {
+    return false;
+  }
+
+  const converted = dateAndTimeToUtc(dateValue, timeValue, timeZone);
+  const parts = getZonedParts(converted, timeZone);
+
+  return (
+    `${parts.year}-${parts.month}-${parts.day}` === dateValue &&
+    `${parts.hour}:${parts.minute}` === timeValue
+  );
+}
+
+function isValidDateKey(value: string) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return false;
+  }
+
+  const [year, month, day] = value.split("-").map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+
+  return (
+    date.getUTCFullYear() === year &&
+    date.getUTCMonth() === month - 1 &&
+    date.getUTCDate() === day
+  );
+}
+
 function getTimeZoneOffset(date: Date, timeZone: string) {
   const parts = getZonedParts(date, timeZone);
   const zonedAsUtc = Date.UTC(

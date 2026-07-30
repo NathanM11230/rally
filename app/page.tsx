@@ -29,7 +29,8 @@ export default async function DashboardPage() {
 
   try {
     lessons = await getUpcomingLessonsForInstructor(profile.id);
-  } catch {
+  } catch (error) {
+    console.error("Unable to load Rally dashboard.", error);
     lessons = null;
   }
 
@@ -40,17 +41,13 @@ export default async function DashboardPage() {
           <div>
             <h1>Dashboard</h1>
             <p className="lede">
-              Add your Supabase environment variables before the dashboard can
-              load.
+              Rally could not load the dashboard. Try again in a moment.
             </p>
           </div>
         </header>
         <section className="panel">
           <div className="setup-note">
-            Set <code>SUPABASE_URL</code> and{" "}
-            <code>SUPABASE_SERVICE_ROLE_KEY</code> and{" "}
-            <code>SUPABASE_ANON_KEY</code> in <code>.env.local</code>, then
-            restart the dev server.
+            If this continues, check the Supabase connection and Vercel logs.
           </div>
         </section>
       </main>

@@ -14,7 +14,8 @@ export default async function ContactsPage() {
 
   try {
     contacts = await getContactDirectory();
-  } catch {
+  } catch (error) {
+    console.error("Unable to load Rally contacts.", error);
     contacts = null;
   }
 
@@ -25,7 +26,8 @@ export default async function ContactsPage() {
           <div>
             <h1>Contacts</h1>
             <p className="lede">
-              Add your Supabase environment variables before Rally can load contacts.
+              Rally could not load contacts. Try again in a moment. If this
+              continues, check the Supabase connection and Vercel logs.
             </p>
           </div>
         </header>

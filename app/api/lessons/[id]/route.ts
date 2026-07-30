@@ -7,6 +7,10 @@ import {
 } from "@/lib/api-auth";
 import { handleApiError, readJson } from "@/lib/api-helpers";
 import { parseLessonInput } from "@/lib/lesson-input";
+import {
+  ensureInstructorIsAssigned,
+  getPrimaryInstructorProfileId,
+} from "@/lib/lesson-instructors";
 import { deleteLesson, updateLesson } from "@/lib/lessons";
 
 type LessonRouteContext = {
@@ -74,15 +78,24 @@ export async function PATCH(request: Request, { params }: LessonRouteContext) {
       return lessonResult.response;
     }
 
-    const instructorProfileIds = ensureProfileIsAssigned(
+    const instructorProfileIds = ensureInstructorIsAssigned(
       parsed.data.instructorProfileIds,
       authResult.auth.profile.id,
     );
+    const primaryInstructorProfileId = getPrimaryInstructorProfileId(
+      instructorProfileIds,
+      lessonResult.lesson.instructor_profile_id,
+    );
+
+    if (!primaryInstructorProfileId) {
+      return NextResponse.json({ error: "At least one pro is required." }, { status: 400 });
+    }
+
     const lesson = await updateLesson(
       id,
       {
         ...parsed.data.lesson,
-        instructor_profile_id: instructorProfileIds[0],
+        instructor_profile_id: primaryInstructorProfileId,
       },
       parsed.data.students,
       instructorProfileIds,
@@ -124,8 +137,4 @@ export async function DELETE(_request: Request, { params }: LessonRouteContext) 
   } catch (error) {
     return handleApiError(error);
   }
-}
-
-function ensureProfileIsAssigned(instructorProfileIds: string[], profileId: string) {
-  return Array.from(new Set([profileId, ...instructorProfileIds]));
 }

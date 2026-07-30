@@ -12,6 +12,10 @@ import type {
 
 const lessonSelect =
   "*, instructor_profile:instructor_profiles(*), lesson_students(*), lesson_instructors(*, instructor_profile:instructor_profiles(*))";
+const lessonSelectForInstructor =
+  `${lessonSelect}, assignment:lesson_instructors!inner(instructor_profile_id)`;
+const UPCOMING_LESSON_LIMIT = 1_000;
+const LESSON_HISTORY_LIMIT = 5_000;
 
 type LessonCalendarFilters = {
   start: Date;
@@ -26,7 +30,8 @@ export async function getUpcomingLessons() {
     .from("lessons")
     .select(lessonSelect)
     .gte("lesson_start_time", new Date().toISOString())
-    .order("lesson_start_time", { ascending: true });
+    .order("lesson_start_time", { ascending: true })
+    .limit(UPCOMING_LESSON_LIMIT);
 
   if (error) {
     throw error;
@@ -36,11 +41,21 @@ export async function getUpcomingLessons() {
 }
 
 export async function getUpcomingLessonsForInstructor(instructorProfileId: string) {
-  const lessons = await getUpcomingLessons();
+  const supabase = getSupabaseAdmin();
 
-  return lessons.filter((lesson) =>
-    isLessonAssignedToInstructor(lesson, instructorProfileId),
-  );
+  const { data, error } = await supabase
+    .from("lessons")
+    .select(lessonSelectForInstructor)
+    .eq("assignment.instructor_profile_id", instructorProfileId)
+    .gte("lesson_start_time", new Date().toISOString())
+    .order("lesson_start_time", { ascending: true })
+    .limit(UPCOMING_LESSON_LIMIT);
+
+  if (error) {
+    throw error;
+  }
+
+  return normalizeLessons(data as unknown as LessonWithInstructorProfile[]);
 }
 
 export async function getLessonsForInstructor(instructorProfileId: string) {
@@ -48,16 +63,16 @@ export async function getLessonsForInstructor(instructorProfileId: string) {
 
   const { data, error } = await supabase
     .from("lessons")
-    .select(lessonSelect)
-    .order("lesson_start_time", { ascending: false });
+    .select(lessonSelectForInstructor)
+    .eq("assignment.instructor_profile_id", instructorProfileId)
+    .order("lesson_start_time", { ascending: false })
+    .limit(LESSON_HISTORY_LIMIT);
 
   if (error) {
     throw error;
   }
 
-  return normalizeLessons(data as LessonWithInstructorProfile[]).filter((lesson) =>
-    isLessonAssignedToInstructor(lesson, instructorProfileId),
-  );
+  return normalizeLessons(data as unknown as LessonWithInstructorProfile[]);
 }
 
 export async function getLessonsForCalendar({
@@ -67,12 +82,16 @@ export async function getLessonsForCalendar({
 }: LessonCalendarFilters) {
   const supabase = getSupabaseAdmin();
 
-  const query = supabase
+  let query = supabase
     .from("lessons")
-    .select(lessonSelect)
+    .select(instructorProfileId ? lessonSelectForInstructor : lessonSelect)
     .gte("lesson_start_time", start.toISOString())
     .lt("lesson_start_time", end.toISOString())
     .order("lesson_start_time", { ascending: true });
+
+  if (instructorProfileId) {
+    query = query.eq("assignment.instructor_profile_id", instructorProfileId);
+  }
 
   const { data, error } = await query;
 
@@ -80,15 +99,7 @@ export async function getLessonsForCalendar({
     throw error;
   }
 
-  const lessons = normalizeLessons(data as LessonWithInstructorProfile[]);
-
-  if (!instructorProfileId) {
-    return lessons;
-  }
-
-  return lessons.filter((lesson) =>
-    isLessonAssignedToInstructor(lesson, instructorProfileId),
-  );
+  return normalizeLessons(data as unknown as LessonWithInstructorProfile[]);
 }
 
 export async function getLesson(id: string) {

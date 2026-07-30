@@ -199,6 +199,10 @@ Courts 1-5.
 - Signup is closed unless the server has an invite code or email allowlist
   configured.
 
+For a small club with a known pro roster, `SIGNUP_ALLOWED_EMAILS` is the
+preferred signup gate. If an invite code is used, it should be long, random,
+and shared only with approved pros.
+
 ## Technical overview
 
 | Area | Implementation |
@@ -241,11 +245,11 @@ Vercel processes the web requests but does not retain the lesson records.
 Vercel Hobby currently includes up to 1,000,000 function invocations per month,
 far beyond the expected traffic from two pros. 
 
-The first practical scaling improvement would be query efficiency rather than
-storage. Some Rally reports currently load the complete lesson history before
-filtering it for the logged-in pro. Before expanding to many pros or tens of
-thousands of lessons, those queries should probably filter by pro and date in Supabase
-and paginate long histories to keep the same speed as reservations and data fills in.
+Lesson reads are filtered by assigned pro and date in Supabase rather than
+loading the club's full history into the Next.js server. Dashboard and calendar
+reads are bounded, and follow-up analysis currently examines at most 5,000
+assigned lessons. A larger multi-club version should add cursor pagination and
+database-side aggregate queries before increasing those bounds.
 
 ## Local setup
 
@@ -306,16 +310,20 @@ Open [http://localhost:3000](http://localhost:3000). On Windows PowerShell,
 
 ## Verification
 
-Run the focused security tests, lint, and production build before deployment:
+Run the regression tests, lint, type check, and production build before
+deployment:
 
 ```bash
 npm test
 npm run lint
+npm run typecheck
 npm run build
 ```
 
-The current tests cover signup gating, calendar-token validation, and the auth
-attempt limiter.
+The current tests cover signup gating, calendar-token validation, auth session
+renewal, the attempt limiter, timezone and pay-period boundaries, lesson input
+validation, contact matching, and multi-pro lesson assignment. GitHub Actions
+runs the same checks for pushes to `main` and for pull requests.
 
 ## Deploying to Vercel
 

@@ -44,7 +44,8 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
       end: monthEnd,
       instructorProfileId: profile.id,
     });
-  } catch {
+  } catch (error) {
+    console.error("Unable to load Rally calendar.", error);
     lessons = null;
   }
 
@@ -53,11 +54,11 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
       <main className="page">
         <header className="page-header">
           <div>
-            <p className="eyebrow">Setup needed</p>
+            <p className="eyebrow">Temporarily unavailable</p>
             <h1>Lesson calendar</h1>
             <p className="lede">
-              Add your Supabase environment variables before Rally can load the
-              calendar.
+              Rally could not load the calendar. Try again in a moment. If this
+              continues, check the Supabase connection and Vercel logs.
             </p>
           </div>
           <Link className="button-secondary" href="/">

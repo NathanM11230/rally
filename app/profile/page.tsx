@@ -11,7 +11,8 @@ export default async function ProfilePage() {
 
   try {
     profile = await getInstructorProfileByUserId(user.id);
-  } catch {
+  } catch (error) {
+    console.error("Unable to load Rally instructor profile.", error);
     canLoadProfile = false;
   }
 
@@ -20,11 +21,11 @@ export default async function ProfilePage() {
       <main className="page">
         <header className="page-header">
           <div>
-            <p className="eyebrow">Setup needed</p>
+            <p className="eyebrow">Temporarily unavailable</p>
             <h1>Instructor profile</h1>
             <p className="lede">
-              Add your Supabase environment variables and run the schema before
-              setting up an instructor profile.
+              Rally could not load your profile. Try again in a moment. If this
+              continues, check the Supabase connection and Vercel logs.
             </p>
           </div>
         </header>

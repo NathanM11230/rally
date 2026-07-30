@@ -23,7 +23,8 @@ export default async function FollowUpsPage() {
 
   try {
     lessons = await getLessonsForInstructor(profile.id);
-  } catch {
+  } catch (error) {
+    console.error("Unable to load Rally follow ups.", error);
     lessons = null;
   }
 
@@ -34,8 +35,8 @@ export default async function FollowUpsPage() {
           <div>
             <h1>Follow ups</h1>
             <p className="lede">
-              Add your Supabase environment variables before Rally can load
-              follow ups.
+              Rally could not load follow ups. Try again in a moment. If this
+              continues, check the Supabase connection and Vercel logs.
             </p>
           </div>
         </header>

@@ -1,4 +1,8 @@
-import { dateAndTimeToUtc, getLessonTimeZone } from "@/lib/date";
+import {
+  dateAndTimeToUtc,
+  getLessonTimeZone,
+  isValidDateTimeInTimeZone,
+} from "@/lib/date";
 import { isSessionType, sessionTypeLabels } from "@/lib/session-types";
 import type { LessonInsert, LessonUpdate } from "@/types/database";
 
@@ -87,6 +91,20 @@ export function parseLessonInput(body: unknown, mode: LessonInputMode): LessonIn
     errors.push("lesson_time must be in 15-minute intervals.");
   } else if (values.lesson_time && !isLessonTimeInAllowedRange(values.lesson_time)) {
     errors.push("lesson_time must be between 6:00 AM and 9:00 PM.");
+  }
+
+  if (
+    values.lesson_date &&
+    values.lesson_time &&
+    /^\d{4}-\d{2}-\d{2}$/.test(values.lesson_date) &&
+    /^\d{2}:\d{2}$/.test(values.lesson_time) &&
+    !isValidDateTimeInTimeZone(
+      values.lesson_date,
+      values.lesson_time,
+      getLessonTimeZone(),
+    )
+  ) {
+    errors.push("lesson_date and lesson_time must be a valid local date and time.");
   }
 
   if (errors.length > 0) {

@@ -11,6 +11,17 @@ create table if not exists public.contacts (
   updated_at timestamptz not null default now()
 );
 
+delete from public.contacts country_code_contact
+using public.contacts local_contact
+where country_code_contact.id <> local_contact.id
+  and country_code_contact.normalized_phone ~ '^1[0-9]{10}$'
+  and substring(country_code_contact.normalized_phone from 2) =
+    local_contact.normalized_phone;
+
+update public.contacts
+set normalized_phone = substring(normalized_phone from 2)
+where normalized_phone ~ '^1[0-9]{10}$';
+
 create unique index if not exists contacts_normalized_phone_idx
   on public.contacts (normalized_phone);
 

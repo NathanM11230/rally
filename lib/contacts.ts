@@ -68,7 +68,7 @@ export async function upsertContactsFromStudents(students: LessonStudentInput[])
     .upsert(contactRows, { onConflict: "normalized_phone" });
 
   if (error) {
-    return;
+    console.error("Unable to save lesson participants as contacts.", error);
   }
 }
 
@@ -220,12 +220,14 @@ function getUniqueContactRows(students: LessonStudentInput[]) {
   return Array.from(rowsByPhone.values());
 }
 
-function normalizeName(value: string) {
+export function normalizeName(value: string) {
   return value.trim().toLowerCase().replace(/\s+/g, " ");
 }
 
-function normalizePhone(value: string) {
-  return value.replace(/\D/g, "");
+export function normalizePhone(value: string) {
+  const digits = value.replace(/\D/g, "");
+
+  return digits.length === 11 && digits.startsWith("1") ? digits.slice(1) : digits;
 }
 
 function lessonHistoryContactToContact(
@@ -248,7 +250,7 @@ function lessonHistoryContactToContact(
   };
 }
 
-function mergeContactResults(
+export function mergeContactResults(
   normalizedQuery: string,
   savedContacts: Contact[],
   lessonContacts: Contact[],
