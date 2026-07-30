@@ -27,6 +27,10 @@ ready-to-send reminder in the phone's messaging app, add the lesson to a
 personal calendar, and later check the club's two-week pay period for anything
 that may have been missed.
 
+Participant entry gets faster over time: the first lesson saves the new
+participant automatically, and future lessons can retrieve the full name and
+phone number by typing only a few letters of the name.
+
 Rally deliberately does **not** send messages in the background. Reminder links
 open the pro's own SMS app with the recipient and message filled in. The pro
 reviews the text and taps Send.
@@ -44,17 +48,31 @@ reviews the text and taps Send.
   </tr>
   <tr>
     <td valign="top">
-      <strong>Create the whole reservation</strong><br>
+      <strong>Save contacts while scheduling</strong><br>
       Choose a lesson type, assign one or more pros, add participants, pick a
-      time, and select one or more courts.
+      time, and select one or more courts. Saving a new participant also saves
+      that name and phone number to the club contact directory.
     </td>
     <td valign="top">
-      <strong>Reuse club contacts</strong><br>
-      Typing a participant's name searches the shared directory. Selecting a
-      result fills the saved name and phone number.
+      <strong>Find them next time by name</strong><br>
+      Typing only part of a participant's name filters the shared directory.
+      Selecting a result fills both the full name and saved phone number.
     </td>
   </tr>
 </table>
+
+### Contacts without double entry
+
+Contact saving is part of lesson creation, not a separate administrative step.
+When a pro saves a lesson with a new participant, Rally automatically creates
+or updates that shared contact. The next time any pro starts typing the person's
+name, Rally shows matching contacts beneath the field; one tap fills the full
+name and phone number.
+
+This is intentionally name-first because pros usually remember who they taught,
+not the person's phone number. Phone numbers are normalized behind the scenes
+so formatting differences do not create unnecessary duplicates. Contacts can
+also be added directly from the Contacts page when no lesson is being created.
 
 <table>
   <tr>
@@ -62,7 +80,7 @@ reviews the text and taps Send.
       <img src="./docs/images/rally-reminder-text.png" alt="A Rally lesson reminder opened in the iPhone Messages app" width="280">
     </td>
     <td width="50%" align="center">
-      <img src="./docs/images/rally-follow-ups.png" alt="Rally follow-up suggestions based on lesson history" width="280">
+      <img src="./docs/images/rally-follow-up-text.png" alt="A Rally scheduling follow-up opened in the iPhone Messages app" width="280">
     </td>
   </tr>
   <tr>
@@ -72,9 +90,29 @@ reviews the text and taps Send.
       court, then hands it to the phone's messaging app.
     </td>
     <td valign="top">
-      <strong>Keep regular players engaged</strong><br>
-      Follow ups ranks frequent lesson contacts and opens a short scheduling
-      text for the pro to review and send.
+      <strong>Start the next conversation</strong><br>
+      Follow ups opens a short, editable scheduling message: “Hey Benjamin,
+      any time to hit soon?”
+    </td>
+  </tr>
+</table>
+
+<table>
+  <tr>
+    <td width="50%" align="center">
+      <img src="./docs/images/rally-follow-ups.png" alt="Rally follow-up suggestions based on lesson history" width="280">
+    </td>
+    <td width="50%" valign="middle">
+      <h3>Follow up from lesson history</h3>
+      <p>
+        Rally ranks the people a pro teaches most often and shows the date of
+        their latest lesson. Tapping Text opens a prepared scheduling message
+        in the phone's native messaging app.
+      </p>
+      <p>
+        Nothing is sent automatically. The pro can edit the wording, choose
+        when to reach out, and tap Send personally.
+      </p>
     </td>
   </tr>
 </table>
@@ -130,7 +168,8 @@ reviews the text and taps Send.
 2. The pro creates a Lesson, Clinic, Other event, Freshmen, Varsity, or Team
    reservation.
 3. One or more pros and participants can be assigned to the same reservation.
-4. Participant details are saved to the shared club contact directory.
+4. Saving the lesson automatically creates or updates each participant in the
+   shared club contact directory.
 5. Assigned pros see the reservation on their own dashboard and calendar.
 6. A reminder button opens a prepared SMS on the pro's phone. Rally can then
    mark the reminder as sent to prevent accidental duplicates.
