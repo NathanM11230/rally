@@ -70,31 +70,11 @@ them in an easy-to-navigate and clean UI.
   </tr>
 </table>
 
-<table>
-  <tr>
-    <td width="50%" align="center">
-      <img src="./docs/images/rally-new-lesson.png" alt="Creating a new lesson in Rally" width="280">
-    </td>
-    <td width="50%" align="center">
-      <img src="./docs/images/rally-contact-autofill.png" alt="Searching saved contacts while creating a lesson" width="280">
-    </td>
-  </tr>
-  <tr>
-    <td valign="top">
-      <strong>Save contacts while scheduling</strong><br>
-      Choose a lesson type, assign one or more pros, add participants, pick a
-      time, and select one or more courts. Saving a new participant also saves
-      that name and phone number to the club contact directory.
-    </td>
-    <td valign="top">
-      <strong>Find them next time by name</strong><br>
-      Typing only part of a participant's name filters the shared directory.
-      Selecting a result fills both the full name and saved phone number.
-    </td>
-  </tr>
-</table>
+<p align="center">
+  <img src="./docs/images/rally-contact-autofill.png" alt="Searching saved contacts while creating a lesson" width="320">
+</p>
 
-### Contacts without double entry
+### Save contacts while scheduling
 
 Contact saving is part of lesson creation, not a separate administrative step.
 When a pro saves a lesson with a new participant, Rally automatically creates
