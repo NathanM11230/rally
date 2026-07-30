@@ -291,6 +291,11 @@ Before sharing Rally with pros, run through
 environment variable checks, live-site verification steps, and Supabase audit
 queries.
 
+If creating a contact shows a setup error about missing contacts, run
+[`supabase/contacts-table.sql`](./supabase/contacts-table.sql) in the Supabase
+SQL Editor. That creates the saved contacts table without rerunning the full
+schema.
+
 ## Security Notes
 
 Signup and login have a lightweight in-memory attempt cap to slow down naive

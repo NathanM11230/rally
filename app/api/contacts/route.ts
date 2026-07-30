@@ -3,7 +3,11 @@ import { NextResponse } from "next/server";
 
 import { cleanString, handleApiError, isRecord, readJson } from "@/lib/api-helpers";
 import { getApiAuthenticatedProfile } from "@/lib/api-auth";
-import { searchContacts, upsertContact } from "@/lib/contacts";
+import {
+  isMissingContactsTableError,
+  searchContacts,
+  upsertContact,
+} from "@/lib/contacts";
 
 export async function GET(request: Request) {
   try {
@@ -51,6 +55,16 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ contact }, { status: 201 });
   } catch (error) {
+    if (isMissingContactsTableError(error)) {
+      return NextResponse.json(
+        {
+          error:
+            "Contacts are not set up in Supabase yet. Run supabase/contacts-table.sql in the Supabase SQL Editor, then try again.",
+        },
+        { status: 503 },
+      );
+    }
+
     return handleApiError(error);
   }
 }

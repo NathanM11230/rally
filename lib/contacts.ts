@@ -108,6 +108,28 @@ export async function upsertContact(input: {
   return data as Contact;
 }
 
+export function isMissingContactsTableError(error: unknown) {
+  return (
+    isSupabaseError(error) &&
+    error.code === "PGRST205" &&
+    error.message.includes("public.contacts")
+  );
+}
+
+function isSupabaseError(error: unknown): error is {
+  code: string;
+  message: string;
+} {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    "message" in error &&
+    typeof error.code === "string" &&
+    typeof error.message === "string"
+  );
+}
+
 async function getSavedContactRows(limit: number, normalizedQuery?: string) {
   const supabase = getSupabaseAdmin();
   let request = supabase
