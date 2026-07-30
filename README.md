@@ -234,12 +234,11 @@ in read-only mode if that limit is exceeded. Existing records remain readable,
 but new lessons and edits would fail until storage is reduced or the project is
 upgraded. 
 
-Based on Rally's current tables and indexes, a reasonable planning estimate is probably 
-about 75,000-200,000 typical reservations within that 500 MB limit. This
-is not a totally sure number as multiple participants, long notes, database
-overhead, and index growth all would affect that. At a combined 10 lessons
-per day for two pros, six days per week, even the low end represents more than
-25 years of lesson history.
+Based on Rally's current tables and indexes, roughly 75,000–200,000 typical reservations 
+fit within the 500 MB limit. The range is wide because multiple participants, long notes, 
+database overhead, and index growth all affect per-row size. At a combined 10 lessons
+per day for two pros, six days per week, even the low end represents more than 24 years of 
+lesson history.
 
 Vercel processes the web requests but does not retain the lesson records.
 Vercel Hobby currently includes up to 1,000,000 function invocations per month,
