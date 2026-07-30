@@ -43,7 +43,7 @@ system and their paycheck, making it easier to catch a lesson that was never
 billed or a payment discrepancy that otherwise may have gone unnoticed. Rally
 does not replace the club's court-booking or POS systems, but it connects the
 pro's schedule, contacts, communication, calendar, and pay-period record around
-them.
+them in an easy-to-navigate and clean UI.
 
 ## Product tour
 
