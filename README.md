@@ -14,22 +14,36 @@ sample data.
 
 ## Why Rally exists
 
-Most lesson management at a small club happens across a calendar, a contact
-list, text messages, and a separate payroll record. Rally brings those pieces
-together without trying to become a full club-management platform.
+Most lesson management at a club is spread across several different platforms.
+At my club, our tennis pros were using one application to reserve courts, their
+phones to communicate with members, personal calendar apps to remember their
+schedules, and an entirely separate POS system to bill each lesson. None of
+those tools gave the pro one complete record. When a lesson changed or a day
+got busy, it was too easy for a reminder, calendar entry, or charge to be
+missed.
 
-A pro can create a lesson in a few taps, reuse a saved participant, open a
-ready-to-send reminder in the phone's messaging app, add the lesson to a
-personal calendar, and later check the club's two-week pay period for anything
-that may have been missed.
+I built Rally to give pros one place to manage their side of that workflow. A
+pro can create a Lesson, Clinic, Other event, Freshmen, Varsity, or Team
+reservation; assign multiple pros and participants; select one or more courts;
+and see only the lessons assigned to them. New participant details are saved
+automatically to the shared club contact directory. The next time that person
+books, typing a few letters of their name fills both the full name and phone
+number.
 
-Participant entry gets faster over time: the first lesson saves the new
-participant automatically, and future lessons can retrieve the full name and
-phone number by typing only a few letters of the name.
+From the same lesson record, a pro can open a ready-to-send reminder in their
+phone's messaging app, add the lesson to a personal calendar, or view it in
+Rally's own Calendar tab. The Follow ups page also uses lesson history to show
+the people a pro works with most often and prepare a quick text asking when
+they would like to hit again. Messages are never sent automatically; the pro
+reviews and sends each one personally.
 
-Rally deliberately does **not** send messages in the background. Reminder links
-open the pro's own SMS app with the recipient and message filled in. The pro
-reviews the text and taps Send.
+Rally also organizes every assigned lesson into the club's two-week pay
+periods. This gives each pro an independent record to compare against the POS
+system and their paycheck, making it easier to catch a lesson that was never
+billed or a payment discrepancy that otherwise may have gone unnoticed. Rally
+does not replace the club's court-booking or POS systems, but it connects the
+pro's schedule, contacts, communication, calendar, and pay-period record around
+them.
 
 ## Product tour
 
