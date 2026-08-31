@@ -76,7 +76,7 @@ export function ManualReminderActions({
             disabled={isSaving}
             onClick={() => updateReminderStatus(false)}
           >
-            Reset status
+            {studentSmsTargets.length > 1 ? "Reset all" : "Reset status"}
           </button>
         ) : (
           <button
@@ -85,7 +85,7 @@ export function ManualReminderActions({
             disabled={isSaving}
             onClick={() => updateReminderStatus(true)}
           >
-            Mark sent
+            {studentSmsTargets.length > 1 ? "Mark all sent" : "Mark sent"}
           </button>
         )
       ) : null}

@@ -16,7 +16,9 @@ export async function getInstructorProfiles() {
     throw error;
   }
 
-  return data;
+  // Treat rows created before the is_active migration as active until the
+  // schema is rerun, keeping deployment order backward-compatible.
+  return data.filter((profile) => profile.is_active !== false);
 }
 
 export async function getInstructorProfile(id: string) {
@@ -104,4 +106,19 @@ export async function updateInstructorProfile(id: string, input: InstructorProfi
   }
 
   return data;
+}
+
+export async function invalidateInstructorCalendarTokens(
+  id: string,
+  currentVersion: number,
+) {
+  const supabase = getSupabaseAdmin();
+  const { error } = await supabase
+    .from("instructor_profiles")
+    .update({ calendar_token_version: currentVersion + 1 })
+    .eq("id", id);
+
+  if (error) {
+    throw error;
+  }
 }

@@ -26,6 +26,14 @@ node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"
 Do not use a club name, season, year, or easy phrase as the invite code. Do not
 reuse `SUPABASE_SERVICE_ROLE_KEY` for `CALENDAR_TOKEN_SECRET`.
 
+## Required Supabase Auth Setting
+
+In the Supabase Auth settings, disable public new-user signup. Rally creates
+approved accounts from its server-only signup route after checking the email
+allowlist or invite code. A user created directly through Supabase will not have
+Rally's trusted access claim and cannot create a pro profile, but disabling
+public signup closes that unnecessary entry point as well.
+
 Rally includes a lightweight in-memory attempt cap for signup and login, but it
 is best-effort only on Vercel. Serverless instances do not share memory, and cold
 starts reset the counter. The invite code or email allowlist is the real signup
@@ -74,8 +82,20 @@ order by p.created_at desc;
 ```
 
 Look for any account/profile that is not you or an approved pro. If you find
-one, do not assume it is harmless. Remove or disable the unknown auth user and
-profile after confirming it is not legitimate.
+one, do not assume it is harmless. First rerun the current `supabase/schema.sql`
+so the safe foreign keys are installed. You can then remove the unknown Auth
+user without deleting lesson history; its profile becomes unlinked. Do not
+delete an instructor profile that owns or is assigned to lessons. Reassign its
+future lessons first, then soft-disable it with:
+
+```sql
+update public.instructor_profiles
+set is_active = false
+where id = 'PROFILE_ID_HERE';
+```
+
+The disabled profile remains on historical lessons and pay records but can no
+longer log in or be assigned new lessons.
 
 ## Regression Tests
 
@@ -90,8 +110,10 @@ npm run build
 The current tests cover:
 
 - signup fails closed when no invite code or allowlist is configured
+- Rally access requires a trusted server-side app metadata claim
 - invalid and empty invite codes are rejected
 - allowlisted emails work case-insensitively
 - calendar links require `CALENDAR_TOKEN_SECRET`
 - calendar tokens reject expiration, tampering, wrong lesson ids, and malformed tokens
+- shared phone numbers remain separate contacts when names differ
 - the best-effort login/signup limiter blocks repeated attempts within one server instance

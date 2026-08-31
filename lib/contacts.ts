@@ -63,9 +63,15 @@ export async function upsertContactsFromStudents(students: LessonStudentInput[])
   }
 
   const supabase = getSupabaseAdmin();
-  const { error } = await supabase
+  let { error } = await supabase
     .from("contacts")
-    .upsert(contactRows, { onConflict: "normalized_phone" });
+    .upsert(contactRows, { onConflict: "normalized_name,normalized_phone" });
+
+  if (isMissingContactIdentityConstraintError(error)) {
+    ({ error } = await supabase
+      .from("contacts")
+      .upsert(contactRows, { onConflict: "normalized_phone" }));
+  }
 
   if (error) {
     console.error("Unable to save lesson participants as contacts.", error);
@@ -95,11 +101,19 @@ export async function upsertContact(input: {
     normalized_phone: normalizedPhone,
   };
   const supabase = getSupabaseAdmin();
-  const { data, error } = await supabase
+  let { data, error } = await supabase
     .from("contacts")
-    .upsert(contactRow, { onConflict: "normalized_phone" })
+    .upsert(contactRow, { onConflict: "normalized_name,normalized_phone" })
     .select(CONTACT_SELECT)
     .single();
+
+  if (isMissingContactIdentityConstraintError(error)) {
+    ({ data, error } = await supabase
+      .from("contacts")
+      .upsert(contactRow, { onConflict: "normalized_phone" })
+      .select(CONTACT_SELECT)
+      .single());
+  }
 
   if (error) {
     throw error;
@@ -198,7 +212,7 @@ async function getLessonContactRows(limit: number, searchQuery?: string) {
 }
 
 function getUniqueContactRows(students: LessonStudentInput[]) {
-  const rowsByPhone = new Map<string, ContactInsert>();
+  const rowsByIdentity = new Map<string, ContactInsert>();
 
   for (const student of students) {
     const fullName = student.student_name.trim();
@@ -209,15 +223,16 @@ function getUniqueContactRows(students: LessonStudentInput[]) {
       continue;
     }
 
-    rowsByPhone.set(normalizedPhone, {
+    const normalizedName = normalizeName(fullName);
+    rowsByIdentity.set(buildContactIdentityKey(normalizedName, normalizedPhone), {
       full_name: fullName,
       phone_number: phoneNumber,
-      normalized_name: normalizeName(fullName),
+      normalized_name: normalizedName,
       normalized_phone: normalizedPhone,
     });
   }
 
-  return Array.from(rowsByPhone.values());
+  return Array.from(rowsByIdentity.values());
 }
 
 export function normalizeName(value: string) {
@@ -256,19 +271,24 @@ export function mergeContactResults(
   lessonContacts: Contact[],
   limit: number,
 ) {
-  const contactsByPhone = new Map<string, Contact>();
+  const contactsByIdentity = new Map<string, Contact>();
 
   for (const contact of [...savedContacts, ...lessonContacts]) {
-    if (!contact.normalized_phone) {
+    const normalizedName = normalizeName(contact.full_name);
+    const normalizedPhone = normalizePhone(contact.phone_number);
+
+    if (!normalizedName || !normalizedPhone) {
       continue;
     }
 
-    if (!contactsByPhone.has(contact.normalized_phone)) {
-      contactsByPhone.set(contact.normalized_phone, contact);
+    const identityKey = buildContactIdentityKey(normalizedName, normalizedPhone);
+
+    if (!contactsByIdentity.has(identityKey)) {
+      contactsByIdentity.set(identityKey, contact);
     }
   }
 
-  return Array.from(contactsByPhone.values())
+  return Array.from(contactsByIdentity.values())
     .sort((first, second) => {
       const firstScore = getContactMatchScore(first, normalizedQuery);
       const secondScore = getContactMatchScore(second, normalizedQuery);
@@ -280,6 +300,17 @@ export function mergeContactResults(
       return first.full_name.localeCompare(second.full_name);
     })
     .slice(0, limit);
+}
+
+function isMissingContactIdentityConstraintError(error: unknown) {
+  return isSupabaseError(error) && error.code === "42P10";
+}
+
+export function buildContactIdentityKey(
+  normalizedName: string,
+  normalizedPhone: string,
+) {
+  return `${normalizedName}\u0000${normalizedPhone}`;
 }
 
 function getContactMatchScore(contact: Contact, normalizedQuery: string) {

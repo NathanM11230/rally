@@ -3,8 +3,10 @@ import { NextResponse } from "next/server";
 import { cleanString, handleApiError, isRecord, readJson } from "@/lib/api-helpers";
 import { enforceAuthRateLimit } from "@/lib/auth-rate-limit";
 import { getSupabaseAuthClient, setAuthCookies } from "@/lib/auth";
+import { buildRallyAccessMetadata } from "@/lib/account-access";
 import { createOrUpdateInstructorProfileForUser } from "@/lib/instructor-profiles";
 import { validateSignupAccess } from "@/lib/signup-access";
+import { getSupabaseAdmin } from "@/lib/supabase/server";
 
 export async function POST(request: Request) {
   const body = await readJson(request);
@@ -43,10 +45,14 @@ export async function POST(request: Request) {
   }
 
   try {
-    const supabase = getSupabaseAuthClient();
-    const { data, error } = await supabase.auth.signUp({
+    // Accounts are provisioned with the service role so public Supabase signup
+    // can remain disabled. The Rally invite/allowlist is checked above.
+    const admin = getSupabaseAdmin();
+    const { data, error } = await admin.auth.admin.createUser({
       email: parsed.data.email,
       password: parsed.data.password,
+      email_confirm: true,
+      app_metadata: buildRallyAccessMetadata(),
     });
 
     if (error || !data.user) {
@@ -61,14 +67,25 @@ export async function POST(request: Request) {
       phone_number: parsed.data.phone_number,
     });
 
+    const authClient = getSupabaseAuthClient();
+    const { data: loginData, error: loginError } =
+      await authClient.auth.signInWithPassword({
+        email: parsed.data.email,
+        password: parsed.data.password,
+      });
+
+    if (loginError || !loginData.session) {
+      return NextResponse.json({
+        ok: true,
+        needsLogin: true,
+      });
+    }
+
     const response = NextResponse.json({
       ok: true,
-      needsEmailConfirmation: !data.session,
+      needsLogin: false,
     });
-
-    if (data.session) {
-      setAuthCookies(response, data.session);
-    }
+    setAuthCookies(response, loginData.session);
 
     return response;
   } catch (error) {

@@ -13,11 +13,11 @@ test("contact normalization is name-first and formatting-insensitive", () => {
   assert.equal(normalizePhone("+1 (412) 555-0101"), "4125550101");
 });
 
-test("saved contacts win over duplicate lesson-history contacts", () => {
+test("saved contacts win over the same lesson-history identity", () => {
   const saved = buildContact("saved-1", "Jim Doe", "(412) 555-0101");
   const history = buildContact(
     "lesson-1",
-    "James Doe",
+    "Jim Doe",
     "+1 412 555 0101",
   );
 
@@ -26,6 +26,27 @@ test("saved contacts win over duplicate lesson-history contacts", () => {
   assert.equal(result.length, 1);
   assert.equal(result[0].id, "saved-1");
   assert.equal(result[0].full_name, "Jim Doe");
+});
+
+test("different people can share one phone number", () => {
+  const parent = buildContact("parent", "Sarah Doe", "4125550101");
+  const child = buildContact("child", "Molly Doe", "+1 412 555 0101");
+
+  const result = mergeContactResults("", [parent, child], [], 8);
+
+  assert.deepEqual(
+    result.map((contact) => contact.full_name),
+    ["Molly Doe", "Sarah Doe"],
+  );
+});
+
+test("ambiguous exact names remain separate autocomplete choices", () => {
+  const first = buildContact("first", "Sarah", "4125550101");
+  const second = buildContact("second", "Sarah", "4125550102");
+
+  const result = mergeContactResults("sarah", [first, second], [], 8);
+
+  assert.equal(result.length, 2);
 });
 
 test("contact matches rank exact, prefix, word prefix, then substring", () => {

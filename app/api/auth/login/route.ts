@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 
 import { cleanString, handleApiError, isRecord, readJson } from "@/lib/api-helpers";
+import { grantRallyAccess, hasRallyAccess } from "@/lib/account-access";
 import { enforceAuthRateLimit } from "@/lib/auth-rate-limit";
 import { getSupabaseAuthClient, setAuthCookies } from "@/lib/auth";
+import { getInstructorProfileByUserId } from "@/lib/instructor-profiles";
 
 export async function POST(request: Request) {
   const body = await readJson(request);
@@ -40,6 +42,29 @@ export async function POST(request: Request) {
         { error: error?.message ?? "Unable to log in." },
         { status: 401 },
       );
+    }
+
+    const existingProfile = await getInstructorProfileByUserId(data.user.id);
+
+    if (existingProfile?.is_active === false) {
+      await supabase.auth.signOut();
+      return NextResponse.json(
+        { error: "This Rally profile has been disabled." },
+        { status: 403 },
+      );
+    }
+
+    if (!hasRallyAccess(data.user) && !existingProfile) {
+      await supabase.auth.signOut();
+      return NextResponse.json(
+        { error: "This account has not been approved for Rally." },
+        { status: 403 },
+      );
+    }
+
+    // Profiles created before the access claim was introduced remain valid.
+    if (existingProfile && !hasRallyAccess(data.user)) {
+      await grantRallyAccess(data.user);
     }
 
     const response = NextResponse.json({ ok: true });

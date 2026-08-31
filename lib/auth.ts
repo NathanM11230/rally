@@ -77,7 +77,7 @@ export async function requireCurrentProfile(): Promise<AuthenticatedProfile> {
   const user = await requireUser();
   const profile = await getInstructorProfileByUserId(user.id);
 
-  if (!profile) {
+  if (!profile || profile.is_active === false) {
     redirect("/profile");
   }
 

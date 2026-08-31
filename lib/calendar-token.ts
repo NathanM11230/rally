@@ -1,16 +1,18 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 
-const CALENDAR_TOKEN_PREFIX = "rally-calendar-v2";
-const CALENDAR_TOKEN_TTL_SECONDS = 60 * 60 * 24 * 14;
+const CALENDAR_TOKEN_PREFIX = "rally-calendar-v3";
+const CALENDAR_TOKEN_TTL_SECONDS = 60 * 15;
 
 export type LessonCalendarTokenPayload = {
   instructorProfileId: string;
+  tokenVersion: number;
   expiresAt: number;
 };
 
 export function buildLessonCalendarToken(
   lessonId: string,
   instructorProfileId: string,
+  tokenVersion = 0,
 ) {
   const secret = getCalendarTokenSecret();
 
@@ -23,10 +25,11 @@ export function buildLessonCalendarToken(
     secret,
     lessonId,
     instructorProfileId,
+    tokenVersion,
     expiresAt,
   );
 
-  return `${expiresAt}.${instructorProfileId}.${signature}`;
+  return `${expiresAt}.${instructorProfileId}.${tokenVersion}.${signature}`;
 }
 
 export function getValidLessonCalendarTokenPayload(
@@ -43,16 +46,26 @@ export function getValidLessonCalendarTokenPayload(
     return null;
   }
 
-  const [expiresAtRaw, instructorProfileId, signature, ...extraParts] =
+  const [
+    expiresAtRaw,
+    instructorProfileId,
+    tokenVersionRaw,
+    signature,
+    ...extraParts
+  ] =
     token.split(".");
   const expiresAt = Number(expiresAtRaw);
+  const tokenVersion = Number(tokenVersionRaw);
 
   if (
     extraParts.length > 0 ||
     !expiresAtRaw ||
     !instructorProfileId ||
+    !tokenVersionRaw ||
     !signature ||
     !Number.isInteger(expiresAt) ||
+    !Number.isInteger(tokenVersion) ||
+    tokenVersion < 0 ||
     expiresAt < Math.floor(Date.now() / 1000)
   ) {
     return null;
@@ -62,6 +75,7 @@ export function getValidLessonCalendarTokenPayload(
     secret,
     lessonId,
     instructorProfileId,
+    tokenVersion,
     expiresAt,
   );
 
@@ -69,18 +83,19 @@ export function getValidLessonCalendarTokenPayload(
     return null;
   }
 
-  return { instructorProfileId, expiresAt };
+  return { instructorProfileId, tokenVersion, expiresAt };
 }
 
 function buildTokenSignature(
   secret: string,
   lessonId: string,
   instructorProfileId: string,
+  tokenVersion: number,
   expiresAt: number,
 ) {
   return createHmac("sha256", secret)
     .update(
-      `${CALENDAR_TOKEN_PREFIX}:${lessonId}:${instructorProfileId}:${expiresAt}`,
+      `${CALENDAR_TOKEN_PREFIX}:${lessonId}:${instructorProfileId}:${tokenVersion}:${expiresAt}`,
     )
     .digest("base64url");
 }

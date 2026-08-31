@@ -31,7 +31,18 @@ test("calendar tokens validate and expose the bound pro profile", () => {
   const payload = getValidLessonCalendarTokenPayload("lesson-1", token);
 
   assert.equal(payload?.instructorProfileId, "profile-1");
+  assert.equal(payload?.tokenVersion, 0);
   assert.equal(typeof payload?.expiresAt, "number");
+});
+
+test("calendar tokens carry the profile revocation version", () => {
+  process.env.CALENDAR_TOKEN_SECRET = "calendar-secret-for-tests";
+  Date.now = () => baseTimeMs;
+
+  const token = buildLessonCalendarToken("lesson-1", "profile-1", 4);
+  const payload = getValidLessonCalendarTokenPayload("lesson-1", token);
+
+  assert.equal(payload?.tokenVersion, 4);
 });
 
 test("calendar tokens reject a different lesson id", () => {
@@ -50,8 +61,8 @@ test("calendar tokens reject tampered profile ids", () => {
 
   const token = buildLessonCalendarToken("lesson-1", "profile-1");
   assert.ok(token);
-  const [expiresAt, , signature] = token.split(".");
-  const tamperedToken = `${expiresAt}.profile-2.${signature}`;
+  const [expiresAt, , tokenVersion, signature] = token.split(".");
+  const tamperedToken = `${expiresAt}.profile-2.${tokenVersion}.${signature}`;
   const payload = getValidLessonCalendarTokenPayload("lesson-1", tamperedToken);
 
   assert.equal(payload, null);
@@ -80,7 +91,7 @@ test("calendar tokens reject expired tokens", () => {
   Date.now = () => baseTimeMs;
 
   const token = buildLessonCalendarToken("lesson-1", "profile-1");
-  Date.now = () => baseTimeMs + 15 * 24 * 60 * 60 * 1000;
+  Date.now = () => baseTimeMs + 16 * 60 * 1000;
 
   const payload = getValidLessonCalendarTokenPayload("lesson-1", token);
 

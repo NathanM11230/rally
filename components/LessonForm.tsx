@@ -276,7 +276,7 @@ export function LessonForm(props: LessonFormProps) {
 
       const body = (await response.json()) as { contacts?: Contact[] };
       const contacts = sortContactsForQuery(
-        mergeContactsByPhone([...localContacts, ...(body.contacts ?? [])]),
+        mergeContactsByIdentity([...localContacts, ...(body.contacts ?? [])]),
         query,
       );
       const exactMatches = contacts.filter(
@@ -763,20 +763,22 @@ function sortContactsForQuery(contacts: Contact[], query: string) {
   });
 }
 
-function mergeContactsByPhone(contacts: Contact[]) {
-  const contactsByPhone = new Map<string, Contact>();
+function mergeContactsByIdentity(contacts: Contact[]) {
+  const contactsByIdentity = new Map<string, Contact>();
 
   for (const contact of contacts) {
     const phoneKey = contact.normalized_phone || contact.phone_number.replace(/\D/g, "");
+    const nameKey = normalizeContactName(contact.full_name);
+    const identityKey = `${nameKey}\u0000${phoneKey}`;
 
-    if (!phoneKey || contactsByPhone.has(phoneKey)) {
+    if (!nameKey || !phoneKey || contactsByIdentity.has(identityKey)) {
       continue;
     }
 
-    contactsByPhone.set(phoneKey, contact);
+    contactsByIdentity.set(identityKey, contact);
   }
 
-  return Array.from(contactsByPhone.values());
+  return Array.from(contactsByIdentity.values());
 }
 
 function getContactMatchScore(contact: Contact, normalizedQuery: string) {

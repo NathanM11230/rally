@@ -30,12 +30,18 @@ alter type public.session_type add value if not exists 'team';
 
 create table if not exists public.instructor_profiles (
   id uuid primary key default gen_random_uuid(),
-  user_id uuid references auth.users(id) on delete cascade,
+  user_id uuid references auth.users(id) on delete set null,
   full_name text not null,
   phone_number text not null,
+  is_active boolean not null default true,
+  calendar_token_version integer not null default 0,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table public.instructor_profiles
+  add column if not exists is_active boolean not null default true,
+  add column if not exists calendar_token_version integer not null default 0;
 
 create table if not exists public.contacts (
   id uuid primary key default gen_random_uuid(),
@@ -53,11 +59,12 @@ create unique index if not exists instructor_profiles_user_id_idx
 
 -- Treat a US country-code prefix as equivalent to the local 10-digit number.
 -- Delete the country-code duplicate first so the normalized update cannot
--- conflict with the unique phone index on existing databases.
+-- conflict with an existing record for the same name and phone.
 delete from public.contacts country_code_contact
 using public.contacts local_contact
 where country_code_contact.id <> local_contact.id
   and country_code_contact.normalized_phone ~ '^1[0-9]{10}$'
+  and country_code_contact.normalized_name = local_contact.normalized_name
   and substring(country_code_contact.normalized_phone from 2) =
     local_contact.normalized_phone;
 
@@ -65,8 +72,13 @@ update public.contacts
 set normalized_phone = substring(normalized_phone from 2)
 where normalized_phone ~ '^1[0-9]{10}$';
 
-create unique index if not exists contacts_normalized_phone_idx
+drop index if exists public.contacts_normalized_phone_idx;
+
+create index if not exists contacts_normalized_phone_idx
   on public.contacts (normalized_phone);
+
+create unique index if not exists contacts_normalized_identity_idx
+  on public.contacts (normalized_name, normalized_phone);
 
 create index if not exists contacts_normalized_name_idx
   on public.contacts (normalized_name);
@@ -75,7 +87,7 @@ create index if not exists contacts_normalized_name_idx
 -- migrated by the alter/update/drop statements below.
 create table if not exists public.lessons (
   id uuid primary key default gen_random_uuid(),
-  instructor_profile_id uuid not null references public.instructor_profiles(id) on delete cascade,
+  instructor_profile_id uuid not null references public.instructor_profiles(id) on delete restrict,
   student_name text not null,
   student_phone text not null,
   session_type public.session_type not null default 'lesson',
@@ -102,7 +114,7 @@ create table if not exists public.lesson_students (
 create table if not exists public.lesson_instructors (
   id uuid primary key default gen_random_uuid(),
   lesson_id uuid not null references public.lessons(id) on delete cascade,
-  instructor_profile_id uuid not null references public.instructor_profiles(id) on delete cascade,
+  instructor_profile_id uuid not null references public.instructor_profiles(id) on delete restrict,
   sort_order integer not null default 0,
   created_at timestamptz not null default now(),
   unique (lesson_id, instructor_profile_id)
@@ -246,20 +258,34 @@ alter table public.lessons
   alter column status set not null,
   alter column reminder_sent set not null;
 
-do $$
-begin
-  if not exists (
-    select 1
-    from pg_constraint
-    where conname = 'lessons_instructor_profile_id_fkey'
-  ) then
-    alter table public.lessons
-      add constraint lessons_instructor_profile_id_fkey
-      foreign key (instructor_profile_id)
-      references public.instructor_profiles(id)
-      on delete cascade;
-  end if;
-end $$;
+-- Auth users can be removed without deleting the pro's historical identity.
+-- Profiles with lesson assignments must be reassigned before deletion.
+alter table public.instructor_profiles
+  drop constraint if exists instructor_profiles_user_id_fkey;
+
+alter table public.instructor_profiles
+  add constraint instructor_profiles_user_id_fkey
+  foreign key (user_id)
+  references auth.users(id)
+  on delete set null;
+
+alter table public.lessons
+  drop constraint if exists lessons_instructor_profile_id_fkey;
+
+alter table public.lessons
+  add constraint lessons_instructor_profile_id_fkey
+  foreign key (instructor_profile_id)
+  references public.instructor_profiles(id)
+  on delete restrict;
+
+alter table public.lesson_instructors
+  drop constraint if exists lesson_instructors_instructor_profile_id_fkey;
+
+alter table public.lesson_instructors
+  add constraint lesson_instructors_instructor_profile_id_fkey
+  foreign key (instructor_profile_id)
+  references public.instructor_profiles(id)
+  on delete restrict;
 
 alter table public.lessons
   drop column if exists instructor_name,

@@ -15,6 +15,7 @@ delete from public.contacts country_code_contact
 using public.contacts local_contact
 where country_code_contact.id <> local_contact.id
   and country_code_contact.normalized_phone ~ '^1[0-9]{10}$'
+  and country_code_contact.normalized_name = local_contact.normalized_name
   and substring(country_code_contact.normalized_phone from 2) =
     local_contact.normalized_phone;
 
@@ -22,8 +23,13 @@ update public.contacts
 set normalized_phone = substring(normalized_phone from 2)
 where normalized_phone ~ '^1[0-9]{10}$';
 
-create unique index if not exists contacts_normalized_phone_idx
+drop index if exists public.contacts_normalized_phone_idx;
+
+create index if not exists contacts_normalized_phone_idx
   on public.contacts (normalized_phone);
+
+create unique index if not exists contacts_normalized_identity_idx
+  on public.contacts (normalized_name, normalized_phone);
 
 create index if not exists contacts_normalized_name_idx
   on public.contacts (normalized_name);

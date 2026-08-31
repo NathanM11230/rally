@@ -113,22 +113,23 @@ function FollowUpCard({
 }
 
 function getFollowUpContacts(lessons: LessonWithInstructorProfile[]) {
-  const contactsByPhone = new Map<string, FollowUpContact>();
+  const contactsByIdentity = new Map<string, FollowUpContact>();
 
   for (const lesson of lessons) {
     for (const person of getLessonStudents(lesson)) {
       const phoneKey = normalizePhone(person.student_phone);
       const fullName = person.student_name.trim();
+      const identityKey = `${normalizeName(fullName)}\u0000${phoneKey}`;
 
       if (!phoneKey || !fullName) {
         continue;
       }
 
-      const existingContact = contactsByPhone.get(phoneKey);
+      const existingContact = contactsByIdentity.get(identityKey);
 
       if (!existingContact) {
-        contactsByPhone.set(phoneKey, {
-          id: phoneKey,
+        contactsByIdentity.set(identityKey, {
+          id: identityKey,
           fullName,
           firstName: getFirstName(fullName),
           phoneNumber: person.student_phone,
@@ -149,7 +150,7 @@ function getFollowUpContacts(lessons: LessonWithInstructorProfile[]) {
     }
   }
 
-  return Array.from(contactsByPhone.values()).sort((first, second) => {
+  return Array.from(contactsByIdentity.values()).sort((first, second) => {
     if (second.lessonCount !== first.lessonCount) {
       return second.lessonCount - first.lessonCount;
     }
@@ -171,6 +172,10 @@ function cleanPhoneNumber(phoneNumber: string) {
 
 function normalizePhone(phoneNumber: string) {
   return phoneNumber.replace(/\D/g, "");
+}
+
+function normalizeName(fullName: string) {
+  return fullName.trim().toLowerCase().replace(/\s+/g, " ");
 }
 
 function getFirstName(fullName: string) {

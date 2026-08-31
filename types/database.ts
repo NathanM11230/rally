@@ -45,6 +45,8 @@ export type Database = {
           user_id: string | null;
           full_name: string;
           phone_number: string;
+          is_active: boolean;
+          calendar_token_version: number;
           created_at: string;
           updated_at: string;
         };
@@ -53,6 +55,8 @@ export type Database = {
           user_id?: string | null;
           full_name: string;
           phone_number: string;
+          is_active?: boolean;
+          calendar_token_version?: number;
           created_at?: string;
           updated_at?: string;
         };
@@ -61,6 +65,8 @@ export type Database = {
           user_id?: string | null;
           full_name?: string;
           phone_number?: string;
+          is_active?: boolean;
+          calendar_token_version?: number;
           created_at?: string;
           updated_at?: string;
         };

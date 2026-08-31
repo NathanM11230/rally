@@ -9,6 +9,7 @@ import {
   buildLessonCalendarFilename,
 } from "@/lib/calendar-event";
 import { getValidLessonCalendarTokenPayload } from "@/lib/calendar-token";
+import { getInstructorProfile } from "@/lib/instructor-profiles";
 import { getLesson, isLessonAssignedToInstructor } from "@/lib/lessons";
 import type { LessonWithInstructorProfile } from "@/types/database";
 import { handleApiError } from "@/lib/api-helpers";
@@ -28,9 +29,16 @@ export async function GET(request: Request, { params }: CalendarRouteContext) {
 
     if (tokenPayload) {
       const lesson = await getLesson(id);
+      const instructorProfile = await getInstructorProfile(
+        tokenPayload.instructorProfileId,
+      );
 
       if (
         !lesson ||
+        !instructorProfile ||
+        instructorProfile.is_active === false ||
+        (instructorProfile.calendar_token_version ?? 0) !==
+          tokenPayload.tokenVersion ||
         !isLessonAssignedToInstructor(lesson, tokenPayload.instructorProfileId)
       ) {
         return NextResponse.json({ error: "Lesson not found." }, { status: 404 });
@@ -68,6 +76,9 @@ function buildCalendarResponse(lesson: LessonWithInstructorProfile) {
     headers: {
       "Content-Type": "text/calendar; charset=utf-8",
       "Content-Disposition": `attachment; filename="${filename}"`,
+      "Cache-Control": "private, no-store, max-age=0",
+      Pragma: "no-cache",
+      Expires: "0",
     },
   });
 }

@@ -48,8 +48,8 @@ export function AuthForm({ mode }: AuthFormProps) {
         throw new Error(body?.error ?? "Unable to continue.");
       }
 
-      if (body?.needsEmailConfirmation) {
-        setMessage("Account created. Check your email to confirm it, then log in.");
+      if (body?.needsLogin) {
+        setMessage("Account created. Log in with your new password.");
         return;
       }
 

@@ -195,13 +195,17 @@ Courts 1-5.
   scoped to the logged-in pro's assigned lessons.
 - Any pro assigned to a lesson can edit the entire reservation.
 - A pro can create a reservation and assign another pro.
-- The participant contact directory is shared across the club.
+- The participant contact directory is intentionally shared across approved
+  club pros. Different people can share one phone number without overwriting
+  each other's names.
 - Signup is closed unless the server has an invite code or email allowlist
   configured.
 
 For a small club with a known pro roster, `SIGNUP_ALLOWED_EMAILS` is the
 preferred signup gate. If an invite code is used, it should be long, random,
-and shared only with approved pros.
+and shared only with approved pros. Rally provisions approved accounts with
+the server-only Supabase admin API; direct public Supabase signup should remain
+disabled.
 
 ## Technical overview
 
@@ -220,11 +224,13 @@ Supabase Row Level Security is enabled with no anonymous policies. Browser
 requests go through Rally's authenticated server routes; the service-role key
 is never sent to the client.
 
-Calendar downloads use a dedicated HMAC secret, expire after 14 days, and are
-bound to the pro who generated the link. Signup and login also have a
-best-effort in-memory attempt cap. On Vercel that cap is per serverless instance,
-so the long random invite code or email allowlist remains the primary signup
-control.
+Calendar downloads use a dedicated HMAC secret, expire after 15 minutes, are
+bound to the pro who generated the link, and are served with `no-store` cache
+headers. Logout revokes the Supabase refresh session and increments the pro's
+calendar token version, immediately invalidating outstanding calendar links.
+Signup and login also have a best-effort in-memory attempt cap. On Vercel that
+cap is per serverless instance, so the long random invite code or email
+allowlist remains the primary signup control.
 
 ## Capacity and scaling
 
@@ -272,14 +278,19 @@ The schema is written to be rerunnable for an existing Rally database. If an
 older deployment only needs the contact directory repair, run
 [`supabase/contacts-table.sql`](./supabase/contacts-table.sql).
 
+Rerunning the full schema also installs the safe profile foreign keys: deleting
+an Auth user unlinks rather than deletes the pro profile, and a profile cannot
+be deleted while lessons still reference it. Set a departing pro's `is_active`
+value to `false` instead; disabled pros cannot log in or be assigned new lessons,
+but remain visible on historical records.
+
 ### 3. Configure Supabase Auth
 
-Enable email/password authentication. Email is used only for account access;
-Rally does not send email lesson reminders.
-
-If email confirmation is enabled, set the Supabase Auth Site URL to the
-production Rally URL and add both the production URL and
-`http://localhost:3000` as allowed redirect URLs.
+Enable email/password authentication, then disable public new-user signup in
+the Supabase Auth settings. Rally's gated `/api/auth/signup` route uses the
+server-only service role to provision approved users, so the Rally signup form
+continues to work. Email is used only for account access; Rally does not send
+email lesson reminders.
 
 ### 4. Add environment variables
 
@@ -289,7 +300,7 @@ Copy `.env.example` to `.env.local` and set:
 | --- | --- |
 | `SUPABASE_URL` | Supabase project URL |
 | `SUPABASE_SERVICE_ROLE_KEY` | Server-only database access |
-| `SUPABASE_ANON_KEY` | Supabase Auth login and signup |
+| `SUPABASE_ANON_KEY` | Supabase Auth login and session renewal |
 | `LESSON_TIME_ZONE` | Club timezone, such as `America/New_York` |
 | `SIGNUP_INVITE_CODE` | Long random code shared with approved pros |
 | `SIGNUP_ALLOWED_EMAILS` | Optional comma-separated signup allowlist |
@@ -320,9 +331,10 @@ npm run build
 ```
 
 The current tests cover signup gating, calendar-token validation, auth session
-renewal, the attempt limiter, timezone and pay-period boundaries, lesson input
-validation, contact matching, and multi-pro lesson assignment. GitHub Actions
-runs the same checks for pushes to `main` and for pull requests.
+renewal, trusted account claims, the attempt limiter, timezone and pay-period
+boundaries, lesson input validation, shared-phone contact matching, and
+multi-pro lesson assignment. GitHub Actions runs the same checks for pushes to
+`main` and for pull requests.
 
 ## Deploying to Vercel
 
@@ -345,6 +357,19 @@ effect.
 Rally is intentionally small. It includes scheduling, shared contacts, manual
 SMS reminders, calendar handoff, follow ups, and pay-period reconciliation.
 It does not include automated SMS delivery, email reminders, billing, payments,
-court availability management, or a public registration flow.
+court availability management, or open public registration.
+
+Reminder status is lesson-level: for a lesson with several participants, the
+pro sends each prepared text and then uses **Mark all sent**. It is a workflow
+check, not an SMS delivery receipt. Pay-period reports intentionally include
+every item entered for the period, including cancelled and no-show records, so
+the pro can reconcile the full schedule against payroll.
+
+Manual reminder links depend on the phone's `sms:` handling. iPhone opens the
+prepared body reliably in the tested flow, while some Android messaging apps
+may open the recipient without the body. Lesson creation cleans up its parent
+record if assignment or participant writes fail, but lesson edits are not a
+multi-user database transaction; if two pros edit the same lesson at once, the
+last saved change wins.
 
 For day-to-day instructions, see [`PRO_GUIDE.md`](./PRO_GUIDE.md).

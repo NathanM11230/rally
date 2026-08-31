@@ -45,6 +45,16 @@ export async function getApiAuthenticatedProfile(): Promise<ApiAuthResult> {
     };
   }
 
+  if (current.profile.is_active === false) {
+    return {
+      ok: false,
+      response: NextResponse.json(
+        { error: "This Rally profile has been disabled." },
+        { status: 403 },
+      ),
+    };
+  }
+
   return {
     ok: true,
     auth: {

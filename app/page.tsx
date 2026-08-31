@@ -122,6 +122,7 @@ export default async function DashboardPage() {
                     timeZone={timeZone}
                     showDate={false}
                     currentInstructorProfileId={profile.id}
+                    calendarTokenVersion={profile.calendar_token_version ?? 0}
                   />
                 ))}
               </div>
@@ -139,6 +140,7 @@ export default async function DashboardPage() {
                     timeZone={timeZone}
                     showDate
                     currentInstructorProfileId={profile.id}
+                    calendarTokenVersion={profile.calendar_token_version ?? 0}
                   />
                 ))}
               </div>
@@ -155,11 +157,13 @@ function LessonCard({
   timeZone,
   showDate,
   currentInstructorProfileId,
+  calendarTokenVersion,
 }: {
   lesson: LessonWithInstructorProfile;
   timeZone: string;
   showDate: boolean;
   currentInstructorProfileId: string;
+  calendarTokenVersion: number;
 }) {
   const students = getLessonStudents(lesson);
   const status = getLessonStatus(lesson);
@@ -210,6 +214,7 @@ function LessonCard({
         <AddToCalendarLink
           lessonId={lesson.id}
           instructorProfileId={currentInstructorProfileId}
+          calendarTokenVersion={calendarTokenVersion}
         />
         <Link
           className="button-secondary compact-button"

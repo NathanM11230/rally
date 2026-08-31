@@ -3,9 +3,11 @@ import { NextResponse } from "next/server";
 
 import { getApiAuthenticatedProfile } from "@/lib/api-auth";
 import { cleanString, handleApiError, isRecord, readJson } from "@/lib/api-helpers";
+import { hasRallyAccess } from "@/lib/account-access";
 import { getCurrentUser } from "@/lib/auth";
 import {
   createOrUpdateInstructorProfileForUser,
+  getInstructorProfileByUserId,
   getInstructorProfiles,
 } from "@/lib/instructor-profiles";
 
@@ -42,6 +44,22 @@ export async function POST(request: Request) {
 
     if (!user) {
       return NextResponse.json({ error: "Log in to continue." }, { status: 401 });
+    }
+
+    const existingProfile = await getInstructorProfileByUserId(user.id);
+
+    if (existingProfile?.is_active === false) {
+      return NextResponse.json(
+        { error: "This Rally profile has been disabled." },
+        { status: 403 },
+      );
+    }
+
+    if (!existingProfile && !hasRallyAccess(user)) {
+      return NextResponse.json(
+        { error: "This account has not been approved for Rally." },
+        { status: 403 },
+      );
     }
 
     const profile = await createOrUpdateInstructorProfileForUser(user.id, parsed.data);

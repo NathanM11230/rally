@@ -135,9 +135,22 @@ export async function createLesson(
     throw error;
   }
 
-  await replaceLessonInstructors(data.id, instructorProfileIds);
-  await replaceLessonStudents(data.id, students);
-  await upsertContactsFromStudents(students);
+  try {
+    await replaceLessonInstructors(data.id, instructorProfileIds);
+    await replaceLessonStudents(data.id, students);
+    await upsertContactsFromStudents(students);
+  } catch (createError) {
+    const { error: cleanupError } = await supabase
+      .from("lessons")
+      .delete()
+      .eq("id", data.id);
+
+    if (cleanupError) {
+      console.error("Unable to clean up an incomplete Rally lesson.", cleanupError);
+    }
+
+    throw createError;
+  }
 
   const lesson = await getLesson(data.id);
 
