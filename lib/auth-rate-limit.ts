@@ -1,7 +1,7 @@
 const AUTH_RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000;
 const AUTH_RATE_LIMIT_MAX_ATTEMPTS = 10;
 
-type AuthRateLimitAction = "login" | "signup";
+type AuthRateLimitAction = "accept-invite" | "login" | "signup";
 
 type AttemptWindow = {
   count: number;

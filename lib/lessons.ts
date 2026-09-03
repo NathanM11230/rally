@@ -20,25 +20,8 @@ const LESSON_HISTORY_LIMIT = 5_000;
 type LessonCalendarFilters = {
   start: Date;
   end: Date;
-  instructorProfileId?: string;
+  instructorProfileId: string;
 };
-
-export async function getUpcomingLessons() {
-  const supabase = getSupabaseAdmin();
-
-  const { data, error } = await supabase
-    .from("lessons")
-    .select(lessonSelect)
-    .gte("lesson_start_time", new Date().toISOString())
-    .order("lesson_start_time", { ascending: true })
-    .limit(UPCOMING_LESSON_LIMIT);
-
-  if (error) {
-    throw error;
-  }
-
-  return normalizeLessons(data as LessonWithInstructorProfile[]);
-}
 
 export async function getUpcomingLessonsForInstructor(instructorProfileId: string) {
   const supabase = getSupabaseAdmin();
@@ -82,16 +65,13 @@ export async function getLessonsForCalendar({
 }: LessonCalendarFilters) {
   const supabase = getSupabaseAdmin();
 
-  let query = supabase
+  const query = supabase
     .from("lessons")
-    .select(instructorProfileId ? lessonSelectForInstructor : lessonSelect)
+    .select(lessonSelectForInstructor)
+    .eq("assignment.instructor_profile_id", instructorProfileId)
     .gte("lesson_start_time", start.toISOString())
     .lt("lesson_start_time", end.toISOString())
     .order("lesson_start_time", { ascending: true });
-
-  if (instructorProfileId) {
-    query = query.eq("assignment.instructor_profile_id", instructorProfileId);
-  }
 
   const { data, error } = await query;
 

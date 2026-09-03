@@ -6,9 +6,12 @@ pay-period records.
 
 ## Getting Started
 
-1. Open Rally.
-2. Log in or create your pro account.
-3. Complete your profile with your full name and phone number.
+1. Open Rally and choose **Create account**.
+2. Enter your approved email or club invite code, plus your name and phone
+   number.
+3. Open the Supabase invitation sent to your email and choose your Rally
+   password.
+4. Return to Rally and log in.
 
 Your phone number is saved to your profile. Rally uses it when you are assigned
 to lessons, but lesson reminders are still sent manually from your own phone.

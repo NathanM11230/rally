@@ -171,17 +171,19 @@ logged-in pro, including reservations shared with multiple pros.
 
 ## How the club workflow works
 
-1. A pro signs up with the club invite code and saves a name and phone number
-   to their profile.
-2. The pro creates a Lesson, Clinic, Other event, Freshmen, Varsity, or Team
+1. A pro requests access with the club invite code or an approved email.
+2. Rally emails the pro a secure invitation. Opening it confirms ownership of
+   the inbox and lets the pro set a password; their name and phone number are
+   saved to their profile.
+3. The pro creates a Lesson, Clinic, Other event, Freshmen, Varsity, or Team
    reservation.
-3. One or more pros and participants can be assigned to the same reservation.
-4. Saving the lesson automatically creates or updates each participant in the
+4. One or more pros and participants can be assigned to the same reservation.
+5. Saving the lesson automatically creates or updates each participant in the
    shared club contact directory.
-5. Assigned pros see the reservation on their own dashboard and calendar.
-6. A reminder button opens a prepared SMS on the pro's phone. Rally can then
+6. Assigned pros see the reservation on their own dashboard and calendar.
+7. A reminder button opens a prepared SMS on the pro's phone. Rally can then
    mark the reminder as sent to prevent accidental duplicates.
-7. The reservation appears in each assigned pro's pay-period report and can be
+8. The reservation appears in each assigned pro's pay-period report and can be
    added to a personal calendar.
 
 Lesson times are offered in 15-minute intervals from 6:00 AM through 9:00 PM.
@@ -199,13 +201,14 @@ Courts 1-5.
   club pros. Different people can share one phone number without overwriting
   each other's names.
 - Signup is closed unless the server has an invite code or email allowlist
-  configured.
+  configured. Approved pros must then open the Supabase invitation sent to
+  their email before choosing a password.
 
 For a small club with a known pro roster, `SIGNUP_ALLOWED_EMAILS` is the
 preferred signup gate. If an invite code is used, it should be long, random,
-and shared only with approved pros. Rally provisions approved accounts with
-the server-only Supabase admin API; direct public Supabase signup should remain
-disabled.
+and shared only with approved pros. Rally sends approved users a Supabase Auth
+invitation so the email address is verified before a password can be set.
+Direct public Supabase signup should remain disabled.
 
 ## Technical overview
 
@@ -288,9 +291,19 @@ but remain visible on historical records.
 
 Enable email/password authentication, then disable public new-user signup in
 the Supabase Auth settings. Rally's gated `/api/auth/signup` route uses the
-server-only service role to provision approved users, so the Rally signup form
-continues to work. Email is used only for account access; Rally does not send
-email lesson reminders.
+server-only service role to send invitations, so the Rally signup form
+continues to work.
+
+Under **Authentication > URL Configuration**, set the production Site URL and
+add this Redirect URL:
+
+```text
+https://rally.management/accept-invite
+```
+
+Keep Supabase's **Invite user** email template linked to
+`{{ .ConfirmationURL }}`. Email is used only to verify account access; Rally
+does not send email lesson reminders.
 
 ### 4. Add environment variables
 
@@ -330,11 +343,11 @@ npm run typecheck
 npm run build
 ```
 
-The current tests cover signup gating, calendar-token validation, auth session
-renewal, trusted account claims, the attempt limiter, timezone and pay-period
-boundaries, lesson input validation, shared-phone contact matching, and
-multi-pro lesson assignment. GitHub Actions runs the same checks for pushes to
-`main` and for pull requests.
+The current tests cover signup gating, invite-link parsing, calendar-token
+validation, auth session renewal, trusted account claims, the attempt limiter,
+timezone and pay-period boundaries, lesson input validation, shared-phone
+contact matching, and multi-pro lesson assignment. GitHub Actions runs the same
+checks for pushes to `main` and for pull requests.
 
 ## Deploying to Vercel
 
@@ -342,10 +355,10 @@ multi-pro lesson assignment. GitHub Actions runs the same checks for pushes to
    branch.
 2. Add the same environment variables listed above to the Production
    environment.
-3. Deploy, then update the Supabase Auth Site URL and redirect allowlist with
-   the final Vercel or custom domain.
-4. Test signup, login, contact creation, lesson creation, a reminder handoff,
-   and an Add to calendar link on a real phone.
+3. Deploy, set the Supabase Auth Site URL, and allow
+   `https://rally.management/accept-invite` as an Auth redirect URL.
+4. Test signup through the emailed invitation, login, contact creation, lesson
+   creation, a reminder handoff, and an Add to calendar link on a real phone.
 5. Complete [`SECURITY_CHECKLIST.md`](./SECURITY_CHECKLIST.md) before inviting
    additional pros.
 

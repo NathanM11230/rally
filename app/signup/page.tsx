@@ -17,9 +17,10 @@ export default async function SignupPage() {
       <section className="panel auth-panel">
         <div className="auth-copy">
           <span className="brand-mark">R</span>
-          <h1>Create your Rally login</h1>
+          <h1>Request your Rally login</h1>
           <p className="page-subtitle">
-            Use your club invite or approved email to create your pro profile.
+            Use your club invite or approved email. Rally will email you a
+            secure link to set your password.
           </p>
         </div>
         <AuthForm mode="signup" />

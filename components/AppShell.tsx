@@ -20,7 +20,10 @@ type AppShellProps = {
 export function AppShell({ children }: AppShellProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const isAuthPage = pathname === "/login" || pathname === "/signup";
+  const isAuthPage =
+    pathname === "/login" ||
+    pathname === "/signup" ||
+    pathname === "/accept-invite";
 
   async function handleLogout() {
     await fetch("/api/auth/logout", { method: "POST" });

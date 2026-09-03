@@ -28,11 +28,19 @@ reuse `SUPABASE_SERVICE_ROLE_KEY` for `CALENDAR_TOKEN_SECRET`.
 
 ## Required Supabase Auth Setting
 
-In the Supabase Auth settings, disable public new-user signup. Rally creates
-approved accounts from its server-only signup route after checking the email
-allowlist or invite code. A user created directly through Supabase will not have
-Rally's trusted access claim and cannot create a pro profile, but disabling
-public signup closes that unnecessary entry point as well.
+In the Supabase Auth settings, disable public new-user signup. Rally sends an
+invitation from its server-only signup route after checking the email allowlist
+or invite code. Opening that email confirms inbox ownership before the pro can
+set a password. A user created directly through Supabase will not have Rally's
+trusted access claim and cannot create a pro profile, but disabling public
+signup closes that unnecessary entry point as well.
+
+Under **Authentication > URL Configuration**:
+
+1. Set **Site URL** to `https://rally.management`.
+2. Add `https://rally.management/accept-invite` to **Redirect URLs**.
+3. Keep the **Invite user** email template linked to
+   `{{ .ConfirmationURL }}`.
 
 Rally includes a lightweight in-memory attempt cap for signup and login, but it
 is best-effort only on Vercel. Serverless instances do not share memory, and cold
@@ -46,10 +54,12 @@ After redeploying, verify these on the live Vercel URL:
 1. Open `/signup`.
 2. Try signing up with a fake email and a wrong invite code. It should fail.
 3. Sign up only with an approved email or the real invite code.
-4. Log in, create a test lesson, and click **Add to calendar** from an iPhone or
+4. Confirm that an invitation arrives, opens `/accept-invite`, and requires a
+   password of at least 10 characters.
+5. Log in, create a test lesson, and click **Add to calendar** from an iPhone or
    phone browser. The `.ics` file should download/open without showing
    `{"error":"Log in to continue."}`.
-5. Visit `/api/contacts` while logged out. It should return `401`.
+6. Visit `/api/contacts` while logged out. It should return `401`.
 
 ## Supabase Audit
 
@@ -113,6 +123,7 @@ The current tests cover:
 - Rally access requires a trusted server-side app metadata claim
 - invalid and empty invite codes are rejected
 - allowlisted emails work case-insensitively
+- invite links require both Supabase session tokens
 - calendar links require `CALENDAR_TOKEN_SECRET`
 - calendar tokens reject expiration, tampering, wrong lesson ids, and malformed tokens
 - shared phone numbers remain separate contacts when names differ

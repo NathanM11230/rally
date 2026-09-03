@@ -2,9 +2,7 @@ import { NextResponse } from "next/server";
 
 import { cleanString, handleApiError, isRecord, readJson } from "@/lib/api-helpers";
 import { enforceAuthRateLimit } from "@/lib/auth-rate-limit";
-import { getSupabaseAuthClient, setAuthCookies } from "@/lib/auth";
-import { buildRallyAccessMetadata } from "@/lib/account-access";
-import { createOrUpdateInstructorProfileForUser } from "@/lib/instructor-profiles";
+import { buildRallyInvitationMetadata } from "@/lib/account-access";
 import { validateSignupAccess } from "@/lib/signup-access";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
 
@@ -45,51 +43,63 @@ export async function POST(request: Request) {
   }
 
   try {
-    // Accounts are provisioned with the service role so public Supabase signup
-    // can remain disabled. The Rally invite/allowlist is checked above.
     const admin = getSupabaseAdmin();
-    const { data, error } = await admin.auth.admin.createUser({
-      email: parsed.data.email,
-      password: parsed.data.password,
-      email_confirm: true,
-      app_metadata: buildRallyAccessMetadata(),
-    });
+    const redirectTo = new URL("/accept-invite", request.url).toString();
+    const { data, error } = await admin.auth.admin.inviteUserByEmail(
+      parsed.data.email,
+      {
+        redirectTo,
+        data: {
+          full_name: parsed.data.full_name,
+          phone_number: parsed.data.phone_number,
+        },
+      },
+    );
 
     if (error || !data.user) {
       return NextResponse.json(
-        { error: error?.message ?? "Unable to create account." },
+        {
+          error:
+            "Unable to send an invitation. This email may already have a Rally account.",
+        },
         { status: 400 },
       );
     }
 
-    await createOrUpdateInstructorProfileForUser(data.user.id, {
-      full_name: parsed.data.full_name,
-      phone_number: parsed.data.phone_number,
-    });
+    const { error: accessError } = await admin.auth.admin.updateUserById(
+      data.user.id,
+      {
+        app_metadata: buildRallyInvitationMetadata(data.user.app_metadata),
+      },
+    );
 
-    const authClient = getSupabaseAuthClient();
-    const { data: loginData, error: loginError } =
-      await authClient.auth.signInWithPassword({
-        email: parsed.data.email,
-        password: parsed.data.password,
-      });
-
-    if (loginError || !loginData.session) {
-      return NextResponse.json({
-        ok: true,
-        needsLogin: true,
-      });
+    if (accessError) {
+      await deleteIncompleteInvite(data.user.id);
+      throw accessError;
     }
 
-    const response = NextResponse.json({
-      ok: true,
-      needsLogin: false,
-    });
-    setAuthCookies(response, loginData.session);
-
-    return response;
+    return NextResponse.json(
+      {
+        ok: true,
+        invitationSent: true,
+      },
+      { status: 202 },
+    );
   } catch (error) {
     return handleApiError(error);
+  }
+}
+
+async function deleteIncompleteInvite(userId: string) {
+  try {
+    const admin = getSupabaseAdmin();
+    const { error } = await admin.auth.admin.deleteUser(userId);
+
+    if (error) {
+      console.error("Unable to clean up an incomplete Rally invitation.", error);
+    }
+  } catch (error) {
+    console.error("Unable to clean up an incomplete Rally invitation.", error);
   }
 }
 
@@ -99,27 +109,21 @@ function parseSignupInput(body: unknown) {
   }
 
   const email = cleanString(body.email);
-  const password = cleanString(body.password);
   const fullName = cleanString(body.full_name);
   const phoneNumber = cleanString(body.phone_number);
   const inviteCode = cleanString(body.invite_code);
 
-  if (!email || !password || !fullName || !phoneNumber) {
+  if (!email || !fullName || !phoneNumber) {
     return {
       ok: false as const,
-      error: "Email, password, full name, and phone number are required.",
+      error: "Email, full name, and phone number are required.",
     };
-  }
-
-  if (password.length < 10) {
-    return { ok: false as const, error: "Password must be at least 10 characters." };
   }
 
   return {
     ok: true as const,
     data: {
       email,
-      password,
       full_name: fullName,
       phone_number: phoneNumber,
       invite_code: inviteCode,

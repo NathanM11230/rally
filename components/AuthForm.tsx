@@ -26,13 +26,17 @@ export function AuthForm({ mode }: AuthFormProps) {
     setIsSaving(true);
 
     const formData = new FormData(event.currentTarget);
-    const payload = {
-      email: String(formData.get("email") ?? ""),
-      password: String(formData.get("password") ?? ""),
-      full_name: String(formData.get("full_name") ?? ""),
-      phone_number: String(formData.get("phone_number") ?? ""),
-      invite_code: String(formData.get("invite_code") ?? ""),
-    };
+    const payload = isSignup
+      ? {
+          email: String(formData.get("email") ?? ""),
+          full_name: String(formData.get("full_name") ?? ""),
+          phone_number: String(formData.get("phone_number") ?? ""),
+          invite_code: String(formData.get("invite_code") ?? ""),
+        }
+      : {
+          email: String(formData.get("email") ?? ""),
+          password: String(formData.get("password") ?? ""),
+        };
 
     try {
       const response = await fetch(`/api/auth/${mode}`, {
@@ -48,8 +52,10 @@ export function AuthForm({ mode }: AuthFormProps) {
         throw new Error(body?.error ?? "Unable to continue.");
       }
 
-      if (body?.needsLogin) {
-        setMessage("Account created. Log in with your new password.");
+      if (body?.invitationSent) {
+        setMessage(
+          "Invitation sent. Open the email from Supabase to confirm your address and set your Rally password.",
+        );
         return;
       }
 
@@ -68,24 +74,24 @@ export function AuthForm({ mode }: AuthFormProps) {
       {message ? <div className="form-success">{message}</div> : null}
 
       {isSignup ? (
-        <div className="form-grid">
-          <Field label="Full name" name="full_name" />
-          <Field label="Phone number" name="phone_number" type="tel" />
-          <Field label="Invite code" name="invite_code" required={false} />
-        </div>
-      ) : null}
-
-      <Field label="Email" name="email" type="email" />
-      <Field
-        label="Password"
-        name="password"
-        type="password"
-        minLength={isSignup ? 10 : undefined}
-      />
+        <>
+          <div className="form-grid">
+            <Field label="Full name" name="full_name" />
+            <Field label="Phone number" name="phone_number" type="tel" />
+            <Field label="Invite code" name="invite_code" required={false} />
+          </div>
+          <Field label="Email" name="email" type="email" />
+        </>
+      ) : (
+        <>
+          <Field label="Email" name="email" type="email" />
+          <Field label="Password" name="password" type="password" />
+        </>
+      )}
 
       <div className="form-actions">
         <button className="button" type="submit" disabled={isSaving}>
-          {isSaving ? "Working..." : isSignup ? "Create account" : "Log in"}
+          {isSaving ? "Working..." : isSignup ? "Send invitation" : "Log in"}
         </button>
         {isSignup ? (
           <Link className="button-secondary" href="/login">
